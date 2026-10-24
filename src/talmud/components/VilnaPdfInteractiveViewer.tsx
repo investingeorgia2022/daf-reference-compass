@@ -611,6 +611,8 @@ function resolvePdfHotspotDafCitation(
 ): {
   startIdx: number;
   endIdx: number;
+  markStartIdx: number;
+  markEndIdx: number;
   tractateId: string;
   tractateNameHe: string;
   tractateNameKa: string;
@@ -877,6 +879,19 @@ function resolvePdfHotspotDafCitation(
   return {
     startIdx,
     endIdx,
+    // Blue highlight covers only the daf reference itself ("(דף ז:)" / "דף ז:"), never the lead word (לקמן / tractate name).
+    markStartIdx:
+      dafWordIdx >= 0 && numWordIdx >= 0
+        ? Math.min(dafWordIdx, numWordIdx)
+        : numWordIdx >= 0
+          ? numWordIdx
+          : Math.min(startIdx, endIdx),
+    markEndIdx:
+      dafWordIdx >= 0 && numWordIdx >= 0
+        ? Math.max(dafWordIdx, numWordIdx)
+        : numWordIdx >= 0
+          ? numWordIdx
+          : Math.max(startIdx, endIdx),
     tractateId: explicitTractate.id,
     tractateNameHe: explicitTractate.nameHe,
     tractateNameKa: explicitTractate.nameKa,
@@ -2539,8 +2554,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       for (let i = 0; i < list.length; i++) {
         const cit = resolvePdfHotspotDafCitation(i, list, trId, trHe, trKa);
         if (cit) {
-          const minI = Math.max(0, Math.min(cit.startIdx, cit.endIdx));
-          const maxI = Math.min(list.length - 1, Math.max(cit.startIdx, cit.endIdx));
+          const minI = Math.max(0, cit.markStartIdx);
+          const maxI = Math.min(list.length - 1, cit.markEndIdx);
           for (let k = minI; k <= maxI; k++) {
             citSet.add(list[k].id);
           }
@@ -3294,8 +3309,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         tractateNameKa
       );
       if (cit) {
-        const minI = Math.max(0, Math.min(cit.startIdx, cit.endIdx));
-        const maxI = Math.min(hotspots.length - 1, Math.max(cit.startIdx, cit.endIdx));
+        const minI = Math.max(0, cit.markStartIdx);
+        const maxI = Math.min(hotspots.length - 1, cit.markEndIdx);
         for (let k = minI; k <= maxI; k++) {
           set.add(hotspots[k].id);
         }
