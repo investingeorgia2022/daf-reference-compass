@@ -3096,7 +3096,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         }
 
         if (preferredType === 'gilyon-hashas') {
-          const entry = getGilyonNote(hotspots, markerHotspot.section, expectedSide);
+          const sourceSection = markerHotspot.sentence?.source === 'mishnah' ? 'mishnah' : markerHotspot.section;
+          const entry = getGilyonNote(hotspots, sourceSection, expectedSide);
           return entry.length ? { targetHotspots: entry, commType: preferredType, key, targetSentenceId } : null;
         }
 
