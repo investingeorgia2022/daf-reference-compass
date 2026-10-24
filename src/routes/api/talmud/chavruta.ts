@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/talmud/chavruta")({
             dafExcerpt: str(b.dafExcerpt, 5000),
           },
         );
-        return { reply: typeof out.reply === "string" ? out.reply : "" };
+        return { reply: typeof out["reply"] === "string" ? out["reply"] : "" };
       }),
     },
   },

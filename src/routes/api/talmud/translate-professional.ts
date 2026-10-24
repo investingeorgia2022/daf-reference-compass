@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/talmud/translate-professional")({
             daf: str(b.daf, 20),
           },
         );
-        return { translation: typeof out.translation === "string" ? out.translation : "" };
+        return { translation: typeof out["translation"] === "string" ? out["translation"] : "" };
       }),
     },
   },
