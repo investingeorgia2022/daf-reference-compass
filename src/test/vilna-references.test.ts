@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { detectSmallMarkerToken } from '../talmud/utils/referenceMarkerDetector';
 import { findScrollParent, getTargetScrollTop, scrollToTarget } from '../talmud/utils/scrollToTarget';
+import { findMarginGutters, normalizeVilnaX } from '../talmud/utils/vilnaColumnGutters';
 
 describe('isolated Vilna markers', () => {
   it.each(['⦸', '⊙', '◐'])('recognizes circular %s as Gilyon', (word) => {
@@ -20,6 +21,30 @@ describe('isolated Vilna markers', () => {
   });
   it.each([['((א))', 'bach'], ['(א)', 'bach'], [')א(', 'bach'], ['[א]', 'gra'], [']א[', 'gra'], ['(1)', 'torah-or'], ['2', 'torah-or'], ['$', 'gilyon-hashas']])('routes %s', (word, type) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara').targetType).toBe(type);
+  });
+  it('never marks a letter that belongs to an abbreviation such as (ויקרא כ"ב)', () => {
+    expect(detectSmallMarkerToken('(ב', 5, 'rashi', { bodyFontHeight: 6.7, abbreviation: true }).isSmallMarker).toBe(false);
+    expect(detectSmallMarkerToken('ב"', 5, 'rashi', { bodyFontHeight: 6.7 }).isSmallMarker).toBe(false);
+  });
+  it('marks a raised Torah Or numeral but not a body-size number', () => {
+    expect(detectSmallMarkerToken('2', 7, 'gemara', { bodyFontHeight: 13.7 }).targetType).toBe('torah-or');
+    expect(detectSmallMarkerToken('2', 13.7, 'gemara', { bodyFontHeight: 13.7 }).isSmallMarker).toBe(false);
+  });
+});
+
+describe('Vilna margin gutters', () => {
+  it('finds the side-column gaps on a larger-scale scan (Berakhot 2a layout)', () => {
+    const boxes = [
+      { leftPct: 9, rightPct: 19, topPct: 20 },
+      { leftPct: 20, rightPct: 85.5, topPct: 20 },
+      { leftPct: 86.5, rightPct: 96, topPct: 20 },
+    ];
+    const g = findMarginGutters(boxes);
+    expect(g.left).toBeCloseTo(19.5, 0);
+    expect(g.right).toBeCloseTo(86, 0);
+    // A margin letter at 17.7% is margin; text just inside the gutter is main text.
+    expect(normalizeVilnaX(17.7, g)).toBeLessThan(14);
+    expect(normalizeVilnaX(21, g)).toBeGreaterThan(14);
   });
 });
 

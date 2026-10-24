@@ -12,6 +12,7 @@ import {
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker } from '../utils/referenceMarkerDetector';
+import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import {
   translateToGeorgianLive,
@@ -994,6 +995,7 @@ function extractHotspotsFromTextContent(
 ): VilnaPdfHotspot[] {
   interface RawPdfRun {
     str: string;
+    quoteAdjacent?: boolean;
     vpLeft: number;
     vpTop: number;
     vpWidth: number;
@@ -1012,6 +1014,26 @@ function extractHotspotsFromTextContent(
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
+  // Locate the real gutters between the side margins and the main text on this scan.
+  const marginGutters =
+    isSiddurPdf || isChumashPdf
+      ? REFERENCE_GUTTERS
+      : findMarginGutters(
+          items
+            .filter((it) => String(it.str || '').trim() && Array.isArray(it.transform))
+            .map((it) => {
+              const t = it.transform as number[];
+              const w = Math.max(2, Number(it.width) || 0);
+              const [x1, y1] = viewport.convertToViewportPoint(Number(t[4]) || 0, Number(t[5]) || 0);
+              const [x2] = viewport.convertToViewportPoint((Number(t[4]) || 0) + w, Number(t[5]) || 0);
+              return {
+                leftPct: (Math.min(x1, x2) / vpW) * 100,
+                rightPct: (Math.max(x1, x2) / vpW) * 100,
+                topPct: (y1 / vpH) * 100,
+              };
+            })
+        );
+
   for (const rawItem of items) {
     let str = String(rawItem.str || '').trim();
     if (isSiddurPdf || isChumashPdf) {
@@ -1021,10 +1043,12 @@ function extractHotspotsFromTextContent(
         .replace(/\s+/g, ' ')
         .trim();
     }
+    // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
+    const isQuoteOnly = /^["'״׳`]+$/.test(str);
     // Accept Hebrew letters, digits (for Torah Or 1..9), and parentheses/brackets (for (א), [א])
-    if (!str || (!/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
-    // Skip pure punctuation like standalone "." or ":" or "'" unless it's a bracket or digit
-    if (/^[.,:;'"״׳\-–—]+$/.test(str)) continue;
+    if (!str || (!isQuoteOnly && !/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
+    // Skip pure punctuation like standalone "." or ":" unless it's a bracket, digit or quote
+    if (!isQuoteOnly && /^[.,:;'"״׳\-–—]+$/.test(str)) continue;
 
     const transform = rawItem.transform as number[] | undefined;
     if (!transform || transform.length < 6) continue;
@@ -1082,7 +1106,7 @@ function extractHotspotsFromTextContent(
       }
     } else {
       section = classifyVilnaCoordinateZone(
-        leftPct + (vpWidth / vpW) * 50,
+        normalizeVilnaX(leftPct + (vpWidth / vpW) * 50, marginGutters),
         topPct,
         isAmudBet,
         pdfH
@@ -1126,6 +1150,27 @@ function extractHotspotsFromTextContent(
       cur.vpWidth = maxVpRight - minVpLeft;
       cur.leftPct = (minVpLeft / vpW) * 100;
       cur.pdfH = Math.min(cur.pdfH, nxt.pdfH);
+      cur.quoteAdjacent = cur.quoteAdjacent || nxt.quoteAdjacent;
+    }
+    // A quote mark glued to a letter makes it an abbreviation (ב"ח, כ"ב) — remember that before
+    // the quote itself is discarded, so the letter is never mistaken for a reference marker.
+    if (/^["'״׳`]+$/.test(cur.str.trim())) {
+      const touchesQuote = (r?: RawPdfRun) => {
+        if (!r) return false;
+        const rRight = r.leftPct + (r.vpWidth / vpW) * 100;
+        const qRight = cur.leftPct + (cur.vpWidth / vpW) * 100;
+        const gap = Math.max(cur.leftPct - rRight, r.leftPct - qRight);
+        return (
+          Math.abs(r.topPct - cur.topPct) < 0.65 &&
+          gap < 0.6 &&
+          Math.abs(r.pdfH - cur.pdfH) <= Math.max(0.8, cur.pdfH * 0.25)
+        );
+      };
+      const prevKept = runs[runs.length - 1];
+      if (touchesQuote(prevKept)) prevKept.quoteAdjacent = true;
+      const nextRaw = initialRuns[i + 1];
+      if (touchesQuote(nextRaw)) nextRaw.quoteAdjacent = true;
+      continue;
     }
     // Discard lonely bracket without any letter or digit
     if (!/[\u0590-\u05FF0-9]/.test(cur.str) && !isCircleMarker(cur.str)) continue;
@@ -1135,12 +1180,25 @@ function extractHotspotsFromTextContent(
   // Step 2: Walk margin runs to tag commentary type and entry key.
   // CRITICAL: Maintain SEPARATE state for Left Margin (leftPct < 50) and Right Margin (leftPct >= 50)
   // so commentary headers and entry keys from opposite sides of the Daf folio NEVER cross-contaminate!
-  let leftMarginComm: MarginCommentaryType = isAmudBet ? 'ein-mishpat' : 'masoret';
+  // Vilna layout: Ein Mishpat sits on the OUTER margin (left on amud A, right on amud B).
+  let leftMarginComm: MarginCommentaryType = isAmudBet ? 'masoret' : 'ein-mishpat';
   let leftMarginKey: string | undefined;
-  let rightMarginComm: MarginCommentaryType = isAmudBet ? 'masoret' : 'ein-mishpat';
+  let rightMarginComm: MarginCommentaryType = isAmudBet ? 'ein-mishpat' : 'masoret';
   let rightMarginKey: string | undefined;
 
-  for (const run of runs) {
+  // Walk each margin column top-to-bottom (right-to-left within a line) so a commentary header
+  // applies to the entries printed below it, regardless of the PDF stream order.
+  const marginWalk = runs
+    .filter((r) => r.section === 'margin')
+    .sort((a, b) => {
+      const sideDiff = Number(a.leftPct >= 50) - Number(b.leftPct >= 50);
+      if (sideDiff !== 0) return sideDiff;
+      const ya = a.vpTop + a.vpHeight * 0.5;
+      const yb = b.vpTop + b.vpHeight * 0.5;
+      if (Math.abs(ya - yb) > Math.max(2, Math.min(a.vpHeight, b.vpHeight) * 0.5)) return ya - yb;
+      return b.vpLeft + b.vpWidth - (a.vpLeft + a.vpWidth);
+    });
+  for (const run of marginWalk) {
     if (run.section === 'margin') {
       const isRightCol = run.leftPct >= 50;
       let activeMarginComm = isRightCol ? rightMarginComm : leftMarginComm;
@@ -1508,6 +1566,7 @@ function extractHotspotsFromTextContent(
             cur.leftPct = (minL / vpW) * 100;
             cur.vpHeight = Math.max(cur.vpHeight, nxt.vpHeight);
             cur.pdfH = Math.max(cur.pdfH, nxt.pdfH);
+            cur.quoteAdjacent = cur.quoteAdjacent || nxt.quoteAdjacent;
           } else {
             break;
           }
@@ -1516,13 +1575,52 @@ function extractHotspotsFromTextContent(
       }
       bucket.runs = joined;
     }
-    const markerContext = (run, token) => ({
+    // A tiny letter touching a same-size quote mark is part of an abbreviation (ב"ח, ז"ל), never a marker.
+    const abbreviationRuns = new Set<RawPdfRun>();
+    if (!isSiddurPdf) {
+      const quoteOnly = /^["'״׳`]/;
+      const quoteEnd = /["'״׳`]$/;
+      const touches = (a: RawPdfRun, o?: RawPdfRun) => {
+        if (!o) return false;
+        const aR = a.vpLeft + a.vpWidth;
+        const oR = o.vpLeft + o.vpWidth;
+        const gap = Math.max(a.vpLeft - oR, o.vpLeft - aR);
+        const sameSize = Math.abs(o.pdfH - a.pdfH) <= Math.max(0.8, a.pdfH * 0.25);
+        return sameSize && gap <= Math.max(2, a.vpHeight * 0.5);
+      };
+      bucket.runs.forEach((r, idx) => {
+        const prev = bucket.runs[idx - 1];
+        const next = bucket.runs[idx + 1];
+        if (
+          (touches(r, next) && quoteOnly.test(next.str.trim())) ||
+          (touches(r, prev) && quoteEnd.test(prev.str.trim()))
+        ) {
+          abbreviationRuns.add(r);
+        }
+      });
+    }
+    const markerContext = (run, token, tokenIdx = 0) => ({
       bodyFontHeight,
       isolated: run.str.trim() === token || /\s/.test(run.str),
-      isEntryStart: bucket.section === 'margin' && run === bucket.runs[0],
+      isEntryStart: bucket.section === 'margin' && run === bucket.runs[0] && tokenIdx === 0,
+      abbreviation: abbreviationRuns.has(run) || run.quoteAdjacent === true,
     });
+    // Margin columns of Ein Mishpat / Torah Or contain bracketed code numbers ([ד], (קכ"ג)) that are not markers.
+    const checkMarker = (run, token, tokenIdx = 0) => {
+      const m = detectSmallMarkerToken(token, run.pdfH, bucket.section, markerContext(run, token, tokenIdx));
+      if (
+        m.isSmallMarker &&
+        bucket.section === 'margin' &&
+        (run.marginCommType === 'ein-mishpat' || run.marginCommType === 'torah-or') &&
+        m.targetType !== 'ein-mishpat' &&
+        m.targetType !== 'torah-or'
+      ) {
+        return { isSmallMarker: false } as ReturnType<typeof detectSmallMarkerToken>;
+      }
+      return m;
+    };
     const rawLineJoined = bucket.runs
-      .filter((r) => !detectSmallMarkerToken(r.str.trim(), r.pdfH, bucket.section, markerContext(r, r.str.trim())).isSmallMarker)
+      .filter((r) => !checkMarker(r, r.str.trim()).isSmallMarker)
       .map((r) => r.str)
       .join(' ')
       .replace(/\s+/g, ' ')
@@ -1577,7 +1675,7 @@ function extractHotspotsFromTextContent(
 
       if (tokens.length === 1) {
         const rawTok = tokens[0];
-        const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
+        const markerCheck = checkMarker(run, rawTok);
         const cleanWord = markerCheck.isSmallMarker
           ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
           : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
@@ -1647,7 +1745,7 @@ function extractHotspotsFromTextContent(
 
         for (let i = 0; i < effectiveTokens.length; i++) {
           const rawTok = effectiveTokens[i];
-          const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
+          const markerCheck = checkMarker(run, rawTok, i);
           const cleanWord = markerCheck.isSmallMarker
             ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
             : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
@@ -2935,16 +3033,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         preferredType = 'ein-mishpat';
       }
 
-      // Expected side of the folio in authentic Vilna Tzurat HaDaf:
-      // Amud A (!isAmudBet): Ein Mishpat, Torah Or & Gilyon HaShas are on Outer Margin (Right, > 60%), Masoret / Bach are on Inner Gutter (Left, < 40%)
-      // Amud B (isAmudBet): Ein Mishpat, Torah Or & Gilyon HaShas are on Outer Margin (Left, < 40%), Masoret / Bach are on Inner Gutter (Right, > 60%)
-      const isOuterColComm =
-        preferredType === 'ein-mishpat' ||
-        preferredType === 'torah-or' ||
-        preferredType === 'gilyon-hashas';
-      const expectedSide: 'left' | 'right' = isOuterColComm
-        ? (isAmudBet ? 'left' : 'right')
-        : (isAmudBet ? 'right' : 'left');
+      // Expected side of the folio: prefer where this commentary's column was actually found on the page;
+      // otherwise use the Vilna layout (Ein Mishpat & Torah Or on the outer margin — left on amud A,
+      // right on amud B; Masoret, Bach, Gilyon and Gra on the inner margin).
+      const typedMarginHotspots = hotspots.filter(
+        (h) => h.section === 'margin' && h.marginCommType === preferredType
+      );
+      const isOuterColComm = preferredType === 'ein-mishpat' || preferredType === 'torah-or';
+      let expectedSide: 'left' | 'right' = isOuterColComm
+        ? (isAmudBet ? 'right' : 'left')
+        : (isAmudBet ? 'left' : 'right');
+      if (typedMarginHotspots.length > 0) {
+        const leftCount = typedMarginHotspots.filter((h) => h.leftPct < 50).length;
+        expectedSide = leftCount * 2 >= typedMarginHotspots.length ? 'left' : 'right';
+      }
+      const onExpectedSide = (h: VilnaPdfHotspot) =>
+        expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60;
 
       // Case 1: User tapped a small marker in Mishnah / Gemara / Rashi / Tosafot -> jump to its Margin Commentary entry!
       if (markerHotspot.section !== 'margin') {
@@ -2970,82 +3074,78 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           (h) => h.section === 'margin' || (isSiddurPdf && h.section === 'rashi')
         );
 
-        // 1) Try exact match on commentary type + entry key
+        const isGilyonEntry = (h: VilnaPdfHotspot) =>
+          h.marginCommType === 'gilyon-hashas' ||
+          h.word.includes('גליון') ||
+          isCircleMarker(h.word);
+
+        // 1) Exact match: same commentary column + same entry key, on the expected side.
         let candidates = marginHotspots.filter(
-          (h) => h.marginCommType === preferredType && h.marginEntryKey === key
+          (h) =>
+            onExpectedSide(h) &&
+            (preferredType === 'gilyon-hashas'
+              ? isGilyonEntry(h)
+              : (h.marginCommType === preferredType &&
+                  (h.marginEntryKey === key || (h.isSmallMarker && h.markerKey === key))) ||
+                // The printed entry key itself (e.g. the small "א" opening an Ein Mishpat entry,
+                // or "2." opening a Torah Or entry), even when the column header was not tied to it.
+                (h.isSmallMarker && h.markerKey === key && h.markerTargetType === preferredType) ||
+                (preferredType === 'torah-or' && /^[0-9]/.test(h.word) && h.cleanWord === key))
         );
 
-        // 2) If no exact type match, search by key on the expected column side
-        if (candidates.length === 0) {
+        // 2) Same entry key on the expected side (column header was not recognised).
+        if (candidates.length === 0 && preferredType !== 'gilyon-hashas') {
           candidates = marginHotspots.filter(
             (h) =>
-              (h.marginEntryKey === key ||
-                h.markerKey === key ||
-                h.cleanWord === key ||
-                (preferredType === 'gilyon-hashas' && (h.word.includes('גליון') || h.marginCommType === 'gilyon-hashas' || /^[⊙◉◎⊛●○]$/.test(h.word))) ||
-                h.word.replace(/[^\u05D0-\u05EA0-9]/g, '') === key) &&
-              (expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60)
+              onExpectedSide(h) &&
+              (h.marginCommType === 'ein-mishpat') === (preferredType === 'ein-mishpat') &&
+              ((h.isSmallMarker && h.markerKey === key && h.markerTargetType === preferredType) ||
+                h.marginEntryKey === key)
           );
         }
 
-        // 3) Fallback: any margin hotspot with matching key
-        if (candidates.length === 0) {
-          candidates = marginHotspots.filter(
-            (h) =>
-              h.marginEntryKey === key ||
-              h.markerKey === key ||
-              h.cleanWord === key ||
-              (preferredType === 'gilyon-hashas' && (h.word.includes('גליון') || h.marginCommType === 'gilyon-hashas' || /^[⊙◉◎⊛●○]$/.test(h.word))) ||
-              h.word.replace(/[^\u05D0-\u05EA0-9]/g, '') === key
-          );
-        }
-
-        // CRITICAL ANTI-SPANNING SAFEGUARD:
-        // Group candidates by physical column and choose ONLY ONE column cluster closest to expected side and vertical level!
         if (candidates.length > 0) {
-          const leftCandidates = candidates.filter((h) => h.leftPct < 50);
-          const rightCandidates = candidates.filter((h) => h.leftPct >= 50);
-          const columnCandidates =
-            expectedSide === 'left'
-              ? leftCandidates.length > 0
-                ? leftCandidates
-                : rightCandidates
-              : rightCandidates.length > 0
-                ? rightCandidates
-                : leftCandidates;
-
-          if (columnCandidates.length > 0) {
-            // Find candidate closest vertically to the source marker
-            let best = columnCandidates[0];
-            let bestDist = Math.abs(best.topPct - markerHotspot.topPct);
-            for (const c of columnCandidates) {
-              const d = Math.abs(c.topPct - markerHotspot.topPct);
-              if (d < bestDist) {
-                bestDist = d;
-                best = c;
-              }
+          // Prefer the printed entry key itself, then its row.
+          const keyGlyphs = candidates.filter((h) => h.isSmallMarker);
+          const pool = keyGlyphs.length > 0 ? keyGlyphs : candidates;
+          let best = pool[0];
+          for (const c of pool) {
+            if (preferredType === 'gilyon-hashas') {
+              if (Math.abs(c.topPct - markerHotspot.topPct) < Math.abs(best.topPct - markerHotspot.topPct)) best = c;
+            } else if (c.topPct < best.topPct) {
+              best = c;
             }
-
-            const actualComm = best.marginCommType || preferredType;
-            const targetRowId = best.rowId;
-            // Get words on the exact same row (confined to a single margin column)
-            const rowWords = hotspots.filter(
-              (h) =>
-                h.rowId === targetRowId &&
-                (expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60)
-            );
-
-            return {
-              targetHotspots: rowWords.length > 0 ? rowWords : [best],
-              commType: actualComm,
-              key,
-              targetSentenceId: best.targetSentenceId || targetSentenceId,
-            };
           }
+
+          const actualComm = best.marginCommType || preferredType;
+          const targetRowId = best.rowId;
+          // Words on the same row, confined to the same margin column.
+          const rowWords = hotspots.filter((h) => h.rowId === targetRowId && onExpectedSide(h));
+
+          return {
+            targetHotspots: rowWords.length > 0 ? rowWords : [best],
+            commType: actualComm,
+            key,
+            targetSentenceId: best.targetSentenceId || targetSentenceId,
+          };
         }
 
-        // 4) High-Precision Synthetic Target in the expected margin column:
-        // When OCR misses the margin text, we still navigate accurately to the margin note aligned with this line!
+        // 3) The entry text was not found: go to the start of that commentary's column
+        //    (its header row) on the correct side, or the same line in that margin.
+        const columnStart = typedMarginHotspots
+          .filter(onExpectedSide)
+          .sort((a, b) => a.topPct - b.topPct)[0];
+        if (columnStart) {
+          const rowWords = hotspots.filter((h) => h.rowId === columnStart.rowId && onExpectedSide(h));
+          return {
+            targetHotspots: rowWords.length > 0 ? rowWords : [columnStart],
+            commType: preferredType,
+            key,
+            targetSentenceId,
+          };
+        }
+
+        // 4) Synthetic target in the expected margin column, aligned with this line.
         const colLeft = expectedSide === 'left' ? 2.8 : 83.2;
         const targetTop = Math.max(7.2, Math.min(88.2, markerHotspot.topPct - 0.4));
         const syntheticTarget: VilnaPdfHotspot = {
