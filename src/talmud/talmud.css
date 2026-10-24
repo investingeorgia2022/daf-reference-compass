@@ -1,0 +1,524 @@
+
+@layer base {
+  html,
+  body,
+  #root {
+    font-family: 'Noto Sans Georgian', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Prevent Hebrew words or phrases from breaking awkwardly mid-word or wrapping mid-phrase (სრული სიტყვის მთლიანად გადატანა ახალ ხაზზე) */
+  [dir="rtl"],
+  [lang="he"],
+  .hebrew-text {
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+    text-wrap: pretty;
+  }
+
+  /* Keep Hebrew liturgical and book phrases unbroken across lines (სრული სიტყვისა და ფრაზის მთლიანად გადატანა ახალ ხაზზე) */
+  .hebrew-phrase-keep,
+  .hebrew-pill,
+  .hebrew-badge,
+  .badge-keep,
+  .hebrew-nowrap,
+  .hebrew-inline-token,
+  [dir="rtl"] .badge-keep,
+  span[dir="rtl"],
+  b[dir="rtl"],
+  strong[dir="rtl"],
+  em[dir="rtl"] {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    vertical-align: middle;
+  }
+
+  /* Day Mode (Light Mode) Soft Sage & Mint Ivory (Screenshot 2) */
+  body.light-theme,
+  html:not(.dark) body {
+    background-color: #EFF5F1;
+    color: #12241A;
+  }
+
+  html:not(.dark) input,
+  html:not(.dark) select,
+  html:not(.dark) textarea {
+    color: #12241A !important;
+    background-color: #FFFFFF !important;
+    border-color: #D5E4DB !important;
+  }
+
+  html:not(.dark) input::placeholder,
+  html:not(.dark) textarea::placeholder {
+    color: #557563 !important;
+  }
+
+  /* Night Mode (Dark Mode) Luxury Midnight Slate-Navy (Screenshot 3) */
+  html.dark body {
+    background-color: #111722;
+    color: #E2E8F0;
+  }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    color: #E2E8F0 !important;
+    background-color: #161E2D !important;
+    border-color: #253246 !important;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #94A3B8 !important;
+  }
+}
+
+/* Hide scrollbars inside Talmud Daf columns & scrollable panels so zero space is wasted on scrollbar tracks */
+.no-scrollbar,
+#talmud-daf-folio-anchor .overflow-y-auto,
+#talmud-daf-folio-anchor .overflow-x-auto {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+#talmud-daf-folio-anchor .overflow-y-auto::-webkit-scrollbar,
+#talmud-daf-folio-anchor .overflow-x-auto::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ultra-modern GPU-composited animations & 3D sanctuary physics */
+@keyframes synapticFlow {
+  0% {
+    stroke-dashoffset: 48;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sanctuaryFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(6px, -14px, 0) scale(1.18);
+    opacity: 0.75;
+  }
+}
+
+@keyframes goldAuraPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(196, 154, 108, 0.45), 0 8px 24px -4px rgba(107, 66, 38, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(196, 154, 108, 0), 0 12px 32px -2px rgba(196, 154, 108, 0.55);
+  }
+}
+
+.animate-synaptic-flow {
+  stroke-dasharray: 6 6;
+  animation: synapticFlow 1.8s linear infinite;
+}
+
+.animate-sanctuary-float {
+  animation: sanctuaryFloat 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-gold-aura {
+  animation: goldAuraPulse 2.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.card-modern-lift {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.card-modern-lift:hover {
+  transform: translate3d(0, -2px, 0) scale(1.006);
+}
+
+.card-modern-lift:active {
+  transform: translate3d(0, 0, 0) scale(0.992);
+}
+
+/* Transparent interactive hotspots on Vilna PDF & 1:1 Cloned Digital PDF Daf */
+.pdf-hotspot-btn,
+.pdf-clone-word-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.pdf-hotspot-btn:hover {
+  background: rgba(245, 158, 11, 0.16) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.pdf-hotspot-btn.is-selected {
+  background: rgba(245, 158, 11, 0.30) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.pdf-clone-word-btn:hover {
+  background: rgba(245, 158, 11, 0.26) !important;
+  border-radius: 2px;
+}
+
+.pdf-clone-word-btn.is-selected {
+  background: rgba(245, 158, 11, 0.42) !important;
+  box-shadow: 0 0 0 1.5px #6b4226 !important;
+  border-radius: 2px;
+}
+
+/* Richer, Deeper Day Mode & Frosted Glass Panels (უფრო მუქი და კონტრასტული დღის რეჟიმი) */
+.kacuna-diamond-field,
+.crystal-panel-dark {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 253, 248, 0.94) 0%,
+    rgba(250, 246, 240, 0.94) 52%,
+    rgba(245, 240, 232, 0.94) 100%
+  ) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(180, 145, 110, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(35, 25, 15, 0.08),
+    0 1px 3px rgba(35, 25, 15, 0.05) !important;
+  color: #1A1209 !important;
+}
+
+html.dark .kacuna-diamond-field,
+html.dark .crystal-panel-dark {
+  background: linear-gradient(
+    135deg,
+    rgba(26, 20, 16, 0.96) 0%,
+    rgba(22, 17, 14, 0.96) 52%,
+    rgba(18, 14, 11, 0.96) 100%
+  ) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(217, 119, 6, 0.3) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65),
+    0 1px 4px rgba(245, 158, 11, 0.15) !important;
+  color: #FAF5EB !important;
+}
+
+.kacuna-diamond-field:hover {
+  border-color: rgba(217, 119, 6, 0.75) !important;
+  box-shadow: 0 10px 28px rgba(14, 116, 144, 0.16),
+    0 0 12px rgba(245, 158, 11, 0.20) !important;
+}
+
+html.dark .kacuna-diamond-field:hover {
+  border-color: rgba(245, 158, 11, 0.85) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5),
+    0 0 14px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Deep Rich Crystalline Warm-Stone Daf Folio & Sub-Windows */
+.crystal-daf-folio {
+  background: linear-gradient(
+    145deg,
+    #e2d3bb 0%,
+    #d7c5a8 48%,
+    #decbb0 100%
+  ) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(84, 50, 27, 0.70) !important;
+  box-shadow: 0 10px 30px rgba(25, 14, 7, 0.26) !important;
+  color: #120904 !important;
+}
+
+.crystal-daf-pane {
+  background: linear-gradient(
+    155deg,
+    #f2e6d2 0%,
+    #e8d7be 54%,
+    #dfcbaf 100%
+  ) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(84, 50, 27, 0.60) !important;
+  box-shadow: 0 2px 8px rgba(25, 14, 7, 0.16) !important;
+  color: #120904 !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Smarter text wrapping for long Georgian definitions & explanations inside crystal-daf-pane */
+.crystal-daf-pane p,
+.crystal-daf-pane div,
+.crystal-daf-pane span:not([dir="rtl"]):not([lang="he"]):not(.hebrew-text):not([data-daf-word="true"]):not([data-hebrew-word="true"]):not(.hebrew-phrase-keep),
+.crystal-daf-pane [lang="ka"],
+.crystal-daf-pane .georgian-text,
+.crystal-daf-pane .translation-text {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  text-wrap: pretty;
+}
+
+/* Strict preservation of Hebrew words inside crystal-daf-pane: never split Hebrew words mid-word */
+.crystal-daf-pane [dir="rtl"],
+.crystal-daf-pane [lang="he"],
+.crystal-daf-pane .hebrew-text,
+.crystal-daf-pane [data-daf-word="true"],
+.crystal-daf-pane [data-hebrew-word="true"],
+.crystal-daf-pane .hebrew-phrase-keep,
+.crystal-daf-pane .hebrew-nowrap {
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  white-space: normal;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  text-wrap: pretty;
+}
+
+.crystal-daf-pane-focused {
+  border-color: rgba(180, 83, 9, 0.95) !important;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.28),
+    0 0 0 1px rgba(180, 83, 9, 0.45) !important;
+}
+
+.crystal-daf-header {
+  background: linear-gradient(
+    90deg,
+    #d7c2a0 0%,
+    #dfcbab 50%,
+    #cfb894 100%
+  ) !important;
+  border-bottom: 1px solid rgba(84, 50, 27, 0.65) !important;
+  box-shadow: none !important;
+  color: #120904 !important;
+}
+
+/* Strict Word Wrap Rule: Never split Hebrew words across lines (სრული სიტყვის მთლიანად გადატანა ახალ ხაზზე) */
+[dir="rtl"],
+.font-serif,
+[lang="he"],
+.hebrew-text {
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  white-space: normal;
+  text-wrap: pretty;
+}
+
+[data-daf-word="true"],
+[data-hebrew-word="true"] {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+/* High Contrast Button Behavior: Default crystal button styling, without overriding colored/custom buttons */
+button:not(.pdf-hotspot-btn):not(.pdf-clone-word-btn):not([data-globe-sphere="true"]):not([data-crystal-gold="true"]):not([data-flat-btn="true"]):not([data-raw-btn="true"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-sky"]):not([class*="bg-red"]):not(.w-3) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 3px rgba(33, 20, 11, 0.12);
+}
+
+/* Flat Champagne-Gold Accent Button for active/primary actions */
+button[data-crystal-gold="true"] {
+  background: linear-gradient(
+    135deg,
+    rgba(254, 243, 199, 0.95) 0%,
+    rgba(253, 230, 138, 0.95) 100%
+  ) !important;
+  border: 1px solid rgba(245, 158, 11, 0.65) !important;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.20) !important;
+  color: #78350f !important;
+}
+
+button[data-crystal-gold="true"] span,
+button[data-crystal-gold="true"] div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Strictly bounded full-text Marquee for overflowing button & header titles:
+   Removes ellipsis ('...') via text-overflow: clip and keeps element strictly inside its field boundaries (overflow-x: hidden, transform: none) while scrollLeft reveals 100% of the title text */
+.marquee-text-wrap,
+.marquee-auto-scroll {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: clip !important;
+  transform: none !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.marquee-text-wrap::-webkit-scrollbar,
+.marquee-auto-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-synaptic-flow,
+  .animate-sanctuary-float,
+  .animate-gold-aura {
+    animation: none !important;
+  }
+  .card-modern-lift:hover,
+  .card-modern-lift:active {
+    transform: none !important;
+  }
+}
+
+/* Continuous Marquee Animation for Bottom Search Bar (მორბენალი სტრიქონი) */
+@keyframes searchMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.search-marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: searchMarquee 18s linear infinite;
+}
+
+.search-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* #talmud-daf-folio-anchor: blue interactive markers must sit directly on top of text layer, selectable without background overlays or borders */
+#talmud-daf-folio-anchor [data-small-marker="true"],
+#talmud-daf-folio-anchor [data-daf-word="true"][data-small-marker="true"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#talmud-daf-folio-anchor [data-daf-word="true"][data-small-marker="true"]:not([data-active-talmud-word="true"]) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* CSS selector: #talmud-daf-folio-anchor. Refactor the CSS for blue interactive markers to ensure they use a high z-index and are set to pointer-events: auto, ensuring they remain selectable while sitting directly on top of the text layer without creating any background overlays or interfering with surrounding text. */
+/* Refine the styling of the .talmud-blue-marker inside #talmud-daf-folio-anchor by adding a subtle 'text-shadow' to improve readability against complex Talmud background patterns without adding a background overlay. */
+#talmud-daf-folio-anchor .talmud-blue-marker {
+  z-index: 55 !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-shadow: 0 0 1.5px rgba(255, 255, 255, 0.95), 0 0 5px rgba(29, 78, 216, 0.5) !important;
+}
+
+.dark #talmud-daf-folio-anchor .talmud-blue-marker {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(96, 165, 250, 0.65) !important;
+}
+
+#talmud-daf-folio-anchor span.talmud-blue-marker {
+  position: relative;
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-shadow: 0 0 1.5px rgba(255, 255, 255, 0.95), 0 0 5px rgba(29, 78, 216, 0.5) !important;
+}
+
+.dark #talmud-daf-folio-anchor span.talmud-blue-marker {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(96, 165, 250, 0.65) !important;
+}
+
+/* CSS selector: #talmud-daf-folio-anchor. Inspect parent containers during 'Fullscreen' mode. Remove any padding, margin, or absolute-positioned divs that currently overlap or partially obscure the 3D Daf folio content, ensuring it stretches edge-to-edge. */
+#talmud-daf-folio-anchor[data-full-viewport-daf="true"] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 280 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* CSS Scroll-Snap alignment and smooth scrolling for Talmud Daf sections */
+/* Update the CSS for #talmud-daf-folio-anchor to set 'scroll-snap-type: y mandatory' and add 'scroll-snap-align: start' to all child elements with ids like #daf-section-*, ensuring clean snaps on section headers. */
+/* Apply 'scroll-behavior: smooth' to the #talmud-daf-folio-anchor container to refine the scrolling experience when clicking markers or navigating. */
+#talmud-daf-folio-anchor {
+  scroll-snap-type: y proximity !important;
+  scroll-behavior: smooth !important;
+  scroll-margin-top: 64px;
+}
+
+#talmud-daf-folio-anchor [id^="daf-section-"],
+#talmud-daf-folio-anchor [id*="daf-section-"],
+[id^="daf-section-"],
+[id*="daf-section-"] {
+  scroll-margin-top: 64px !important;
+}
+
+.talmud-focus-sentence-target,
+.talmud-blink-target-box,
+[data-active-commentary-focus="true"] {
+  scroll-snap-align: center !important;
+  scroll-margin: 20vh !important;
+}
+
+
