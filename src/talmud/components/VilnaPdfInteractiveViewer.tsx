@@ -3064,8 +3064,12 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             onExpectedSide(h) &&
             (preferredType === 'gilyon-hashas'
               ? isGilyonEntry(h)
-              : h.marginCommType === preferredType &&
-                (h.marginEntryKey === key || (h.isSmallMarker && h.markerKey === key)))
+              : (h.marginCommType === preferredType &&
+                  (h.marginEntryKey === key || (h.isSmallMarker && h.markerKey === key))) ||
+                // The printed entry key itself (e.g. the small "א" opening an Ein Mishpat entry,
+                // or "2." opening a Torah Or entry), even when the column header was not tied to it.
+                (h.isSmallMarker && h.markerKey === key && h.markerTargetType === preferredType) ||
+                (preferredType === 'torah-or' && /^[0-9]/.test(h.word) && h.cleanWord === key))
         );
 
         // 2) Same entry key on the expected side (column header was not recognised).
