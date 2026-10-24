@@ -20,3 +20,5 @@
 - PDF marker navigation owns vertical scrolling through scrollToTarget after zoom settles; focus events marked scrollHandled only change zoom/pan to prevent competing scrolls.
 - Use PDF.js legacy browser build with its matching worker; it supplies missing browser primitives needed to render scans on older mobile browsers.
 - Vilna PDF margin vs main-text zones are found per scan by vilnaColumnGutters (blank gutters), not fixed percentages; scans are printed at different scales.
+- PDF marker touch boxes are partitioned by printed glyph boundaries; Gilyon notes resolve by source section, so adjacent links and distinct notes stay independent.
+- Biblical PDF citations use a separate verse window and chapter/verse parser; chapter-only citations resolve by unique quotation evidence, never a guessed verse.

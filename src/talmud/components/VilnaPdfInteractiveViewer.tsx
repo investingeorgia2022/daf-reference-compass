@@ -5029,7 +5029,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                       lastMarkerTouchRef.current = Date.now();
                       setSelectedRange(null);
                       setShowRangeHandles(false);
-                      triggerJumpAndBlinkForMarker(h);
+                      if (!openBiblicalCitation(idx)) triggerJumpAndBlinkForMarker(h);
                     } else clearLongPressTimer();
                   }}
                   onTouchCancel={() => { markerTouchRef.current = null; clearLongPressTimer(); }}
@@ -5102,6 +5102,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               </div>,
               document.body
             )}
+
+          {biblicalCitation && <BiblicalVerseWindow citation={biblicalCitation} onClose={() => setBiblicalCitation(null)} />}
 
           {/* Copy Confirmation Toast */}
           {typeof document !== 'undefined' &&
