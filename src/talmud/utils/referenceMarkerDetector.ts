@@ -19,7 +19,7 @@ export function detectSmallMarkerToken(
 } {
   const clean = rawWord.replace(/[\u200e\u200f\u202a-\u202e]/g, '').trim();
 
-  if (clean.length > 5) return { isSmallMarker: false };
+  if (clean.length > 8) return { isSmallMarker: false };
 
   const digitMatch = clean.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
   if (digitMatch?.[1]) {

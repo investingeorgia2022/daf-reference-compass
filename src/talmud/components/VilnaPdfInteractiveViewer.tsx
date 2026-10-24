@@ -4772,6 +4772,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   data-daf-word="true"
                   data-small-marker={h.isSmallMarker ? 'true' : undefined}
                   data-marker-type={h.markerTargetType}
+                  data-marker-key={h.markerKey}
+                  aria-label={h.word}
                   onMouseDown={(e) => {
                     if (h.isSmallMarker) {
                       suppressNextClickRef.current = false;
