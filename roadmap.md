@@ -16,3 +16,5 @@
 - [x] Make adjacent markers independently tappable.
 - [x] Open biblical citations as verses and point explanation windows to their selected words.
 - [x] Verify screenshot examples and run regression tests.
+- [ ] Expand the biblical verse window with explanations and verse-specific commentaries.
+- [ ] Test exact-verse connections and verify the explanation window.
