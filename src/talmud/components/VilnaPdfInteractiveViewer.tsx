@@ -15,7 +15,7 @@ import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarker
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
-import { getIndependentMarkerBoxes, getGilyonNote } from '../utils/pdfMarkerNavigation';
+import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import {
@@ -3147,10 +3147,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const actualComm = preferredType;
           const targetRowId = best.rowId;
           // Words on the same row, confined to the same margin column.
-          const rowWords = hotspots.filter((h) =>
-            onExpectedSide(h) && (preferredType === 'torah-or'
-              ? h.section === 'margin' && h.marginCommType === 'torah-or' && h.marginEntryKey === key
-              : h.rowId === targetRowId && h.section === 'margin' && h.marginCommType === preferredType && h.marginEntryKey === key));
+          const rowWords = getExactMarginEntry(hotspots, preferredType, key, expectedSide);
 
           return {
             targetHotspots: rowWords.length > 0 ? rowWords : [best],
@@ -3160,58 +3157,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           };
         }
 
-        // Never present a Torah Or heading/synthetic position as the corresponding quotation.
-        if (preferredType === 'torah-or') return null;
-
-        // 3) The entry text was not found: go to the start of that commentary's column
-        //    (its header row) on the correct side, or the same line in that margin.
-        const columnStart = typedMarginHotspots
-          .filter(onExpectedSide)
-          .sort((a, b) => a.topPct - b.topPct)[0];
-        if (columnStart) {
-          const rowWords = hotspots.filter((h) => h.rowId === columnStart.rowId && onExpectedSide(h));
-          return {
-            targetHotspots: rowWords.length > 0 ? rowWords : [columnStart],
-            commType: preferredType,
-            key,
-            targetSentenceId,
-          };
-        }
-
-        // 4) Synthetic target in the expected margin column, aligned with this line.
-        const colLeft = expectedSide === 'left' ? 2.8 : 83.2;
-        const targetTop = Math.max(7.2, Math.min(88.2, markerHotspot.topPct - 0.4));
-        const syntheticTarget: VilnaPdfHotspot = {
-          id: `syn-margin-${preferredType}-${key}`,
-          word: key,
-          cleanWord: key,
-          section: 'margin',
-          leftPct: colLeft,
-          topPct: targetTop,
-          widthPct: 14.0,
-          heightPct: 3.2,
-          sentence: targetSentenceId
-            ? {
-                id: targetSentenceId,
-                source: 'meforshim',
-                hebrewText: key,
-                translationKa: '',
-                explanationKa: '',
-              }
-            : markerHotspot.sentence,
-          rowId: `syn-row-${preferredType}-${key}`,
-          isSmallMarker: false,
-          marginCommType: preferredType,
-          marginEntryKey: key,
-          targetSentenceId,
-        };
-
-        return {
-          targetHotspots: [syntheticTarget],
-          commType: preferredType,
-          key,
-          targetSentenceId,
-        };
+        // An unverified heading or synthetic location is not the referenced text.
+        return null;
       } else {
         // Case 2: User tapped an entry marker inside the Margin Commentary -> jump back to source marker!
         const matchedSource = hotspots.filter(
@@ -3237,7 +3184,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             }
           }
           const targetRowId = best.rowId;
-          const rowWords = hotspots.filter((h) => h.rowId === targetRowId);
+          const rowWords = hotspots.filter((h) => h.rowId === targetRowId && h.section === best.section && (!best.sentence?.id || h.sentence?.id === best.sentence.id));
           return {
             targetHotspots: rowWords.length > 0 ? rowWords : [best],
             commType: markerHotspot.marginCommType || preferredType,
@@ -4492,23 +4439,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Keyframes for continuous commentary target blinking until user touches the screen */}
-      <style>{`
-        @keyframes talmudTargetBlinkPulse {
-          0%, 100% {
-            background-color: rgba(245, 158, 11, 0.48);
-            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.95), 0 0 18px rgba(245, 158, 11, 0.85);
-          }
-          50% {
-            background-color: rgba(14, 165, 233, 0.12);
-            box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.25), 0 0 4px rgba(245, 158, 11, 0.15);
-          }
-        }
-        .talmud-blink-target-box {
-          animation: talmudTargetBlinkPulse 0.78s ease-in-out infinite;
-        }
-      `}</style>
-
       {/* ORIGINAL VILNA DAF PDF CANVAS CONTAINER — NO ZOOM BUTTONS ON THE DAF AREA ITSELF */}
       <div className={`w-full flex justify-center ${isFullScreen ? 'w-full min-h-full p-0 m-0' : 'overflow-x-auto py-0'}`}>
         <div
@@ -4587,10 +4517,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 top: `${blinkingTarget.topPct}%`,
                 width: `${blinkingTarget.widthPct}%`,
                 height: `${blinkingTarget.heightPct}%`,
-                boxShadow:
-                  '0 0 0 2.5px #F59E0B, 0 0 16px rgba(245, 158, 11, 0.85)',
               }}
-              className="absolute z-28 rounded-[4px] pointer-events-none talmud-blink-target-box"
+              className="absolute z-28 pointer-events-none"
             />
           )}
 
@@ -4964,7 +4892,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               // Royal Blue ink tinting is applied strictly on the letter glyphs on the canvas.
               // Markers and citation nodes remain 100% transparent without any background overlays masking surrounding characters.
               const bgStyle = isBlinkingWord
-                ? 'rgba(245, 158, 11, 0.32)'
+                ? 'var(--reference-target-highlight)'
                 : isSelected
                   ? 'rgba(245, 168, 28, 0.25)'
                   : 'transparent';
@@ -4977,6 +4905,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   role="button"
                   tabIndex={-1}
                   data-daf-word="true"
+                  data-reference-highlight={isBlinkingWord ? 'true' : undefined}
                   data-small-marker={h.isSmallMarker ? 'true' : undefined}
                   data-marker-type={h.markerTargetType}
                   data-marker-key={h.markerKey}

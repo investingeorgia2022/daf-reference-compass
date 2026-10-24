@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getIndependentMarkerBoxes, getGilyonNote } from '../talmud/utils/pdfMarkerNavigation';
+import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../talmud/utils/pdfMarkerNavigation';
 import { parseBiblicalCitation, findQuotedVerse } from '../talmud/utils/biblicalCitation';
 describe('independent adjacent PDF markers', () => {
   it.each([['3','(ה'],['ו','ו(']])('keeps %s and %s separately tappable', (a,b) => {
@@ -14,6 +14,19 @@ describe('Gilyon source-specific entry', () => {
   it('routes the circle after חצות to the Mishnah note, not Tosafot or the heading', () => {
     const spots = ['גליון הש','במתני','כדי להרחיק','פסחים','בתוס','כדי להמתין'].map((word,i) => ({ word, section:'margin',marginCommType:'gilyon-hashas',leftPct:88,topPct:20+i }));
     expect(getGilyonNote(spots,'mishnah','right').map(s=>s.word)).toEqual(['במתני','כדי להרחיק','פסחים']);
+  });
+});
+describe('exact destination highlighting', () => {
+  it('includes continuation text of the matching Bach entry and excludes the heading and next entry', () => {
+    const spots = [
+      { word:'הגהות',section:'margin',marginCommType:'bach',leftPct:88,topPct:20 },
+      { word:'(ה)',section:'margin',marginCommType:'bach',marginEntryKey:'ה',leftPct:88,topPct:21 },
+      { word:'תיקון',section:'margin',marginCommType:'bach',marginEntryKey:'ה',leftPct:88,topPct:22 },
+      { word:'אחר',section:'margin',marginCommType:'bach',marginEntryKey:'ו',leftPct:88,topPct:23 },
+      { word:'מקביל',section:'margin',marginCommType:'masoret',marginEntryKey:'ה',leftPct:88,topPct:24 },
+    ];
+    expect(getExactMarginEntry(spots,'bach','ה','right').map(s=>s.word)).toEqual(['(ה)','תיקון']);
+    expect(getExactMarginEntry(spots,'bach','ז','right')).toEqual([]);
   });
 });
 describe('biblical citations instead of commentary indices', () => {

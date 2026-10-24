@@ -31,6 +31,12 @@ interface MarginSpot {
   section: string; marginCommType?: string; marginEntryKey?: string; word: string; topPct: number; leftPct: number;
 }
 
+/** Highlight the entire verified entry, including continuation rows, but not neighboring entries. */
+export function getExactMarginEntry<T extends MarginSpot>(spots: T[], type: string, key: string, side: 'left' | 'right'): T[] {
+  return spots.filter(s => s.section === 'margin' && s.marginCommType === type && s.marginEntryKey === key &&
+    (side === 'left' ? s.leftPct < 40 : s.leftPct > 60)).sort((a,b) => a.topPct - b.topPct || b.leftPct - a.leftPct);
+}
+
 /** Gilyon contains separate notes on Mishnah, Gemara and Tosafot, not one nearest row. */
 export function getGilyonNote<T extends MarginSpot>(spots: T[], sourceSection: string, side: 'left' | 'right'): T[] {
   const column = spots.filter(s => s.section === 'margin' && s.marginCommType === 'gilyon-hashas' &&
