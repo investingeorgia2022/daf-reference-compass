@@ -11,7 +11,7 @@ import {
   SelectedDafTarget,
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
-import { detectSmallMarkerToken, isCircleMarker } from '../utils/referenceMarkerDetector';
+import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import {
@@ -1240,11 +1240,9 @@ function extractHotspotsFromTextContent(
       const firstTok = (s.split(/\s+/)[0] || '').trim();
 
       // Check Torah Or digits (e.g. "2.", "2", "2-", "[2]")
-      const torahOrMatch = activeMarginComm === 'torah-or'
-        ? firstTok.match(/^[.(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/)
-        : null;
-      if (torahOrMatch) {
-        activeMarginKey = torahOrMatch[1];
+      const torahOrKey = activeMarginComm === 'torah-or' ? getTorahOrNumber(firstTok) : undefined;
+      if (torahOrKey) {
+        activeMarginKey = torahOrKey;
         if (!activeMarginComm || activeMarginComm === 'ein-mishpat') {
           activeMarginComm = 'torah-or';
         }
@@ -1538,7 +1536,10 @@ function extractHotspotsFromTextContent(
       if (bucket.runs.length === 0) continue;
     }
 
-    const bodyFontHeight = Math.max(...bucket.runs.map((r) => r.pdfH));
+    const ordinaryHeights = bucket.runs.filter(r => /[א-ת]{3}/.test(r.str) && !/^[()[\]]/.test(r.str)).map(r => r.pdfH).sort((a, b) => a - b);
+    const bodyFontHeight = ordinaryHeights.length
+      ? ordinaryHeights[Math.floor(ordinaryHeights.length / 2)]
+      : Math.max(...bucket.runs.map((r) => r.pdfH));
 
     // Rejoin reference markers that the PDF splits into separate runs: "(" + "א" + ")" -> "(א)", "[" + "א" + "]" -> "[א]".
     if (!isSiddurPdf && bucket.runs.length > 1) {
@@ -1560,8 +1561,7 @@ function extractHotspotsFromTextContent(
           // RTL: the run further right is read first.
           const combined = cur.vpLeft >= nxt.vpLeft ? `${a}${b}` : `${b}${a}`;
           const hasBracket = /[()\[\]]/.test(combined);
-          const addsOnlyLetter = /[א-ת]/.test(a) && /^[א-ת]+$/.test(b);
-          if (small && near && hasBracket && !addsOnlyLetter && (isPiece(a) || isMarkerShape(a)) && isPiece(b) && isMarkerShape(combined)) {
+          if (small && near && hasBracket && canJoinMarkerFragments(a, b, combined) && (isPiece(a) || isMarkerShape(a)) && isPiece(b) && isMarkerShape(combined)) {
             rIdx++;
             const minL = Math.min(cur.vpLeft, nxt.vpLeft);
             const maxR = Math.max(curR, nxtR);
@@ -1611,7 +1611,7 @@ function extractHotspotsFromTextContent(
     const markerContext = (run, token, tokenIdx = 0) => ({
       bodyFontHeight,
       raised: bodyBaseline === null ? false : bodyBaseline - (run.vpTop + run.vpHeight) >= Math.max(0.8, run.vpHeight * 0.15),
-      isolated: run.str.trim() === token || /\s/.test(run.str),
+      isolated: run.str.trim() === token,
       isEntryStart: bucket.section === 'margin' && run === bucket.runs[0] && tokenIdx === 0,
       abbreviation: abbreviationRuns.has(run) || run.quoteAdjacent === true,
     });

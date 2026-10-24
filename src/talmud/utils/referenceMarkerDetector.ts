@@ -6,6 +6,17 @@ export function isCircleMarker(word: string): boolean {
   return CIRCLE_MARKER_PATTERN.test(word.replace(/[()\[\]\s]/g, ''));
 }
 
+/** PDF streams may mirror punctuation before a printed entry number. */
+export function getTorahOrNumber(word: string): string | undefined {
+  return word.trim().match(/^[.,:;]?[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/)?.[1];
+}
+
+export function canJoinMarkerFragments(a: string, b: string, combined: string): boolean {
+  // Never join two letter-bearing runs: ו( + ו must remain two separate indices.
+  if (/[א-ת]/.test(a) && /[א-ת]/.test(b)) return false;
+  return /[()[\]]/.test(combined) && detectSmallMarkerToken(combined, 4, 'gemara').isSmallMarker;
+}
+
 export function detectSmallMarkerToken(
   rawWord: string,
   pdfH: number,
@@ -37,11 +48,11 @@ export function detectSmallMarkerToken(
     ? pdfH <= context.bodyFontHeight * 0.78
     : pdfH <= 8.5;
 
-  const digitMatch = clean.match(/^[.(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
-  if (digitMatch?.[1]) {
+  const digitKey = getTorahOrNumber(clean);
+  if (digitKey) {
     // Torah Or numerals are printed raised and small next to the verse.
     if (context.bodyFontHeight && (!small || context.raised === false) && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
-    return { isSmallMarker: true, key: digitMatch[1], displayWord: clean, targetType: 'torah-or' };
+    return { isSmallMarker: true, key: digitKey, displayWord: clean, targetType: 'torah-or' };
   }
 
   // Hagahot HaGra: [א] (PDF may mirror it as ]א[)

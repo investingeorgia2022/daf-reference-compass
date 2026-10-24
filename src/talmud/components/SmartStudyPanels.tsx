@@ -344,6 +344,7 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
       >
         <SearchableSelect
           label="სასწავლო ინსტრუმენტი"
+          wrapLabels
           options={
             [
               {
@@ -600,11 +601,6 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
             />
           </div>
         )}
-        <ReadingLineGuide
-          initialY={36}
-          isDarkField={isDark}
-          fieldLabel="სასწავლო პანელი"
-        />
 
         {activeTab === 'halacha-bridge' && (
           <HalachaBridgePanel

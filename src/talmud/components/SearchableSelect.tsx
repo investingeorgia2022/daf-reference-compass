@@ -22,6 +22,7 @@ interface SearchableSelectProps {
   isDark?: boolean;
   className?: string;
   compact?: boolean;
+  wrapLabels?: boolean;
   variant?: 'classic' | 'modern';
   allowCustomValue?: boolean;
   customValueLabel?: string;
@@ -40,6 +41,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   isDark = true,
   className = '',
   compact = false,
+  wrapLabels = false,
   variant = 'classic',
   allowCustomValue = false,
   customValueLabel = 'თავისუფლად შეყვანა',
@@ -190,6 +192,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             {open && (
               <motion.div
                 ref={dropdownRef}
+                data-wrap-labels={wrapLabels ? 'true' : undefined}
                 data-searchable-select-portal="true"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
@@ -393,7 +396,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                           }`}
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className={wrapLabels ? 'flex flex-col items-start gap-1' : 'flex items-center gap-2'}>
                               {opt.badgeHe && (
                                 <span
                                   dir="rtl"
@@ -410,11 +413,11 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                   {opt.badgeHe}
                                 </span>
                               )}
-                              <span className="truncate">{opt.label}</span>
+                              <span className={wrapLabels ? 'whitespace-normal break-words' : 'truncate'}>{opt.label}</span>
                             </div>
                             {opt.sublabel && (
                               <div
-                                className={`text-[10.5px] truncate mt-0.5 ${
+                                className={`text-[10.5px] ${wrapLabels ? 'whitespace-normal' : 'truncate'} mt-0.5 ${
                                   theme === 'celestial-slate'
                                     ? isSelected
                                       ? 'text-sky-100'
@@ -472,6 +475,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         type="button"
         data-raw-btn="true"
         data-flat-btn="true"
+        aria-label={label || placeholder}
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className={`w-full flex items-center justify-between gap-1.5 text-left rounded-xl border transition-all duration-150 cursor-pointer shadow-xs ${
           compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-xs sm:text-sm'
@@ -489,8 +494,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 : 'bg-[#FAF5EC] hover:bg-[#F3EBDD] border-[#D4C3AC] text-[#1E130A]'
         }`}
       >
-        <div className="flex items-center justify-between gap-1.5 min-w-0 flex-1">
-          <span className="truncate font-bold">
+        <div className={wrapLabels ? 'flex flex-col items-start gap-1 min-w-0 flex-1' : 'flex items-center justify-between gap-1.5 min-w-0 flex-1'}>
+          <span className={`${wrapLabels ? 'whitespace-normal break-words' : 'truncate'} font-bold`}>
             {selectedOption ? selectedOption.label : value || placeholder}
           </span>
           {selectedOption?.badgeHe && (
