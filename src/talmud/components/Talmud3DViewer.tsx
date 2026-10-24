@@ -176,7 +176,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   // Listen for direct jump-to-target events from small index markers (e.g. (א) -> הגהות הב"ח) or external reset requests
   useEffect(() => {
     const onFocusTargetPct = (e: Event) => {
-      const detail = (e as CustomEvent<{ ox: number; oy: number; targetScale?: number }>).detail;
+      const detail = (e as CustomEvent<{ ox: number; oy: number; targetScale?: number; scrollHandled?: boolean }>).detail;
       if (!detail) return;
       const ox = Math.max(2, Math.min(98, detail.ox));
       const oy = Math.max(2, Math.min(98, detail.oy));
@@ -201,6 +201,9 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       if (nextScale > 1.02) {
         setShowResetAfterRelease(true);
       }
+
+      // The PDF marker owns scrolling after this zoom transition settles.
+      if (detail.scrollHandled) return;
 
       // Ensure the folio scrolls directly and accurately to the exact target line
       const folioEl = document.getElementById('talmud-daf-folio-anchor');
@@ -243,7 +246,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         }
       } else if (typeof detail.delta === 'number') {
         setScale((prev) => {
-          const next = Math.max(0.7, Math.min(3.5, prev + detail.delta!));
+          const next = Math.max(0.7, Math.min(3.5, prev + (detail.delta ?? 0)));
           if (next <= 1.02) {
             setPanX(0);
             setPanY(0);
