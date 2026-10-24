@@ -1022,10 +1022,12 @@ function extractHotspotsFromTextContent(
         .replace(/\s+/g, ' ')
         .trim();
     }
+    // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
+    const isQuoteOnly = /^["'״׳`]+$/.test(str);
     // Accept Hebrew letters, digits (for Torah Or 1..9), and parentheses/brackets (for (א), [א])
-    if (!str || (!/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
-    // Skip pure punctuation like standalone "." or ":" or "'" unless it's a bracket or digit
-    if (/^[.,:;'"״׳\-–—]+$/.test(str)) continue;
+    if (!str || (!isQuoteOnly && !/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
+    // Skip pure punctuation like standalone "." or ":" unless it's a bracket, digit or quote
+    if (!isQuoteOnly && /^[.,:;'"״׳\-–—]+$/.test(str)) continue;
 
     const transform = rawItem.transform as number[] | undefined;
     if (!transform || transform.length < 6) continue;
