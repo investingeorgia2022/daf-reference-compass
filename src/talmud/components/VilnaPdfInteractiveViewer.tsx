@@ -1477,6 +1477,45 @@ function extractHotspotsFromTextContent(
     }
 
     const bodyFontHeight = Math.max(...bucket.runs.map((r) => r.pdfH));
+
+    // Rejoin reference markers that the PDF splits into separate runs: "(" + "א" + ")" -> "(א)", "[" + "א" + "]" -> "[א]".
+    if (!isSiddurPdf && bucket.runs.length > 1) {
+      const isPiece = (s: string) => /^[()\[\]]{1,2}$|^[\u05D0-\u05EA]{1,2}$/.test(s);
+      const isMarkerShape = (s: string) =>
+        /^[(\[]{1,2}[\u05D0-\u05EA]{1,2}[)\]]{0,2}$|^[\u05D0-\u05EA]{1,2}[)\]]{1,2}$/.test(s);
+      const joined: RawPdfRun[] = [];
+      for (let rIdx = 0; rIdx < bucket.runs.length; rIdx++) {
+        const cur = { ...bucket.runs[rIdx] };
+        while (rIdx + 1 < bucket.runs.length) {
+          const nxt = bucket.runs[rIdx + 1];
+          const a = cur.str.trim();
+          const b = nxt.str.trim();
+          const small = Math.max(cur.pdfH, nxt.pdfH) <= bodyFontHeight * 0.8;
+          const curR = cur.vpLeft + cur.vpWidth;
+          const nxtR = nxt.vpLeft + nxt.vpWidth;
+          const gapPx = Math.max(cur.vpLeft - nxtR, nxt.vpLeft - curR);
+          const near = gapPx <= Math.max(3, cur.vpHeight * 0.6);
+          // RTL: the run further right is read first.
+          const combined = cur.vpLeft >= nxt.vpLeft ? `${a}${b}` : `${b}${a}`;
+          const hasBracket = /[()\[\]]/.test(combined);
+          if (small && near && hasBracket && (isPiece(a) || isMarkerShape(a)) && isPiece(b) && isMarkerShape(combined)) {
+            rIdx++;
+            const minL = Math.min(cur.vpLeft, nxt.vpLeft);
+            const maxR = Math.max(curR, nxtR);
+            cur.str = combined;
+            cur.vpLeft = minL;
+            cur.vpWidth = maxR - minL;
+            cur.leftPct = (minL / vpW) * 100;
+            cur.vpHeight = Math.max(cur.vpHeight, nxt.vpHeight);
+            cur.pdfH = Math.max(cur.pdfH, nxt.pdfH);
+          } else {
+            break;
+          }
+        }
+        joined.push(cur);
+      }
+      bucket.runs = joined;
+    }
     const markerContext = (run, token) => ({
       bodyFontHeight,
       isolated: run.str.trim() === token || /\s/.test(run.str),
