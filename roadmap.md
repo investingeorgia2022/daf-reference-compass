@@ -18,3 +18,4 @@
 - [x] Verify screenshot examples and run regression tests.
 - [ ] Expand the biblical verse window with explanations and verse-specific commentaries.
 - [ ] Test exact-verse connections and verify the explanation window.
+- [ ] Highlight the exact destination text after reference-marker navigation.
