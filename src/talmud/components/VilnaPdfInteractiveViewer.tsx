@@ -1135,9 +1135,10 @@ function extractHotspotsFromTextContent(
   // Step 2: Walk margin runs to tag commentary type and entry key.
   // CRITICAL: Maintain SEPARATE state for Left Margin (leftPct < 50) and Right Margin (leftPct >= 50)
   // so commentary headers and entry keys from opposite sides of the Daf folio NEVER cross-contaminate!
-  let leftMarginComm: MarginCommentaryType = isAmudBet ? 'ein-mishpat' : 'masoret';
+  // Vilna layout: Ein Mishpat sits on the OUTER margin (left on amud A, right on amud B).
+  let leftMarginComm: MarginCommentaryType = isAmudBet ? 'masoret' : 'ein-mishpat';
   let leftMarginKey: string | undefined;
-  let rightMarginComm: MarginCommentaryType = isAmudBet ? 'masoret' : 'ein-mishpat';
+  let rightMarginComm: MarginCommentaryType = isAmudBet ? 'ein-mishpat' : 'masoret';
   let rightMarginKey: string | undefined;
 
   for (const run of runs) {
