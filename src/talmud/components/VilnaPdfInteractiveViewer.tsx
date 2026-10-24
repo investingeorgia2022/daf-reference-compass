@@ -1517,13 +1517,52 @@ function extractHotspotsFromTextContent(
       }
       bucket.runs = joined;
     }
-    const markerContext = (run, token) => ({
+    // A tiny letter touching a same-size quote mark is part of an abbreviation (ב"ח, ז"ל), never a marker.
+    const abbreviationRuns = new Set<RawPdfRun>();
+    if (!isSiddurPdf) {
+      const quoteOnly = /^["'״׳`]/;
+      const quoteEnd = /["'״׳`]$/;
+      const touches = (a: RawPdfRun, o?: RawPdfRun) => {
+        if (!o) return false;
+        const aR = a.vpLeft + a.vpWidth;
+        const oR = o.vpLeft + o.vpWidth;
+        const gap = Math.max(a.vpLeft - oR, o.vpLeft - aR);
+        const sameSize = Math.abs(o.pdfH - a.pdfH) <= Math.max(0.8, a.pdfH * 0.25);
+        return sameSize && gap <= Math.max(2, a.vpHeight * 0.5);
+      };
+      bucket.runs.forEach((r, idx) => {
+        const prev = bucket.runs[idx - 1];
+        const next = bucket.runs[idx + 1];
+        if (
+          (touches(r, next) && quoteOnly.test(next.str.trim())) ||
+          (touches(r, prev) && quoteEnd.test(prev.str.trim()))
+        ) {
+          abbreviationRuns.add(r);
+        }
+      });
+    }
+    const markerContext = (run, token, tokenIdx = 0) => ({
       bodyFontHeight,
       isolated: run.str.trim() === token || /\s/.test(run.str),
-      isEntryStart: bucket.section === 'margin' && run === bucket.runs[0],
+      isEntryStart: bucket.section === 'margin' && run === bucket.runs[0] && tokenIdx === 0,
+      abbreviation: abbreviationRuns.has(run),
     });
+    // Margin columns of Ein Mishpat / Torah Or contain bracketed code numbers ([ד], (קכ"ג)) that are not markers.
+    const checkMarker = (run, token, tokenIdx = 0) => {
+      const m = detectSmallMarkerToken(token, run.pdfH, bucket.section, markerContext(run, token, tokenIdx));
+      if (
+        m.isSmallMarker &&
+        bucket.section === 'margin' &&
+        (run.marginCommType === 'ein-mishpat' || run.marginCommType === 'torah-or') &&
+        m.targetType !== 'ein-mishpat' &&
+        m.targetType !== 'torah-or'
+      ) {
+        return { isSmallMarker: false } as ReturnType<typeof detectSmallMarkerToken>;
+      }
+      return m;
+    };
     const rawLineJoined = bucket.runs
-      .filter((r) => !detectSmallMarkerToken(r.str.trim(), r.pdfH, bucket.section, markerContext(r, r.str.trim())).isSmallMarker)
+      .filter((r) => !checkMarker(r, r.str.trim()).isSmallMarker)
       .map((r) => r.str)
       .join(' ')
       .replace(/\s+/g, ' ')
