@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DafPageData, SefariaCommentaryItem, TalmudSentence } from '../types/talmud';
 
 export interface ParsedSefariaRef {

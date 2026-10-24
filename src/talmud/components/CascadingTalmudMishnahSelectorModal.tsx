@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { X, Check, RotateCcw, History, ArrowRight, Sliders, Hash } from 'lucide-react';

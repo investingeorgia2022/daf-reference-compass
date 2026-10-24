@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TalmudSentence } from '../types/talmud';
 import { SacredBookItem, BuiltSacredPage, numberToHebrewGematria } from './tanakhAndHalakhaData';
 

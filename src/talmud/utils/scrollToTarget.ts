@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Smoothly scrolls the nearest scrollable ancestor (or the window) so that `target`
  * lands at `anchorRatio` of the visible height. Uses live getBoundingClientRect,

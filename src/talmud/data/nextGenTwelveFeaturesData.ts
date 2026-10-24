@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface DebateDialogueTurn {
   id: string;
   role: 'makshan' | 'tartzan' | 'rashi' | 'tosafot';

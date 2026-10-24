@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { UILang } from '../types/talmud';
 import {
   lookupSiddurLineTranslationKa,

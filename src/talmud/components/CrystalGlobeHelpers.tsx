@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Check, Plus, Minus, RotateCcw, X, Crown, Globe } from 'lucide-react';

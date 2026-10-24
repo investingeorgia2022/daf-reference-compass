@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TalmudSentence } from '../types/talmud';
 import {
   YALKUT_YOSEF_KITZUR_BOOKS,

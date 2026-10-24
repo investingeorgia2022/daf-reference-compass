@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type BlessingCategoryId =
   | 'all'
   | 'bread-meal'

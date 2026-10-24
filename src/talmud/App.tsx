@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import {

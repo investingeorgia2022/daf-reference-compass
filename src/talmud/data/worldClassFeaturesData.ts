@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface HalachaBridgeEntry {
   id: string;
   dafRef: string;

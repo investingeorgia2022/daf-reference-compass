@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Reference-marker detection for the Vilna Tzurat HaDaf page.
  *

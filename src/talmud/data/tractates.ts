@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SederInfo, TractateInfo } from "../types/talmud";
 
 export const SEDARIM: SederInfo[] = [

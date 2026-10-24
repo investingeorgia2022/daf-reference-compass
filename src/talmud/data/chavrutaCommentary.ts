@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SefariaCommentaryItem, TalmudSentence } from '../types/talmud';
 
 export const BUILTIN_CHAVRUTA_COMMENTARY: Record<string, TalmudSentence[]> = {

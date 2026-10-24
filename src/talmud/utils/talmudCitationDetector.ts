@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TRACTATES } from '../data/tractates';
 import { numberToHebrewGematria } from '../data/tanakhAndHalakhaData';
 

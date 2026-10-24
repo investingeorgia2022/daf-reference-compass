@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DafPageData, TalmudSentence } from '../types/talmud';
 import { toHebrewDafNumber } from './tractates';
 

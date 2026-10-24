@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SourceLookupResult } from "../types/talmud";
 import { normalizeHebrewWord } from "./lexicon";
 

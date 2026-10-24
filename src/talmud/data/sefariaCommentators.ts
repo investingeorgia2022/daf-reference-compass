@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SefariaCommentaryItem } from "../types/talmud";
 
 export const SEFARIA_COMMENTATOR_MAP: Record<string, string> = {

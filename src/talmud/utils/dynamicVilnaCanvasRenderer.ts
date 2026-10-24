@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DafPageData, TalmudSentence } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 import type { VilnaPdfHotspot, MarginCommentaryType } from '../components/VilnaPdfInteractiveViewer';

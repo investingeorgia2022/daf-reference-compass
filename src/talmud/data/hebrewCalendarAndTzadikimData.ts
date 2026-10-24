@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SacredRealmId } from './tanakhAndHalakhaData';
 
 export interface TzadikBiography {

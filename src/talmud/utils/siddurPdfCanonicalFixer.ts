@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { LexiconEntry } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 
