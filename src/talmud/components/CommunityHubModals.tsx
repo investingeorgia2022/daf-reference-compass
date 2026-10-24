@@ -36,6 +36,7 @@ import { SACRED_REALMS, SacredRealmId, TORAH_BOOKS } from '../data/tanakhAndHala
 import { SearchableSelect, SelectOption } from './SearchableSelect';
 import { WindowsWindowControls } from './WindowsWindowControls';
 import { VoiceSearchMicButton } from './VoiceSearchMicButton';
+import { Button } from '@/components/ui/button';
 import { UILang, AppCurrency } from '../types/talmud';
 
 export interface RegisteredScholarUser {
@@ -931,44 +932,15 @@ export const DailyStudyDedicationRibbon: React.FC<DailyStudyDedicationRibbonProp
   isDark,
 }) => {
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 pt-1 pb-0.5 box-border">
-      <div
-        className={`w-full px-3 py-1.5 rounded-xl border flex flex-wrap items-center justify-between gap-2 text-xs box-border shadow-xs ${
-          isDark
-            ? 'bg-[#26180F]/95 border-[#C49A6C]/40 text-[#FAF5EB]'
-            : 'bg-[#EAD8BD] border-[#8B5A2B]/50 text-[#1B1008]'
-        }`}
-      >
-        <div
-          onClick={onOpenDedicationModal}
-          className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
-        >
-          <Flame className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <span className="font-black text-[11px] text-amber-700 dark:text-amber-400 shrink-0">
-            {activeDedication.typeLabelKa}:
-          </span>
-          <span className="font-bold text-[11px] truncate">
-            {activeDedication.honoreeNameKa}
-          </span>
-          <span
-            dir="rtl"
-            className="hidden md:inline-block font-serif font-black text-[#8B5A2B] dark:text-[#C49A6C] text-xs shrink-0 whitespace-nowrap"
-          >
-            ({activeDedication.typeLabelHe} • {activeDedication.honoreeNameHe})
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={onOpenDedicationModal}
-            className="h-6 px-3 rounded-lg bg-[#5C3A21] hover:bg-[#6E472B] text-[#FAF5EB] text-[10.5px] font-black border border-[#C49A6C]/60 flex items-center gap-1 cursor-pointer shadow-xs"
-          >
-            <Plus className="w-3 h-3 shrink-0" />
-            <span>სწავლის მიძღვნა</span>
-          </button>
-        </div>
-      </div>
+    <div className="dedication-ribbon-wrap">
+      <Button variant="ghost" onClick={onOpenDedicationModal} className="dedication-ribbon" aria-label="სწავლის მიძღვნა">
+        <Flame className="shrink-0" />
+        <span className="dedication-ribbon-copy">
+          <span className="dedication-ribbon-type">{activeDedication.typeLabelKa}</span>
+          <span className="dedication-ribbon-name">{activeDedication.honoreeNameKa}</span>
+        </span>
+        <Plus className="shrink-0" />
+      </Button>
     </div>
   );
 };
@@ -1623,59 +1595,26 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCloseDedicationModal}
-            className="fixed inset-0 z-[210] bg-black/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 overflow-hidden box-border"
+            className="dedication-overlay"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className={`w-full max-w-2xl max-h-[88vh] flex flex-col rounded-3xl border-2 shadow-2xl overflow-hidden box-border ${
+              role="dialog" aria-modal="true" aria-labelledby="dedication-dialog-title" className={`dedication-dialog w-full max-w-2xl flex flex-col overflow-hidden box-border ${
                 isDark
                   ? 'bg-[#1D140D] border-[#C49A6C] text-[#FAF5EB]'
                   : 'bg-[#FAF3E4] border-[#6E472B] text-[#21140B]'
               }`}
             >
-              {/* Sticky Top Header with Prominent Return Button */}
-              <div
-                className={`shrink-0 px-4 sm:px-5 py-3 border-b flex items-center justify-between gap-2 ${
-                  isDark ? 'bg-[#261910] border-[#8B5A2B]/40' : 'bg-[#EFE2C8] border-[#8B5A2B]/35'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <button
-                    type="button"
-                    onClick={onCloseDedicationModal}
-                    className="px-2.5 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#6E472B] text-[#FAF5EB] text-xs font-extrabold flex items-center gap-1 border border-[#C49A6C]/60 cursor-pointer shrink-0 shadow-xs"
-                    title="უკან დაბრუნება"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>უკან დაბრუნება</span>
-                  </button>
-                  <div className="w-8 h-8 rounded-xl bg-amber-600 text-[#21140B] hidden sm:flex items-center justify-center shrink-0">
-                    <Flame className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs sm:text-base font-black truncate">
-                      დღევანდელი სწავლის მიძღვნა • הקדשת הלימוד היומי
-                    </h3>
-                    <p className="text-[10.5px] opacity-80 truncate">
-                      სულის მოსამაღლებლად, ჯანმრთელობისა და კეთილდღეობისთვის
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={onCloseDedicationModal}
-                  className="p-2 rounded-xl bg-[#5C3A21] text-[#FAF5EB] border border-[#C49A6C]/50 cursor-pointer shrink-0"
-                  title="დახურვა"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <header className="dedication-dialog-header">
+                <div className="min-w-0 flex-1"><h3 id="dedication-dialog-title">სწავლის მიძღვნა</h3></div>
+                <Button variant="ghost" size="icon" onClick={onCloseDedicationModal} aria-label="დახურვა" title="დახურვა"><X /></Button>
+              </header>
 
               {/* Scrollable Middle Body */}
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 dedication-dialog-body">
                 {/* Category Filter Pills & Search */}
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
@@ -1690,7 +1629,7 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                     ).map((cat) => {
                       const active = dedicationFilterType === cat.id;
                       return (
-                        <button
+                        <Button variant="ghost"
                           key={cat.id}
                           type="button"
                           onClick={() => setDedicationFilterType(cat.id)}
@@ -1703,7 +1642,7 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                           }`}
                         >
                           <span className="truncate">{cat.label}</span>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -1753,7 +1692,7 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                       return (
                         <div
                           key={item.id}
-                          className={`w-full p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all ${
+                          className={`dedication-entry w-full p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all ${
                             isCurrent
                               ? 'bg-gradient-to-r from-[#FAF5EB] via-[#E8D8BE] to-[#C49A6C] text-[#21140B] border-2 border-[#5C3A21] font-black shadow-md'
                               : isDark
@@ -1776,21 +1715,21 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                               />
                               <span className="text-[11px] font-extrabold">{item.typeLabelKa}</span>
                             </div>
-                            <div className="text-xs sm:text-sm font-black truncate mt-0.5">
+                            <div className="text-xs sm:text-sm font-black whitespace-normal break-words mt-1">
                               {item.honoreeNameKa}
                             </div>
-                            <div dir="rtl" className="font-serif text-xs opacity-85 truncate">
+                            <div dir="rtl" className="font-serif text-xs opacity-85 whitespace-normal">
                               {item.typeLabelHe} • {item.honoreeNameHe}
                             </div>
                             {item.sponsorNameKa && (
-                              <div className="text-[10.5px] opacity-75 truncate">
+                              <div className="text-[10.5px] opacity-75 whitespace-normal">
                                 მიმძღვნელი: {item.sponsorNameKa}
                               </div>
                             )}
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <button
+                            <Button variant="ghost"
                               type="button"
                               onClick={() =>
                                 setLitDedicationCandles((prev) => ({
@@ -1807,9 +1746,9 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                             >
                               <Flame className="w-3.5 h-3.5" />
                               <span>{isLit ? 'ანთია' : 'სანთელი'}</span>
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button variant="ghost"
                               type="button"
                               onClick={() => {
                                 onSelectDedication(item);
@@ -1829,7 +1768,7 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                               ) : (
                                 <span>არჩევა</span>
                               )}
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       );
@@ -1910,7 +1849,7 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                       }`}
                     />
                     {newDedCustomMemberInput.trim().length > 1 && (
-                      <button
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => {
                           const m = newDedCustomMemberInput.trim();
@@ -1921,11 +1860,11 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                         className="px-3 py-2 rounded-xl bg-emerald-700 text-white text-xs font-extrabold cursor-pointer shrink-0"
                       >
                         + წევრის დამატება
-                      </button>
+                      </Button>
                     )}
                   </div>
 
-                  <button
+                  <Button variant="ghost"
                     type="button"
                     onClick={() => {
                       if (!newDedHonoreeKa.trim()) return;
@@ -1974,28 +1913,10 @@ export const CommunityModalsManager: React.FC<CommunityModalsManagerProps> = ({
                     className="w-full py-2.5 rounded-2xl bg-gradient-to-b from-[#FAF5EB] via-[#E8D8BE] to-[#C49A6C] text-[#21140B] font-black text-xs cursor-pointer shadow-md"
                   >
                     მიძღვნის შენახვა და დაფაზე გამოტანა
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              {/* Sticky Bottom Footer with Prominent Return Button */}
-              <div
-                className={`shrink-0 px-4 sm:px-5 py-2.5 border-t flex items-center justify-between gap-2 ${
-                  isDark ? 'bg-[#261910] border-[#8B5A2B]/40' : 'bg-[#EFE2C8] border-[#8B5A2B]/35'
-                }`}
-              >
-                <span className="text-[11px] opacity-80 truncate">
-                  არჩეული მიძღვნა გამოჩნდება ყველა სასწავლო დაფის თავში
-                </span>
-                <button
-                  type="button"
-                  onClick={onCloseDedicationModal}
-                  className="px-4 py-1.5 rounded-xl bg-[#5C3A21] hover:bg-[#6E472B] text-[#FAF5EB] text-xs font-extrabold flex items-center gap-1.5 border border-[#C49A6C]/60 cursor-pointer shrink-0 shadow-sm"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>უკან დაბრუნება</span>
-                </button>
-              </div>
             </motion.div>
           </motion.div>
         )}

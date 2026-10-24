@@ -83,7 +83,7 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
   return (
     <div className="space-y-3">
       <div
-        className={`p-3 rounded-xl border ${
+        className={`study-tool-intro py-2 border-b ${
           isDark
             ? 'bg-[#1D130D] border-[#5C3A21] text-[#EED9B9]'
             : 'bg-[#FBF7F0] border-[#CBB89D] text-[#2C1A10]'
@@ -93,19 +93,16 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
           <div className="flex items-center gap-2">
             <Scale className="w-4 h-4 text-[#C49A6C]" />
             <span className="text-xs font-extrabold">
-              1. ჰალახის ცოცხალი ხიდი (עין משפט • גמרא → רמב״ם → טור → שולחן ערוך)
+              ჰალახის ხიდი
             </span>
           </div>
           <span dir="rtl" className="text-xs font-serif font-bold opacity-85">
             {tractateNameHe} {dafData.dafId}
           </span>
         </div>
-        <p className="text-xs opacity-85 leading-relaxed mb-2.5">
-          თვალი გაადევნეთ, როგორ გარდაიქმნება გემარის დისკუსია საბოლოო ჰალახურ კანონად რამბამის
-          „მიშნე თორაში“, „ტურსა“ და „შულხან არუხში“.
-        </p>
         <SearchableSelect
           label="ჰალახური თემის გაფილტვრა:"
+          wrapLabels
           options={bridgeOptions}
           value={selectedBridgeId}
           onChange={setSelectedBridgeId}
@@ -120,13 +117,13 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-          className={`p-3.5 rounded-2xl border space-y-3 ${
+          className={`halacha-study-entry py-4 border-b space-y-3 ${
             isDark
               ? 'bg-[#1D130D]/95 border-[#5C3A21]'
               : 'bg-[#FBF7F0] border-[#8B5A2B]/40 shadow-sm'
           }`}
         >
-          <div className="flex items-start justify-between gap-2 border-b border-[#8B5A2B]/25 pb-2">
+          <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#8B5A2B]/25 pb-2">
             <div>
               <div className="text-xs font-extrabold">
                 #{idx + 1} · {item.topicKa}
@@ -139,7 +136,7 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
               {item.sentenceId && (
                 <button
                   type="button"
-                  onClick={() => onHighlightSentence(item.sentenceId!)}
+                  onClick={() => { if (item.sentenceId) onHighlightSentence(item.sentenceId); }}
                   className="px-2.5 py-1 rounded-lg bg-[#6B4226] text-[#FBF7F0] text-[11px] font-bold cursor-pointer hover:bg-[#7D4E2D] transition-colors"
                 >
                   დაფზე ნახვა

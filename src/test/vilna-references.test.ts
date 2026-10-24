@@ -1,9 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectSmallMarkerToken } from '../talmud/utils/referenceMarkerDetector';
+import { detectSmallMarkerToken, canJoinMarkerFragments } from '../talmud/utils/referenceMarkerDetector';
 import { findScrollParent, getTargetScrollTop, scrollToTarget } from '../talmud/utils/scrollToTarget';
 import { findMarginGutters, normalizeVilnaX } from '../talmud/utils/vilnaColumnGutters';
 
 describe('isolated Vilna markers', () => {
+  it.each(['.1', '.2', '.3'])('recognizes mirrored Torah Or entry %s', (word) => {
+    expect(detectSmallMarkerToken(word, 7.44, 'margin', { bodyFontHeight: 7.44, isEntryStart: true }).key).toBe(word.slice(1));
+  });
+  it('preserves the two separate raised vav indices instead of the malformed ו(ו token', () => {
+    expect(canJoinMarkerFragments('ו(', 'ו', 'ו(ו')).toBe(false);
+    expect(detectSmallMarkerToken('ו(', 7.44, 'gemara', { bodyFontHeight: 13.68 }).targetType).toBe('masoret');
+    expect(detectSmallMarkerToken('ו(ו', 7.44, 'gemara', { bodyFontHeight: 13.68 }).isSmallMarker).toBe(false);
+  });
+  it('rejoins a split closing parenthesis for Bach without losing the marker', () => {
+    expect(canJoinMarkerFragments('(א', ')', '(א)')).toBe(true);
+  });
+  it('rejects a small but baseline-aligned ordinary commentary letter', () => {
+    expect(detectSmallMarkerToken('ו', 6.72, 'rashi', { bodyFontHeight: 11.94, isolated: true, raised: false }).isSmallMarker).toBe(false);
+  });
+  it('retains a genuinely raised isolated Ein Mishpat letter', () => {
+    expect(detectSmallMarkerToken('ו', 7.44, 'gemara', { bodyFontHeight: 13.68, isolated: true, raised: true }).targetType).toBe('ein-mishpat');
+  });
   it.each(['⦸', '⊙', '◐'])('recognizes circular %s as Gilyon', (word) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara')).toMatchObject({ isSmallMarker: true, key: 'גליון', targetType: 'gilyon-hashas' });
   });
