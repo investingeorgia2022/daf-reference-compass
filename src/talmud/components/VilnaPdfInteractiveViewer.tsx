@@ -3036,7 +3036,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           candidates = marginHotspots.filter(
             (h) =>
               onExpectedSide(h) &&
-              h.marginCommType !== 'ein-mishpat' === (preferredType !== 'ein-mishpat') &&
+              (h.marginCommType === 'ein-mishpat') === (preferredType === 'ein-mishpat') &&
               ((h.isSmallMarker && h.markerKey === key && h.markerTargetType === preferredType) ||
                 h.marginEntryKey === key)
           );
