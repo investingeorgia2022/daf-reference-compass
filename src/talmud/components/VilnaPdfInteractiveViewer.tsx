@@ -1126,6 +1126,7 @@ function extractHotspotsFromTextContent(
       cur.vpWidth = maxVpRight - minVpLeft;
       cur.leftPct = (minVpLeft / vpW) * 100;
       cur.pdfH = Math.min(cur.pdfH, nxt.pdfH);
+      cur.quoteAdjacent = cur.quoteAdjacent || nxt.quoteAdjacent;
     }
     // A quote mark glued to a letter makes it an abbreviation (ב"ח, כ"ב) — remember that before
     // the quote itself is discarded, so the letter is never mistaken for a reference marker.
@@ -1529,6 +1530,7 @@ function extractHotspotsFromTextContent(
             cur.leftPct = (minL / vpW) * 100;
             cur.vpHeight = Math.max(cur.vpHeight, nxt.vpHeight);
             cur.pdfH = Math.max(cur.pdfH, nxt.pdfH);
+            cur.quoteAdjacent = cur.quoteAdjacent || nxt.quoteAdjacent;
           } else {
             break;
           }
@@ -1565,7 +1567,7 @@ function extractHotspotsFromTextContent(
       bodyFontHeight,
       isolated: run.str.trim() === token || /\s/.test(run.str),
       isEntryStart: bucket.section === 'margin' && run === bucket.runs[0] && tokenIdx === 0,
-      abbreviation: abbreviationRuns.has(run),
+      abbreviation: abbreviationRuns.has(run) || run.quoteAdjacent === true,
     });
     // Margin columns of Ein Mishpat / Torah Or contain bracketed code numbers ([ד], (קכ"ג)) that are not markers.
     const checkMarker = (run, token, tokenIdx = 0) => {
