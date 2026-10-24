@@ -4339,10 +4339,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     const citation = parseBiblicalCitation(row.map(h => h.word).join(' '));
     if (!citation) return false;
     // Only the printed citation is a link, not every word in its quotation row.
-    const text = spot.word.replace(/[()[\].,:;״׳"']/g,'').trim();
-    const numberToken = /^[א-ת]{1,4}$/.test(text) &&
-      row.some(h => h.word.includes(citation.bookHe) && Math.abs(h.leftPct-spot.leftPct) < 12);
-    if (!spot.word.includes(citation.bookHe) && !numberToken) return false;
+    const bookIdx = row.findIndex(h => h.word.includes(citation.bookHe));
+    const spotIdx = row.findIndex(h => h.id === spot.id);
+    const citationEndIdx = bookIdx + (citation.verse ? 2 : 1);
+    if (bookIdx < 0 || spotIdx < bookIdx || spotIdx > citationEndIdx) return false;
     setSelectedRange(null); setShowRangeHandles(false);
     setBiblicalCitation(citation);
     return true;
