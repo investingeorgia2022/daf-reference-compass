@@ -3016,82 +3016,74 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           (h) => h.section === 'margin' || (isSiddurPdf && h.section === 'rashi')
         );
 
-        // 1) Try exact match on commentary type + entry key
+        const isGilyonEntry = (h: VilnaPdfHotspot) =>
+          h.marginCommType === 'gilyon-hashas' ||
+          h.word.includes('גליון') ||
+          isCircleMarker(h.word);
+
+        // 1) Exact match: same commentary column + same entry key, on the expected side.
         let candidates = marginHotspots.filter(
-          (h) => h.marginCommType === preferredType && h.marginEntryKey === key
+          (h) =>
+            onExpectedSide(h) &&
+            (preferredType === 'gilyon-hashas'
+              ? isGilyonEntry(h)
+              : h.marginCommType === preferredType &&
+                (h.marginEntryKey === key || (h.isSmallMarker && h.markerKey === key)))
         );
 
-        // 2) If no exact type match, search by key on the expected column side
-        if (candidates.length === 0) {
+        // 2) Same entry key on the expected side (column header was not recognised).
+        if (candidates.length === 0 && preferredType !== 'gilyon-hashas') {
           candidates = marginHotspots.filter(
             (h) =>
-              (h.marginEntryKey === key ||
-                h.markerKey === key ||
-                h.cleanWord === key ||
-                (preferredType === 'gilyon-hashas' && (h.word.includes('גליון') || h.marginCommType === 'gilyon-hashas' || /^[⊙◉◎⊛●○]$/.test(h.word))) ||
-                h.word.replace(/[^\u05D0-\u05EA0-9]/g, '') === key) &&
-              (expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60)
+              onExpectedSide(h) &&
+              h.marginCommType !== 'ein-mishpat' === (preferredType !== 'ein-mishpat') &&
+              ((h.isSmallMarker && h.markerKey === key && h.markerTargetType === preferredType) ||
+                h.marginEntryKey === key)
           );
         }
 
-        // 3) Fallback: any margin hotspot with matching key
-        if (candidates.length === 0) {
-          candidates = marginHotspots.filter(
-            (h) =>
-              h.marginEntryKey === key ||
-              h.markerKey === key ||
-              h.cleanWord === key ||
-              (preferredType === 'gilyon-hashas' && (h.word.includes('גליון') || h.marginCommType === 'gilyon-hashas' || /^[⊙◉◎⊛●○]$/.test(h.word))) ||
-              h.word.replace(/[^\u05D0-\u05EA0-9]/g, '') === key
-          );
-        }
-
-        // CRITICAL ANTI-SPANNING SAFEGUARD:
-        // Group candidates by physical column and choose ONLY ONE column cluster closest to expected side and vertical level!
         if (candidates.length > 0) {
-          const leftCandidates = candidates.filter((h) => h.leftPct < 50);
-          const rightCandidates = candidates.filter((h) => h.leftPct >= 50);
-          const columnCandidates =
-            expectedSide === 'left'
-              ? leftCandidates.length > 0
-                ? leftCandidates
-                : rightCandidates
-              : rightCandidates.length > 0
-                ? rightCandidates
-                : leftCandidates;
-
-          if (columnCandidates.length > 0) {
-            // Find candidate closest vertically to the source marker
-            let best = columnCandidates[0];
-            let bestDist = Math.abs(best.topPct - markerHotspot.topPct);
-            for (const c of columnCandidates) {
-              const d = Math.abs(c.topPct - markerHotspot.topPct);
-              if (d < bestDist) {
-                bestDist = d;
-                best = c;
-              }
+          // Prefer the printed entry key itself, then its row.
+          const keyGlyphs = candidates.filter((h) => h.isSmallMarker);
+          const pool = keyGlyphs.length > 0 ? keyGlyphs : candidates;
+          let best = pool[0];
+          for (const c of pool) {
+            if (preferredType === 'gilyon-hashas') {
+              if (Math.abs(c.topPct - markerHotspot.topPct) < Math.abs(best.topPct - markerHotspot.topPct)) best = c;
+            } else if (c.topPct < best.topPct) {
+              best = c;
             }
-
-            const actualComm = best.marginCommType || preferredType;
-            const targetRowId = best.rowId;
-            // Get words on the exact same row (confined to a single margin column)
-            const rowWords = hotspots.filter(
-              (h) =>
-                h.rowId === targetRowId &&
-                (expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60)
-            );
-
-            return {
-              targetHotspots: rowWords.length > 0 ? rowWords : [best],
-              commType: actualComm,
-              key,
-              targetSentenceId: best.targetSentenceId || targetSentenceId,
-            };
           }
+
+          const actualComm = best.marginCommType || preferredType;
+          const targetRowId = best.rowId;
+          // Words on the same row, confined to the same margin column.
+          const rowWords = hotspots.filter((h) => h.rowId === targetRowId && onExpectedSide(h));
+
+          return {
+            targetHotspots: rowWords.length > 0 ? rowWords : [best],
+            commType: actualComm,
+            key,
+            targetSentenceId: best.targetSentenceId || targetSentenceId,
+          };
         }
 
-        // 4) High-Precision Synthetic Target in the expected margin column:
-        // When OCR misses the margin text, we still navigate accurately to the margin note aligned with this line!
+        // 3) The entry text was not found: go to the start of that commentary's column
+        //    (its header row) on the correct side, or the same line in that margin.
+        const columnStart = typedMarginHotspots
+          .filter(onExpectedSide)
+          .sort((a, b) => a.topPct - b.topPct)[0];
+        if (columnStart) {
+          const rowWords = hotspots.filter((h) => h.rowId === columnStart.rowId && onExpectedSide(h));
+          return {
+            targetHotspots: rowWords.length > 0 ? rowWords : [columnStart],
+            commType: preferredType,
+            key,
+            targetSentenceId,
+          };
+        }
+
+        // 4) Synthetic target in the expected margin column, aligned with this line.
         const colLeft = expectedSide === 'left' ? 2.8 : 83.2;
         const targetTop = Math.max(7.2, Math.min(88.2, markerHotspot.topPct - 0.4));
         const syntheticTarget: VilnaPdfHotspot = {
