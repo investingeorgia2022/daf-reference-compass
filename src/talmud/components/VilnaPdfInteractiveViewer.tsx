@@ -12,6 +12,7 @@ import {
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker } from '../utils/referenceMarkerDetector';
+import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import {
   translateToGeorgianLive,
@@ -1013,6 +1014,26 @@ function extractHotspotsFromTextContent(
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
+  // Locate the real gutters between the side margins and the main text on this scan.
+  const marginGutters =
+    isSiddurPdf || isChumashPdf
+      ? REFERENCE_GUTTERS
+      : findMarginGutters(
+          items
+            .filter((it) => String(it.str || '').trim() && Array.isArray(it.transform))
+            .map((it) => {
+              const t = it.transform as number[];
+              const w = Math.max(2, Number(it.width) || 0);
+              const [x1, y1] = viewport.convertToViewportPoint(Number(t[4]) || 0, Number(t[5]) || 0);
+              const [x2] = viewport.convertToViewportPoint((Number(t[4]) || 0) + w, Number(t[5]) || 0);
+              return {
+                leftPct: (Math.min(x1, x2) / vpW) * 100,
+                rightPct: (Math.max(x1, x2) / vpW) * 100,
+                topPct: (y1 / vpH) * 100,
+              };
+            })
+        );
+
   for (const rawItem of items) {
     let str = String(rawItem.str || '').trim();
     if (isSiddurPdf || isChumashPdf) {
@@ -1085,7 +1106,7 @@ function extractHotspotsFromTextContent(
       }
     } else {
       section = classifyVilnaCoordinateZone(
-        leftPct + (vpWidth / vpW) * 50,
+        normalizeVilnaX(leftPct + (vpWidth / vpW) * 50, marginGutters),
         topPct,
         isAmudBet,
         pdfH
