@@ -3069,8 +3069,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const em = dafData.einMishpat?.find((e) => e.marker === key || normalizeHebrewWord(e.marker) === key);
           targetSentenceId = em ? `ein-mishpat-${em.id}` : `ein-mishpat-${key}`;
         } else if (preferredType === 'torah-or') {
-          const to = dafData.torahOr?.find((t, i) => String(t.id || i + 1) === key);
-          targetSentenceId = to ? `torah-or-${to.id || key}` : `torah-or-${key}`;
+          const entryIndex = Number(key) - 1;
+          const to = dafData.torahOr?.[entryIndex];
+          targetSentenceId = to ? `torah-or-${to.id || entryIndex}` : undefined;
         } else if (preferredType === 'masoret') {
           const m = dafData.masoretHaShas?.find((ms) => ms.marker === key || normalizeHebrewWord(ms.marker) === key);
           targetSentenceId = m ? `masoret-${m.id}` : `masoret-${key}`;
@@ -3132,7 +3133,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const actualComm = best.marginCommType || preferredType;
           const targetRowId = best.rowId;
           // Words on the same row, confined to the same margin column.
-          const rowWords = hotspots.filter((h) => h.rowId === targetRowId && onExpectedSide(h));
+          const rowWords = hotspots.filter((h) =>
+            onExpectedSide(h) && (preferredType === 'torah-or'
+              ? h.section === 'margin' && h.marginCommType === 'torah-or' && h.marginEntryKey === key
+              : h.rowId === targetRowId));
 
           return {
             targetHotspots: rowWords.length > 0 ? rowWords : [best],
@@ -3141,6 +3145,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             targetSentenceId: best.targetSentenceId || targetSentenceId,
           };
         }
+
+        // Never present a Torah Or heading/synthetic position as the corresponding quotation.
+        if (preferredType === 'torah-or') return null;
 
         // 3) The entry text was not found: go to the start of that commentary's column
         //    (its header row) on the correct side, or the same line in that margin.
