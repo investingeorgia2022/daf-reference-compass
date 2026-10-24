@@ -22,7 +22,7 @@ export function detectSmallMarkerToken(
   if (clean.length > 5) return { isSmallMarker: false };
 
   const digitMatch = clean.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
-  if (digitMatch) {
+  if (digitMatch?.[1]) {
     return { isSmallMarker: true, key: digitMatch[1], displayWord: clean, targetType: 'torah-or' };
   }
 
@@ -31,23 +31,23 @@ export function detectSmallMarkerToken(
   }
 
   const bracketMatch = clean.match(/^[\[]([\u05D0-\u05EA]{1,2})[\]]$/);
-  if (bracketMatch) {
+  if (bracketMatch?.[1]) {
     return { isSmallMarker: true, key: bracketMatch[1], displayWord: clean, targetType: 'gra' };
   }
 
   const doubleParenMatch = clean.match(/^\(\(([\u05D0-\u05EA]{1,2})\)\)$/);
-  if (doubleParenMatch) {
+  if (doubleParenMatch?.[1]) {
     return { isSmallMarker: true, key: doubleParenMatch[1], displayWord: clean, targetType: 'bach' };
   }
 
   const singleParenMatch =
     clean.match(/^[()]([\u05D0-\u05EA]{1,2})[()]?[.:]?$/) || clean.match(/^([\u05D0-\u05EA]{1,2})[()][.:]?$/);
-  if (singleParenMatch) {
+  if (singleParenMatch?.[1]) {
     return { isSmallMarker: true, key: singleParenMatch[1], displayWord: clean, targetType: 'masoret' };
   }
 
   const dotMatch = clean.match(/^([\u05D0-\u05EA]{1,2})[.,:;\-–—־]$/);
-  if (dotMatch) {
+  if (dotMatch?.[1]) {
     return { isSmallMarker: true, key: dotMatch[1], displayWord: clean, targetType: 'ein-mishpat' };
   }
 
