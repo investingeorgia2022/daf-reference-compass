@@ -611,6 +611,8 @@ function resolvePdfHotspotDafCitation(
 ): {
   startIdx: number;
   endIdx: number;
+  markStartIdx: number;
+  markEndIdx: number;
   tractateId: string;
   tractateNameHe: string;
   tractateNameKa: string;
@@ -877,6 +879,19 @@ function resolvePdfHotspotDafCitation(
   return {
     startIdx,
     endIdx,
+    // Blue highlight covers only the daf reference itself ("(דף ז:)" / "דף ז:"), never the lead word (לקמן / tractate name).
+    markStartIdx:
+      dafWordIdx >= 0 && numWordIdx >= 0
+        ? Math.min(dafWordIdx, numWordIdx)
+        : numWordIdx >= 0
+          ? numWordIdx
+          : Math.min(startIdx, endIdx),
+    markEndIdx:
+      dafWordIdx >= 0 && numWordIdx >= 0
+        ? Math.max(dafWordIdx, numWordIdx)
+        : numWordIdx >= 0
+          ? numWordIdx
+          : Math.max(startIdx, endIdx),
     tractateId: explicitTractate.id,
     tractateNameHe: explicitTractate.nameHe,
     tractateNameKa: explicitTractate.nameKa,
