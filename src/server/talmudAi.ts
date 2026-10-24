@@ -39,10 +39,17 @@ export async function askJson(task: string, shape: string, payload: unknown): Pr
   }
 }
 
-export async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+export interface TalmudBody {
+  question?: unknown; scope?: unknown; query?: unknown; word?: unknown; sentence?: unknown;
+  sourceType?: unknown; tractate?: unknown; daf?: unknown; text?: unknown; hebrewOriginal?: unknown;
+  sectionType?: unknown; targetLang?: unknown; tractateHebrew?: unknown; tractateGeorgian?: unknown;
+  dafExcerpt?: unknown; language?: unknown; audioBase64?: unknown; mimeType?: unknown; lang?: unknown;
+}
+
+export async function readJsonBody(request: Request): Promise<TalmudBody> {
   try {
     const b = await request.json();
-    return b && typeof b === "object" ? (b as Record<string, unknown>) : {};
+    return b && typeof b === "object" ? (b as TalmudBody) : {};
   } catch {
     return {};
   }
@@ -60,7 +67,7 @@ export function errorResponse(e: unknown): Response {
 }
 
 /** Wraps a JSON AI handler with body parsing and error handling. */
-export function jsonAiHandler(fn: (body: Record<string, unknown>) => Promise<unknown>) {
+export function jsonAiHandler(fn: (body: TalmudBody) => Promise<unknown>) {
   return async ({ request }: { request: Request }) => {
     const body = await readJsonBody(request);
     try {
