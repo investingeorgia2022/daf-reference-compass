@@ -1127,6 +1127,26 @@ function extractHotspotsFromTextContent(
       cur.leftPct = (minVpLeft / vpW) * 100;
       cur.pdfH = Math.min(cur.pdfH, nxt.pdfH);
     }
+    // A quote mark glued to a letter makes it an abbreviation (ב"ח, כ"ב) — remember that before
+    // the quote itself is discarded, so the letter is never mistaken for a reference marker.
+    if (/^["'״׳`]+$/.test(cur.str.trim())) {
+      const touchesQuote = (r?: RawPdfRun) => {
+        if (!r) return false;
+        const rRight = r.leftPct + (r.vpWidth / vpW) * 100;
+        const qRight = cur.leftPct + (cur.vpWidth / vpW) * 100;
+        const gap = Math.max(cur.leftPct - rRight, r.leftPct - qRight);
+        return (
+          Math.abs(r.topPct - cur.topPct) < 0.65 &&
+          gap < 0.6 &&
+          Math.abs(r.pdfH - cur.pdfH) <= Math.max(0.8, cur.pdfH * 0.25)
+        );
+      };
+      const prevKept = runs[runs.length - 1];
+      if (touchesQuote(prevKept)) prevKept.quoteAdjacent = true;
+      const nextRaw = initialRuns[i + 1];
+      if (touchesQuote(nextRaw)) nextRaw.quoteAdjacent = true;
+      continue;
+    }
     // Discard lonely bracket without any letter or digit
     if (!/[\u0590-\u05FF0-9]/.test(cur.str) && !isCircleMarker(cur.str)) continue;
     runs.push(cur);
