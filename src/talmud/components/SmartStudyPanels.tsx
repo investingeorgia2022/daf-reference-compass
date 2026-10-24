@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Sparkles,
@@ -300,10 +301,10 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
   });
 
   return (
-    <div
+    <div data-study-center="true"
       className={
         isStudyCenterMaximized
-          ? `fixed inset-2 z-[265] overflow-y-auto rounded-2xl border-2 transition-colors shadow-2xl ${
+          ? `fixed inset-2 z-[320] overflow-y-auto rounded-2xl border-2 transition-colors shadow-2xl ${
               isDark
                 ? 'bg-[#241810] border-[#C49A6C] text-[#FAF5EB]'
                 : 'bg-[#EDE2CC] border-[#8B5A2B] text-[#2C1A10]'
@@ -315,80 +316,14 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
             }`
       }
     >
-      {/* Top Intellectual Study Center Header with Show/Hide Toggle & Daf Yomi Completion */}
-      <div
-        className={`px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 ${
-          isDark ? 'border-[#5C3A21] bg-[#1D130D]' : 'border-[#CBB89D] bg-[#DFCFB4]'
-        }`}
-      >
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
-              isDark
-                ? 'bg-[#2B1D14] border-[#C49A6C]/50 text-[#FAF5EB] hover:bg-[#3A271B]'
-                : 'bg-[#FBF7F0] border-[#8B5A2B]/50 text-[#2C1A10] hover:bg-white'
-            }`}
-            title={
-              isCollapsed
-                ? 'ინტელექტუალური სასწავლო ცენტრის გამოჩენა'
-                : 'ინტელექტუალური სასწავლო ცენტრის დამალვა'
-            }
-          >
-            {isCollapsed ? (
-              <>
-                <Eye className="w-3.5 h-3.5 text-[#C49A6C]" />
-                <span>ჩვენება (28 სუპერ-ფუნქცია)</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-[#C49A6C]" />
-                <span>დამალვა</span>
-                <ChevronUp className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-          <div>
-            <div
-              className={`text-xs sm:text-sm font-extrabold uppercase tracking-wider ${
-                isDark ? 'text-[#EED9B9]' : 'text-[#4A2E1B]'
-              }`}
-            >
-              ინტელექტუალური სასწავლო ცენტრი (28 ულტრა-თანამედროვე მოდული)
-            </div>
-            <div className="text-[11px] opacity-80">
-              3D სინაფსური ხიდი • ბეთ-დინის სიმულატორი • სოფერის კალიგრაფია • დროის მანქანა • ფუძის სკანერი • შასის 3D გალაქტიკა
-            </div>
-          </div>
+      <header className="study-center-header">
+        <div className="study-center-title"><BookOpen /><h2>სასწავლო ცენტრი</h2><span>{tractateNameKa} {dafData.dafId}</span></div>
+        <div className="study-center-actions">
+          <Button variant="ghost" size="sm" onClick={() => onToggleDafComplete(currentDafKey)} aria-pressed={isDafCompleted} className="study-completion"><CheckCircle2 />{isDafCompleted ? 'შესწავლილია' : 'შესწავლილად მონიშვნა'}</Button>
+          <Button variant="ghost" size="icon" onClick={onToggleCollapse} aria-expanded={!isCollapsed} title={isCollapsed ? 'ჩვენება' : 'დამალვა'} aria-label={isCollapsed ? 'ჩვენება' : 'დამალვა'}>{isCollapsed ? <ChevronDown /> : <ChevronUp />}</Button>
+          <Button variant="ghost" size="icon" onClick={() => { if (isCollapsed) onToggleCollapse?.(); setIsStudyCenterMaximized(v => !v); }} title={isStudyCenterMaximized ? 'დაბრუნება' : 'სრული ეკრანი'} aria-label={isStudyCenterMaximized ? 'დაბრუნება' : 'სრული ეკრანი'}>{isStudyCenterMaximized ? <X /> : <Maximize2 />}</Button>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onToggleDafComplete(currentDafKey)}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
-              isDafCompleted
-                ? 'bg-[#2E6B3E] hover:bg-[#38804B] text-[#FBF7F0] shadow-sm'
-                : 'bg-[#6B4226] hover:bg-[#7D4E2D] text-[#FBF7F0] shadow-sm'
-            }`}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{isDafCompleted ? 'დაფი შესწავლილია' : 'მონიშნე შესწავლილად'}</span>
-          </button>
-          <WindowsWindowControls
-            isMinimized={isCollapsed}
-            onToggleMinimize={onToggleCollapse ? () => onToggleCollapse() : undefined}
-            isMaximized={isStudyCenterMaximized}
-            onToggleMaximize={() => {
-              if (isCollapsed && onToggleCollapse) onToggleCollapse();
-              setIsStudyCenterMaximized((v) => !v);
-            }}
-            isDark={isDark}
-            size="sm"
-          />
-        </div>
-      </div>
+      </header>
 
       <AnimatePresence initial={false}>
         {!isCollapsed && (
@@ -408,7 +343,7 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
         }`}
       >
         <SearchableSelect
-          label="სასწავლო ინსტრუმენტისა და 9 ახალი სუპერ-ფიჩერის არჩევა (დროფდაუნი):"
+          label="სასწავლო ინსტრუმენტი"
           options={
             [
               {
@@ -589,121 +524,15 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
             ] as SelectOption[]
           }
           value={activeTab}
-          onChange={(val) => setActiveTab(val as PanelTab)}
+          onChange={(val) => { setActiveTab(val as PanelTab); setIsActiveTabMinimized(false); }}
           isDark={isDark}
           compact
         />
       </div>
 
-      {/* Quick Access Modules Bar — Fits Cleanly on a Single Line (სწრაფი წვდომის მოდულები - ერთ ხაზზე) */}
-      <div className="relative w-full border-b select-none">
-        <button
-          type="button"
-          onClick={() => {
-            const el = document.getElementById('smart-study-quick-modules-row');
-            if (el) el.scrollBy({ left: -240, behavior: 'smooth' });
-          }}
-          className={`absolute left-0 top-0 bottom-0 z-10 w-7 flex items-center justify-center transition-all opacity-80 hover:opacity-100 cursor-pointer ${
-            isDark
-              ? 'bg-gradient-to-r from-[#19100B] via-[#19100B]/90 to-transparent text-[#EED9B9]'
-              : 'bg-gradient-to-r from-[#D7C4A8] via-[#D7C4A8]/90 to-transparent text-[#1D1108]'
-          }`}
-          title="მარცხნივ გადახვევა"
-        >
-          <ChevronLeft className="w-4 h-4 shrink-0" />
-        </button>
-
-        <div
-          id="smart-study-quick-modules-row"
-          className={`flex items-center gap-1.5 px-8 py-2 w-full overflow-x-auto no-scrollbar whitespace-nowrap touch-pan-x scroll-smooth select-none flex-nowrap ${
-            isDark ? 'border-[#5C3A21] bg-[#19100B]' : 'border-[#8B5A2B]/40 bg-[#D7C4A8]'
-          }`}
-        >
-          {(
-            [
-              { id: 'halacha-bridge', label: '1. ჰალახა', icon: Scale },
-              { id: 'audio-shiur', label: '2. აუდიო', icon: Volume2 },
-              { id: 'parallel-sugyot', label: '3. სინოპტიკა', icon: Columns },
-              { id: 'socratic-quiz', label: '4. ტესტი', icon: HelpCircle },
-              { id: 'realia-measures', label: '5. საზომები', icon: Calculator },
-              { id: 'flashcards-srs', label: '6. ბარათები', icon: Brain },
-              { id: 'daf-yomi-tracker', label: '7. დაფ იომი', icon: Calendar },
-              { id: 'sage-dynasty', label: '8. დინასტია', icon: Network },
-              { id: 'manuscripts-studio', label: '9. ხელნაწერი', icon: FileSpreadsheet },
-              { id: 'offline-library', label: '10. ოფლაინ შასი', icon: HardDrive },
-              { id: 'live-debate-theater', label: '11. დებატ-ხმა', icon: Mic },
-              { id: 'hermeneutics-logic', label: '12. 13 მიდოთი', icon: Scale },
-              { id: 'historical-atlas', label: '13. ატლასი', icon: Compass },
-              { id: 'machloket-arena', label: '14. მახლოკეთი', icon: Swords },
-              { id: 'tanakh-concordance', label: '15. ფასუკები', icon: BookOpen },
-              { id: 'daf-highlighter', label: '16. მარკერი', icon: Highlighter },
-              { id: 'gematria-lab', label: '17. გემატრია', icon: Sparkles },
-              { id: 'semicha-exam', label: '18. სმიხა', icon: Award },
-              { id: 'ein-yaakov', label: '19. ეინ იაკოვი', icon: Heart },
-              { id: 'seder-timer', label: '20. ტაიმერი', icon: Timer },
-              { id: 'sugya-flowchart', label: '21. რუკა-ხე', icon: GitMerge },
-              { id: 'sofer-rashi-trainer', label: '22. რაში/რ״თ', icon: Type },
-              { id: 'synaptic-bridge', label: '23. 3D სინაფსი', icon: Zap },
-              { id: 'beit-din-court', label: '24. ბეთ-დინი', icon: Scale },
-              { id: 'sofer-calligraphy', label: '25. კულმუსი', icon: Feather },
-              { id: 'time-machine', label: '26. დროის პორტალი', icon: Clock },
-              { id: 'aramaic-morphology', label: '27. ფუძე/שורש', icon: Layers },
-              { id: 'shas-galaxy', label: '28. შას-გალაქტიკა', icon: Globe },
-              { id: 'poskim-master-grid', label: '29. ფოსკიმ-ბადე', icon: Scale },
-              { id: 'daily-blessings', label: '30. კურთხევები', icon: Sparkles },
-            ] as const
-          ).map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <motion.button
-                key={tab.id}
-                type="button"
-                whileHover={{ y: -1, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-extrabold whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive
-                    ? 'text-[#FFFDF8] shadow-md'
-                    : isDark
-                      ? 'bg-[#2B1D14] text-[#EED9B9] border border-[#5C3A21] hover:border-[#C49A6C]'
-                      : 'bg-[#FDFBF7] text-[#1D1108] border border-[#8B5A2B]/60 hover:bg-white hover:border-[#6B4226]'
-                }`}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="smart-study-active-pill"
-                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                    className="absolute inset-0 rounded-xl bg-[#5C3417] border border-[#C49A6C] z-0"
-                  />
-                )}
-                <Icon className="relative z-10 w-3.5 h-3.5 shrink-0" />
-                <span className="relative z-10 whitespace-nowrap">{tab.label}</span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            const el = document.getElementById('smart-study-quick-modules-row');
-            if (el) el.scrollBy({ left: 240, behavior: 'smooth' });
-          }}
-          className={`absolute right-0 top-0 bottom-0 z-10 w-7 flex items-center justify-center transition-all opacity-80 hover:opacity-100 cursor-pointer ${
-            isDark
-              ? 'bg-gradient-to-l from-[#19100B] via-[#19100B]/90 to-transparent text-[#EED9B9]'
-              : 'bg-gradient-to-l from-[#D7C4A8] via-[#D7C4A8]/90 to-transparent text-[#1D1108]'
-          }`}
-          title="მარჯვნივ გადახვევა"
-        >
-          <ChevronRight className="w-4 h-4 shrink-0" />
-        </button>
-      </div>
-
       {/* Classic 5 Beit Midrash Navigation Tabs */}
       <div
-        className={`grid grid-cols-5 gap-1.5 p-2 border-b w-full ${
+        className={`study-core-tabs flex gap-1 p-2 border-b w-full overflow-x-auto ${
           isDark ? 'border-[#5C3A21] bg-[#1D130D]/90' : 'border-[#CBB89D] bg-[#E5D7BE]'
         }`}
       >
@@ -723,7 +552,7 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center justify-center gap-1 px-1.5 py-2 rounded-xl text-[11px] sm:text-xs font-extrabold truncate transition-all cursor-pointer ${
+              className={`shrink-0 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#6B4226] text-[#FBF7F0] shadow-sm'
                   : isDark
@@ -732,33 +561,10 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{tab.label}</span>
+              <span>{tab.label}</span>
             </button>
           );
         })}
-      </div>
-
-      {/* Active Tab Window Title Bar (Windows-style Minimize / Maximize / Restore) */}
-      <div
-        className={`px-3.5 py-2 border-b flex items-center justify-between gap-2 ${
-          isDark ? 'border-[#5C3A21] bg-[#1A110B]' : 'border-[#CBB89D] bg-[#EFE4CF]'
-        }`}
-      >
-        <div className="flex items-center gap-2 text-xs font-extrabold">
-          <Sparkles className="w-3.5 h-3.5 text-[#C49A6C]" />
-          <span>აქტიური ტაბი: {activeTab.toUpperCase()}</span>
-        </div>
-        <WindowsWindowControls
-          isMinimized={isActiveTabMinimized}
-          onToggleMinimize={() => setIsActiveTabMinimized((v) => !v)}
-          isMaximized={isActiveTabMaximized}
-          onToggleMaximize={() => {
-            setIsActiveTabMinimized(false);
-            setIsActiveTabMaximized((v) => !v);
-          }}
-          isDark={isDark}
-          size="sm"
-        />
       </div>
 
       {/* Tab Content */}
@@ -772,7 +578,7 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
                     ? 'bg-[#1D130D] border-[#C49A6C] text-[#FAF5EB]'
                     : 'bg-[#FAF4E4] border-[#8B5A2B] text-[#2C1A10]'
                 }`
-              : 'relative p-4 max-h-[680px] overflow-y-auto space-y-3'
+              : 'study-tool-content relative p-3 sm:p-4 space-y-3'
         }
       >
         {isActiveTabMaximized && (
