@@ -3150,7 +3150,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const rowWords = hotspots.filter((h) =>
             onExpectedSide(h) && (preferredType === 'torah-or'
               ? h.section === 'margin' && h.marginCommType === 'torah-or' && h.marginEntryKey === key
-              : h.rowId === targetRowId && h.section === 'margin' && h.marginCommType === preferredType));
+              : h.rowId === targetRowId && h.section === 'margin' && h.marginCommType === preferredType && h.marginEntryKey === key));
 
           return {
             targetHotspots: rowWords.length > 0 ? rowWords : [best],
