@@ -9,7 +9,7 @@ describe('isolated Vilna markers', () => {
   it('recognizes superscript dalet relative to body text', () => {
     expect(detectSmallMarkerToken('ד', 9, 'gemara', { bodyFontHeight: 14 })).toMatchObject({ isSmallMarker: true, key: 'ד', targetType: 'ein-mishpat' });
   });
-  it.each(['ב(', 'צ)', '(ק', '(א)'])('recognizes single-parenthesis %s', (word) => {
+  it.each(['ב(', 'צ)', '(ק', 'ד('])('recognizes single-parenthesis %s', (word) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara').targetType).toBe('masoret');
   });
   it.each(['דברים', 'אמרו', 'כדי', 'ב', 'ד', ')דף', '(שם)', 'של)', '(לו)', 'כא.'])('leaves normal text %s untouched', (word) => {
@@ -18,7 +18,7 @@ describe('isolated Vilna markers', () => {
   it('does not mark regular margin letters without entry context', () => {
     expect(detectSmallMarkerToken('ד', 12, 'margin').isSmallMarker).toBe(false);
   });
-  it.each([['((א))', 'bach'], ['[א]', 'gra'], ['(1)', 'torah-or']])('routes %s', (word, type) => {
+  it.each([['((א))', 'bach'], ['(א)', 'bach'], [')א(', 'bach'], ['[א]', 'gra'], [']א[', 'gra'], ['(1)', 'torah-or'], ['2', 'torah-or'], ['$', 'gilyon-hashas']])('routes %s', (word, type) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara').targetType).toBe(type);
   });
 });
