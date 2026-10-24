@@ -10,7 +10,7 @@ export function detectSmallMarkerToken(
   rawWord: string,
   pdfH: number,
   section: string,
-  context: { bodyFontHeight?: number; isolated?: boolean; isEntryStart?: boolean } = {}
+  context: { bodyFontHeight?: number; isolated?: boolean; isEntryStart?: boolean; abbreviation?: boolean } = {}
 ): {
   isSmallMarker: boolean;
   key?: string;
@@ -18,6 +18,14 @@ export function detectSmallMarkerToken(
   targetType?: MarginCommentaryType;
 } {
   const clean = rawWord.replace(/[\u200e\u200f\u202a-\u202e]/g, '').trim();
+
+  if (isCircleMarker(clean)) {
+    return { isSmallMarker: true, key: 'גליון', displayWord: clean, targetType: 'gilyon-hashas' };
+  }
+
+  // Letters glued to a quote mark (ב"ח, ז"ל, ת') are abbreviations, never reference markers.
+  if (context.abbreviation || /["'״׳`]/.test(clean)) return { isSmallMarker: false };
+
   const letters = clean.replace(/[^\u05D0-\u05EA]/g, '');
   // Short Hebrew words are not indices, even when surrounded by punctuation.
   const validIndex = !letters || /^[א-ת]$/.test(letters) || /^(?:י[א-ט]|[כלמנסעפצ][א-ט]|ט[וז])$/.test(letters);
@@ -25,13 +33,15 @@ export function detectSmallMarkerToken(
 
   if (clean.length > 8) return { isSmallMarker: false };
 
+  const small = context.bodyFontHeight
+    ? pdfH <= context.bodyFontHeight * 0.78
+    : pdfH <= 8.5;
+
   const digitMatch = clean.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
   if (digitMatch?.[1]) {
+    // Torah Or numerals are printed raised and small next to the verse.
+    if (!small && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
     return { isSmallMarker: true, key: digitMatch[1], displayWord: clean, targetType: 'torah-or' };
-  }
-
-  if (isCircleMarker(clean)) {
-    return { isSmallMarker: true, key: 'גליון', displayWord: clean, targetType: 'gilyon-hashas' };
   }
 
   // Hagahot HaGra: [א] (PDF may mirror it as ]א[)
@@ -53,17 +63,11 @@ export function detectSmallMarkerToken(
     return { isSmallMarker: true, key: singleParenMatch[1], displayWord: clean, targetType: 'masoret' };
   }
 
-  const dotMatch = clean.match(/^([\u05D0-\u05EA])[.,:;\-–—־]$/);
-  if (dotMatch?.[1]) {
-    return { isSmallMarker: true, key: dotMatch[1], displayWord: clean, targetType: 'ein-mishpat' };
-  }
-
-  const small = context.bodyFontHeight
-    ? pdfH <= context.bodyFontHeight * 0.78
-    : pdfH <= 8.5;
+  // Ein Mishpat: a bare small letter (optionally followed by a dot) standing alone between words.
   const marginEntry = section === 'margin' && context.isEntryStart === true;
-  if (/^[\u05D0-\u05EA]$/.test(clean) && context.isolated !== false && (small || marginEntry)) {
-    return { isSmallMarker: true, key: clean, displayWord: clean, targetType: 'ein-mishpat' };
+  const bare = clean.match(/^([\u05D0-\u05EA])[.,:;\-–—־]?$/);
+  if (bare?.[1] && context.isolated !== false && (small || marginEntry)) {
+    return { isSmallMarker: true, key: bare[1], displayWord: clean, targetType: 'ein-mishpat' };
   }
 
   return { isSmallMarker: false };

@@ -1617,7 +1617,7 @@ function extractHotspotsFromTextContent(
 
       if (tokens.length === 1) {
         const rawTok = tokens[0];
-        const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
+        const markerCheck = checkMarker(run, rawTok);
         const cleanWord = markerCheck.isSmallMarker
           ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
           : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
@@ -1687,7 +1687,7 @@ function extractHotspotsFromTextContent(
 
         for (let i = 0; i < effectiveTokens.length; i++) {
           const rawTok = effectiveTokens[i];
-          const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
+          const markerCheck = checkMarker(run, rawTok, i);
           const cleanWord = markerCheck.isSmallMarker
             ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
             : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
