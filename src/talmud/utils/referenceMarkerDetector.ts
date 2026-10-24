@@ -1,6 +1,6 @@
 import type { MarginCommentaryType } from '../components/VilnaPdfInteractiveViewer';
 
-export const CIRCLE_MARKER_PATTERN = /^[⦸⊙◉◎⊛●○◐◑◒◓⊗⊕]$/u;
+export const CIRCLE_MARKER_PATTERN = /^[⦸⊙◉◎⊛●○◐◑◒◓⊗⊕$]$/u;
 
 export function isCircleMarker(word: string): boolean {
   return CIRCLE_MARKER_PATTERN.test(word.replace(/[()\[\]\s]/g, ''));
@@ -34,18 +34,21 @@ export function detectSmallMarkerToken(
     return { isSmallMarker: true, key: 'גליון', displayWord: clean, targetType: 'gilyon-hashas' };
   }
 
-  const bracketMatch = clean.match(/^[\[]([\u05D0-\u05EA]{1,2})[\]]$/);
+  // Hagahot HaGra: [א] (PDF may mirror it as ]א[)
+  const bracketMatch = clean.match(/^[\[\]]([\u05D0-\u05EA]{1,2})[\[\]]$/);
   if (bracketMatch?.[1]) {
     return { isSmallMarker: true, key: bracketMatch[1], displayWord: clean, targetType: 'gra' };
   }
 
-  const doubleParenMatch = clean.match(/^\(\(([\u05D0-\u05EA]{1,2})\)\)$/);
+  // Hagahot HaBach: letter closed by parentheses on BOTH sides — (א) or ((א)); PDF may mirror them.
+  const doubleParenMatch = clean.match(/^[()]{1,2}([\u05D0-\u05EA]{1,2})[()]{1,2}$/);
   if (doubleParenMatch?.[1]) {
     return { isSmallMarker: true, key: doubleParenMatch[1], displayWord: clean, targetType: 'bach' };
   }
 
   const singleParenMatch =
-    clean.match(/^[()]([\u05D0-\u05EA]{1,2})[()]?[.:]?$/) || clean.match(/^([\u05D0-\u05EA]{1,2})[()][.:]?$/);
+    // Masoret HaShas: one-sided parenthesis — (ד or ד)
+    clean.match(/^[()]([\u05D0-\u05EA]{1,2})[.:]?$/) || clean.match(/^([\u05D0-\u05EA]{1,2})[()][.:]?$/);
   if (singleParenMatch?.[1]) {
     return { isSmallMarker: true, key: singleParenMatch[1], displayWord: clean, targetType: 'masoret' };
   }

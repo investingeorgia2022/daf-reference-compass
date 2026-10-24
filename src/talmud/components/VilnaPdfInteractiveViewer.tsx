@@ -1482,7 +1482,7 @@ function extractHotspotsFromTextContent(
     if (!isSiddurPdf && bucket.runs.length > 1) {
       const isPiece = (s: string) => /^[()\[\]]{1,2}$|^[\u05D0-\u05EA]{1,2}$/.test(s);
       const isMarkerShape = (s: string) =>
-        /^[(\[]{1,2}[\u05D0-\u05EA]{1,2}[)\]]{0,2}$|^[\u05D0-\u05EA]{1,2}[)\]]{1,2}$/.test(s);
+        /^[()\[\]]{0,2}[\u05D0-\u05EA]{1,2}[()\[\]]{0,2}$/.test(s);
       const joined: RawPdfRun[] = [];
       for (let rIdx = 0; rIdx < bucket.runs.length; rIdx++) {
         const cur = { ...bucket.runs[rIdx] };
