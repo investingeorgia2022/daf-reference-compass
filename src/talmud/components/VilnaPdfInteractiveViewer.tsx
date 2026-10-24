@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { Loader2, ChevronUp, ChevronDown, GripHorizontal, X, Copy, BookOpen, Check } from 'lucide-react';
 import {
   DafPageData,
