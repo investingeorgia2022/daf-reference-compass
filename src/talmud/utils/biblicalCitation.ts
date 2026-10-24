@@ -8,15 +8,17 @@ const VALUES: Record<string, number> = { א:1,ב:2,ג:3,ד:4,ה:5,ו:6,ז:7,ח:8
 function numberOf(s: string): number {
   return /^\d+$/.test(s) ? Number(s) : [...s.replace(/[״׳"']/g,'')].reduce((n,c) => n + (VALUES[c] ?? 0),0);
 }
-export interface BiblicalCitation { book: string; bookHe: string; chapter: number; verse?: number; quote: string; label: string }
+export interface BiblicalCitation { book: string; bookHe: string; chapter: number; verse?: number | undefined; quote: string; label: string }
 export function parseBiblicalCitation(text: string): BiblicalCitation | null {
   const pattern = new RegExp(`(${Object.keys(BOOKS).join('|')})\\s+([א-ת״׳"']{1,6}|\\d{1,3})(?:[\\s,:]+([א-ת״׳"']{1,6}|\\d{1,3})(?=[)\\]\\s.:]|$))?`, 'u');
   const m = text.match(pattern);
-  if (!m || m.index === undefined) return null;
+  if (!m || m.index === undefined || !m[1] || !m[2]) return null;
+  const book = BOOKS[m[1]];
+  if (!book) return null;
   const chapter = numberOf(m[2]);
   const verse = m[3] ? numberOf(m[3]) : undefined;
   if (!chapter || chapter > 150 || (verse !== undefined && (!verse || verse > 176))) return null;
-  return { book: BOOKS[m[1]], bookHe: m[1], chapter, verse, quote: text.slice(0,m.index).replace(/[()[\]]/g,'').trim(), label: `${m[1]} ${chapter}${verse ? `:${verse}` : ''}` };
+  return { book, bookHe: m[1], chapter, verse, quote: text.slice(0,m.index).replace(/[()[\]]/g,'').trim(), label: `${m[1]} ${chapter}${verse ? `:${verse}` : ''}` };
 }
 export function plainBiblicalText(text: string): string {
   return text.replace(/<[^>]*>/g,'').replace(/[\u0591-\u05c7]/g,'').replace(/[^א-ת\s]/g,' ').replace(/\s+/g,' ').trim();

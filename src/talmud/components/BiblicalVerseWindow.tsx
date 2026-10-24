@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BiblicalCitation, findQuotedVerse } from '../utils/biblicalCitation';
 
 export function BiblicalVerseWindow({ citation, onClose }: { citation: BiblicalCitation; onClose: () => void }) {
-  const [result, setResult] = useState<{ verses: string[]; verse?: number } | null>(null);
+  const [result, setResult] = useState<{ verses: string[]; verse: number | undefined } | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
