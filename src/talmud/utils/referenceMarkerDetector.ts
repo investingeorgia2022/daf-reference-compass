@@ -21,7 +21,7 @@ export function detectSmallMarkerToken(
   const letters = clean.replace(/[^\u05D0-\u05EA]/g, '');
   // Short Hebrew words are not indices, even when surrounded by punctuation.
   const validIndex = !letters || /^[א-ת]$/.test(letters) || /^(?:י[א-ט]|[כלמנסעפצ][א-ט]|ט[וז])$/.test(letters);
-  if (!validIndex) return { isSmallMarker: false };
+  if (!validIndex || ['דף', 'שם', 'של', 'לו', 'כו'].includes(letters)) return { isSmallMarker: false };
 
   if (clean.length > 8) return { isSmallMarker: false };
 
