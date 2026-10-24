@@ -994,6 +994,7 @@ function extractHotspotsFromTextContent(
 ): VilnaPdfHotspot[] {
   interface RawPdfRun {
     str: string;
+    quoteAdjacent?: boolean;
     vpLeft: number;
     vpTop: number;
     vpWidth: number;
@@ -1162,7 +1163,19 @@ function extractHotspotsFromTextContent(
   let rightMarginComm: MarginCommentaryType = isAmudBet ? 'ein-mishpat' : 'masoret';
   let rightMarginKey: string | undefined;
 
-  for (const run of runs) {
+  // Walk each margin column top-to-bottom (right-to-left within a line) so a commentary header
+  // applies to the entries printed below it, regardless of the PDF stream order.
+  const marginWalk = runs
+    .filter((r) => r.section === 'margin')
+    .sort((a, b) => {
+      const sideDiff = Number(a.leftPct >= 50) - Number(b.leftPct >= 50);
+      if (sideDiff !== 0) return sideDiff;
+      const ya = a.vpTop + a.vpHeight * 0.5;
+      const yb = b.vpTop + b.vpHeight * 0.5;
+      if (Math.abs(ya - yb) > Math.max(2, Math.min(a.vpHeight, b.vpHeight) * 0.5)) return ya - yb;
+      return b.vpLeft + b.vpWidth - (a.vpLeft + a.vpWidth);
+    });
+  for (const run of marginWalk) {
     if (run.section === 'margin') {
       const isRightCol = run.leftPct >= 50;
       let activeMarginComm = isRightCol ? rightMarginComm : leftMarginComm;
