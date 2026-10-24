@@ -552,6 +552,7 @@ export const SmartStudyPanels: React.FC<SmartStudyPanelsProps> = ({
             <button
               key={tab.id}
               type="button"
+              aria-pressed={isActive}
               onClick={() => setActiveTab(tab.id)}
               className={`shrink-0 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer ${
                 isActive
