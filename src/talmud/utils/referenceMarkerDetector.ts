@@ -18,6 +18,10 @@ export function detectSmallMarkerToken(
   targetType?: MarginCommentaryType;
 } {
   const clean = rawWord.replace(/[\u200e\u200f\u202a-\u202e]/g, '').trim();
+  const letters = clean.replace(/[^\u05D0-\u05EA]/g, '');
+  // Short Hebrew words are not indices, even when surrounded by punctuation.
+  const validIndex = !letters || /^[א-ת]$/.test(letters) || /^(?:י[א-ט]|[כלמנסעפצ][א-ט]|ט[וז])$/.test(letters);
+  if (!validIndex) return { isSmallMarker: false };
 
   if (clean.length > 8) return { isSmallMarker: false };
 
@@ -46,7 +50,7 @@ export function detectSmallMarkerToken(
     return { isSmallMarker: true, key: singleParenMatch[1], displayWord: clean, targetType: 'masoret' };
   }
 
-  const dotMatch = clean.match(/^([\u05D0-\u05EA]{1,2})[.,:;\-–—־]$/);
+  const dotMatch = clean.match(/^([\u05D0-\u05EA])[.,:;\-–—־]$/);
   if (dotMatch?.[1]) {
     return { isSmallMarker: true, key: dotMatch[1], displayWord: clean, targetType: 'ein-mishpat' };
   }

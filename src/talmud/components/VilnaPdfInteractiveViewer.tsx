@@ -3953,10 +3953,12 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
       // Scroll to the real target element (measured live, so zoom transforms and
       // nested scroll containers are accounted for). Falls back to the page box.
-      const targetEl =
-        (targetHotspot && document.getElementById(`pdf-hotspot-${targetHotspot.id}`)) ||
-        pageContainerRef.current;
-      if (targetEl) scrollToTarget(targetEl);
+      requestAnimationFrame(() => {
+        const page = pageContainerRef.current;
+        const targetEl = page?.querySelector('[data-marker-navigation-target]') ||
+          (targetHotspot && page?.querySelector(`[id="pdf-hotspot-${targetHotspot.id}"]`));
+        if (targetEl instanceof HTMLElement) scrollToTarget(targetEl);
+      });
 
       return true;
     },
@@ -4375,6 +4377,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           {blinkingTarget && (
             <div
               id="active-blinking-marker-target"
+              data-marker-navigation-target="true"
               style={{
                 left: `${blinkingTarget.leftPct}%`,
                 top: `${blinkingTarget.topPct}%`,

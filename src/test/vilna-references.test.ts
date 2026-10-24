@@ -12,7 +12,7 @@ describe('isolated Vilna markers', () => {
   it.each(['ב(', 'צ)', '(ק', '(א)'])('recognizes single-parenthesis %s', (word) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara').targetType).toBe('masoret');
   });
-  it.each(['דברים', 'אמרו', 'כדי', 'ב', 'ד'])('leaves normal text %s untouched', (word) => {
+  it.each(['דברים', 'אמרו', 'כדי', 'ב', 'ד', ')דף', '(שם)', 'של)', '(לו)', 'כא.'])('leaves normal text %s untouched', (word) => {
     expect(detectSmallMarkerToken(word, 12, 'gemara').isSmallMarker).toBe(false);
   });
   it('does not mark regular margin letters without entry context', () => {
