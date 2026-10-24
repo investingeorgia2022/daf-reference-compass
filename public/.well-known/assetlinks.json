@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.talmudbavli3d.shas",
+        "sha256_cert_fingerprints": ["CC:74:A0:A7:25:8B:A5:7A:0A:D6:6A:6E:12:BC:30:A4:A7:E4:88:E7:FE:98:D3:95:B5:43:E3:01:3E:0F:35:FA"]
+      }
+    }]
