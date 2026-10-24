@@ -40,7 +40,7 @@ export function detectSmallMarkerToken(
   const digitMatch = clean.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
   if (digitMatch?.[1]) {
     // Torah Or numerals are printed raised and small next to the verse.
-    if (!small && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
+    if (context.bodyFontHeight && !small && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
     return { isSmallMarker: true, key: digitMatch[1], displayWord: clean, targetType: 'torah-or' };
   }
 
