@@ -10,33 +10,130 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTalmudAiNavigateRouteImport } from './routes/api/talmud/ai-navigate'
+import { Route as ApiTalmudAnalyzeRouteImport } from './routes/api/talmud/analyze'
+import { Route as ApiTalmudAskGeminiRouteImport } from './routes/api/talmud/ask-gemini'
+import { Route as ApiTalmudChavrutaRouteImport } from './routes/api/talmud/chavruta'
+import { Route as ApiTalmudSourceLookupRouteImport } from './routes/api/talmud/source-lookup'
+import { Route as ApiTalmudTranslateProfessionalRouteImport } from './routes/api/talmud/translate-professional'
+import { Route as ApiTalmudVoiceTranscribeRouteImport } from './routes/api/talmud/voice-transcribe'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTalmudAiNavigateRoute = ApiTalmudAiNavigateRouteImport.update({
+  id: '/api/talmud/ai-navigate',
+  path: '/api/talmud/ai-navigate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTalmudAnalyzeRoute = ApiTalmudAnalyzeRouteImport.update({
+  id: '/api/talmud/analyze',
+  path: '/api/talmud/analyze',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTalmudAskGeminiRoute = ApiTalmudAskGeminiRouteImport.update({
+  id: '/api/talmud/ask-gemini',
+  path: '/api/talmud/ask-gemini',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTalmudChavrutaRoute = ApiTalmudChavrutaRouteImport.update({
+  id: '/api/talmud/chavruta',
+  path: '/api/talmud/chavruta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTalmudSourceLookupRoute = ApiTalmudSourceLookupRouteImport.update({
+  id: '/api/talmud/source-lookup',
+  path: '/api/talmud/source-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTalmudTranslateProfessionalRoute =
+  ApiTalmudTranslateProfessionalRouteImport.update({
+    id: '/api/talmud/translate-professional',
+    path: '/api/talmud/translate-professional',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTalmudVoiceTranscribeRoute =
+  ApiTalmudVoiceTranscribeRouteImport.update({
+    id: '/api/talmud/voice-transcribe',
+    path: '/api/talmud/voice-transcribe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/talmud/ai-navigate': typeof ApiTalmudAiNavigateRoute
+  '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
+  '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
+  '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
+  '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/talmud/ai-navigate': typeof ApiTalmudAiNavigateRoute
+  '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
+  '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
+  '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
+  '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/talmud/ai-navigate': typeof ApiTalmudAiNavigateRoute
+  '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
+  '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
+  '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
+  '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/talmud/ai-navigate'
+    | '/api/talmud/analyze'
+    | '/api/talmud/ask-gemini'
+    | '/api/talmud/chavruta'
+    | '/api/talmud/source-lookup'
+    | '/api/talmud/translate-professional'
+    | '/api/talmud/voice-transcribe'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/talmud/ai-navigate'
+    | '/api/talmud/analyze'
+    | '/api/talmud/ask-gemini'
+    | '/api/talmud/chavruta'
+    | '/api/talmud/source-lookup'
+    | '/api/talmud/translate-professional'
+    | '/api/talmud/voice-transcribe'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/talmud/ai-navigate'
+    | '/api/talmud/analyze'
+    | '/api/talmud/ask-gemini'
+    | '/api/talmud/chavruta'
+    | '/api/talmud/source-lookup'
+    | '/api/talmud/translate-professional'
+    | '/api/talmud/voice-transcribe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiTalmudAiNavigateRoute: typeof ApiTalmudAiNavigateRoute
+  ApiTalmudAnalyzeRoute: typeof ApiTalmudAnalyzeRoute
+  ApiTalmudAskGeminiRoute: typeof ApiTalmudAskGeminiRoute
+  ApiTalmudChavrutaRoute: typeof ApiTalmudChavrutaRoute
+  ApiTalmudSourceLookupRoute: typeof ApiTalmudSourceLookupRoute
+  ApiTalmudTranslateProfessionalRoute: typeof ApiTalmudTranslateProfessionalRoute
+  ApiTalmudVoiceTranscribeRoute: typeof ApiTalmudVoiceTranscribeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +145,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/talmud/ai-navigate': {
+      id: '/api/talmud/ai-navigate'
+      path: '/api/talmud/ai-navigate'
+      fullPath: '/api/talmud/ai-navigate'
+      preLoaderRoute: typeof ApiTalmudAiNavigateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/analyze': {
+      id: '/api/talmud/analyze'
+      path: '/api/talmud/analyze'
+      fullPath: '/api/talmud/analyze'
+      preLoaderRoute: typeof ApiTalmudAnalyzeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/ask-gemini': {
+      id: '/api/talmud/ask-gemini'
+      path: '/api/talmud/ask-gemini'
+      fullPath: '/api/talmud/ask-gemini'
+      preLoaderRoute: typeof ApiTalmudAskGeminiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/chavruta': {
+      id: '/api/talmud/chavruta'
+      path: '/api/talmud/chavruta'
+      fullPath: '/api/talmud/chavruta'
+      preLoaderRoute: typeof ApiTalmudChavrutaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/source-lookup': {
+      id: '/api/talmud/source-lookup'
+      path: '/api/talmud/source-lookup'
+      fullPath: '/api/talmud/source-lookup'
+      preLoaderRoute: typeof ApiTalmudSourceLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/translate-professional': {
+      id: '/api/talmud/translate-professional'
+      path: '/api/talmud/translate-professional'
+      fullPath: '/api/talmud/translate-professional'
+      preLoaderRoute: typeof ApiTalmudTranslateProfessionalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talmud/voice-transcribe': {
+      id: '/api/talmud/voice-transcribe'
+      path: '/api/talmud/voice-transcribe'
+      fullPath: '/api/talmud/voice-transcribe'
+      preLoaderRoute: typeof ApiTalmudVoiceTranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiTalmudAiNavigateRoute: ApiTalmudAiNavigateRoute,
+  ApiTalmudAnalyzeRoute: ApiTalmudAnalyzeRoute,
+  ApiTalmudAskGeminiRoute: ApiTalmudAskGeminiRoute,
+  ApiTalmudChavrutaRoute: ApiTalmudChavrutaRoute,
+  ApiTalmudSourceLookupRoute: ApiTalmudSourceLookupRoute,
+  ApiTalmudTranslateProfessionalRoute: ApiTalmudTranslateProfessionalRoute,
+  ApiTalmudVoiceTranscribeRoute: ApiTalmudVoiceTranscribeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
