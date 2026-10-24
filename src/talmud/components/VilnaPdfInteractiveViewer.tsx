@@ -15,6 +15,9 @@ import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarker
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
+import { getIndependentMarkerBoxes, getGilyonNote } from '../utils/pdfMarkerNavigation';
+import { parseBiblicalCitation } from '../utils/biblicalCitation';
+import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -1142,7 +1145,7 @@ function extractHotspotsFromTextContent(
       ) < 1.25 &&
       /^[()\[\]\u05D0-\u05EA]{1,4}$/.test(cur.str + initialRuns[i + 1].str) &&
       // A complete one-sided marker followed by another letter is TWO indices, not a word.
-      !/^[א-ת]{1,2}[()]$|^[()][א-ת]{1,2}$/.test(cur.str) &&
+      canJoinMarkerFragments(cur.str, initialRuns[i + 1].str, cur.str + initialRuns[i + 1].str) &&
       (/[\(\)\[\]]/.test(cur.str) || /[\(\)\[\]]/.test(initialRuns[i + 1].str))
     ) {
       const nxt = initialRuns[++i];
@@ -1249,7 +1252,7 @@ function extractHotspotsFromTextContent(
         }
       } else if (
         activeMarginComm === 'bach' &&
-        /^[\(\)][\u05D0-\u05EA]{1,2}[\(\)]?$/.test(firstTok)
+        /^[\(\)]{1,2}[\u05D0-\u05EA]{1,2}[\(\)]{1,2}$/.test(firstTok)
       ) {
         activeMarginKey = firstTok.replace(/[^\u05D0-\u05EA]/g, '');
       } else if (
@@ -1881,7 +1884,7 @@ function extractHotspotsFromTextContent(
     });
   }
 
-  return hotspots;
+  return getIndependentMarkerBoxes(hotspots);
 }
 
 export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps> = ({
@@ -1919,6 +1922,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
+  const [biblicalCitation, setBiblicalCitation] = useState(null);
   const isAmudBet = dafData.dafId.endsWith('b');
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
 
@@ -3091,6 +3095,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           return entry.length ? { targetHotspots: entry, commType: preferredType, key, targetSentenceId } : null;
         }
 
+        if (preferredType === 'gilyon-hashas') {
+          const entry = getGilyonNote(hotspots, markerHotspot.section, expectedSide);
+          return entry.length ? { targetHotspots: entry, commType: preferredType, key, targetSentenceId } : null;
+        }
+
         const isGilyonEntry = (h: VilnaPdfHotspot) =>
           h.marginCommType === 'gilyon-hashas' ||
           h.word.includes('גליון') ||
@@ -3123,7 +3132,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         if (candidates.length > 0) {
           // Prefer the printed entry key itself, then its row.
-          const keyGlyphs = candidates.filter((h) => h.isSmallMarker);
+          const keyGlyphs = candidates.filter((h) => h.isSmallMarker && h.markerTargetType === preferredType);
           const pool = keyGlyphs.length > 0 ? keyGlyphs : candidates;
           let best = pool[0];
           for (const c of pool) {
@@ -3134,13 +3143,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             }
           }
 
-          const actualComm = best.marginCommType || preferredType;
+          const actualComm = preferredType;
           const targetRowId = best.rowId;
           // Words on the same row, confined to the same margin column.
           const rowWords = hotspots.filter((h) =>
             onExpectedSide(h) && (preferredType === 'torah-or'
               ? h.section === 'margin' && h.marginCommType === 'torah-or' && h.marginEntryKey === key
-              : h.rowId === targetRowId));
+              : h.rowId === targetRowId && h.section === 'margin' && h.marginCommType === preferredType));
 
           return {
             targetHotspots: rowWords.length > 0 ? rowWords : [best],
@@ -4322,6 +4331,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     [pdfLines, hotspots, tractateNameHe, tractateNameKa, dafData.dafId, updateStoppedRow]
   );
 
+  const openBiblicalCitation = (idx: number): boolean => {
+    const spot = hotspots[idx];
+    if (!spot) return false;
+    const row = hotspots.filter(h => h.rowId === spot.rowId).sort((a,b) => b.leftPct - a.leftPct);
+    const citation = parseBiblicalCitation(row.map(h => h.word).join(' '));
+    if (!citation) return false;
+    // Only the printed citation is a link, not every word in its quotation row.
+    const text = spot.word.replace(/[()[\].,:;״׳"']/g,'').trim();
+    const numberToken = /^[א-ת]{1,4}$/.test(text) &&
+      row.some(h => h.word.includes(citation.bookHe) && Math.abs(h.leftPct-spot.leftPct) < 12);
+    if (!spot.word.includes(citation.bookHe) && !numberToken) return false;
+    setSelectedRange(null); setShowRangeHandles(false);
+    setBiblicalCitation(citation);
+    return true;
+  };
+
   const handleWordClick = (e: React.MouseEvent<HTMLElement>, idx: number) => {
     e.stopPropagation();
     clearLongPressTimer();
@@ -4337,6 +4362,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
     const clickedHotspot = hotspots[idx];
     if (!clickedHotspot) return;
+    if (openBiblicalCitation(idx)) return;
 
     // When tapping on an index marker (either in text or in the margin commentary):
     // Directly focus on the connected target with smooth scroll & blink — DO NOT open any note window!
