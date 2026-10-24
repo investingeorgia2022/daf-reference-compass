@@ -680,7 +680,7 @@ export function App() {
   const [isOfflineLibraryModalOpen, setIsOfflineLibraryModalOpen] = useState<boolean>(false);
   const [isJoystickOpen, setIsJoystickOpen] = useState<boolean>(false);
   const [isStudyCenterCollapsed, setIsStudyCenterCollapsed] = useState<boolean>(false);
-  const [activeRealm, setActiveRealm] = useState<SacredRealmId>('torah');
+  const [activeRealm, setActiveRealm] = useState<SacredRealmId>('talmud');
   const [realmTarget, setRealmTarget] = useState<{ bookId?: string; chapter?: number }>({});
   const [citationReturnStack, setCitationReturnStack] = useState<CitationReturnPoint[]>([]);
   const [globalFocusedPane, setGlobalFocusedPane] = useState<{
