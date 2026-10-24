@@ -10,7 +10,7 @@ export function detectSmallMarkerToken(
   rawWord: string,
   pdfH: number,
   section: string,
-  context: { bodyFontHeight?: number; isolated?: boolean; isEntryStart?: boolean; abbreviation?: boolean } = {}
+  context: { bodyFontHeight?: number; isolated?: boolean; isEntryStart?: boolean; abbreviation?: boolean; raised?: boolean } = {}
 ): {
   isSmallMarker: boolean;
   key?: string;
@@ -37,10 +37,10 @@ export function detectSmallMarkerToken(
     ? pdfH <= context.bodyFontHeight * 0.78
     : pdfH <= 8.5;
 
-  const digitMatch = clean.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
+  const digitMatch = clean.match(/^[.(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
   if (digitMatch?.[1]) {
     // Torah Or numerals are printed raised and small next to the verse.
-    if (context.bodyFontHeight && !small && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
+    if (context.bodyFontHeight && (!small || context.raised === false) && !(section === 'margin' && context.isEntryStart)) return { isSmallMarker: false };
     return { isSmallMarker: true, key: digitMatch[1], displayWord: clean, targetType: 'torah-or' };
   }
 
@@ -66,7 +66,7 @@ export function detectSmallMarkerToken(
   // Ein Mishpat: a bare small letter (optionally followed by a dot) standing alone between words.
   const marginEntry = section === 'margin' && context.isEntryStart === true;
   const bare = clean.match(/^([\u05D0-\u05EA])[.,:;\-–—־]?$/);
-  if (bare?.[1] && context.isolated !== false && (small || marginEntry)) {
+  if (bare?.[1] && context.isolated !== false && ((small && context.raised !== false) || marginEntry)) {
     return { isSmallMarker: true, key: bare[1], displayWord: clean, targetType: 'ein-mishpat' };
   }
 

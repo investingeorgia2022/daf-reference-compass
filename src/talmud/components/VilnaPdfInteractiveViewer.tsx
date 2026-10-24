@@ -1140,6 +1140,8 @@ function extractHotspotsFromTextContent(
         initialRuns[i + 1].leftPct - (cur.leftPct + (cur.vpWidth / vpW) * 100)
       ) < 1.25 &&
       /^[()\[\]\u05D0-\u05EA]{1,4}$/.test(cur.str + initialRuns[i + 1].str) &&
+      // A complete one-sided marker followed by another letter is TWO indices, not a word.
+      !/^[א-ת]{1,2}[()]$|^[()][א-ת]{1,2}$/.test(cur.str) &&
       (/[\(\)\[\]]/.test(cur.str) || /[\(\)\[\]]/.test(initialRuns[i + 1].str))
     ) {
       const nxt = initialRuns[++i];
@@ -1173,7 +1175,7 @@ function extractHotspotsFromTextContent(
       continue;
     }
     // Discard lonely bracket without any letter or digit
-    if (!/[\u0590-\u05FF0-9]/.test(cur.str) && !isCircleMarker(cur.str)) continue;
+    if (!/[\u0590-\u05FF0-9]/.test(cur.str) && !isCircleMarker(cur.str) && !/^[()[\]]{1,2}$/.test(cur.str)) continue;
     runs.push(cur);
   }
 
@@ -1238,7 +1240,9 @@ function extractHotspotsFromTextContent(
       const firstTok = (s.split(/\s+/)[0] || '').trim();
 
       // Check Torah Or digits (e.g. "2.", "2", "2-", "[2]")
-      const torahOrMatch = firstTok.match(/^[(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/);
+      const torahOrMatch = activeMarginComm === 'torah-or'
+        ? firstTok.match(/^[.(\[]?([0-9]{1,2})[)\].,:;\-–—־]?$/)
+        : null;
       if (torahOrMatch) {
         activeMarginKey = torahOrMatch[1];
         if (!activeMarginComm || activeMarginComm === 'ein-mishpat') {
@@ -1556,7 +1560,8 @@ function extractHotspotsFromTextContent(
           // RTL: the run further right is read first.
           const combined = cur.vpLeft >= nxt.vpLeft ? `${a}${b}` : `${b}${a}`;
           const hasBracket = /[()\[\]]/.test(combined);
-          if (small && near && hasBracket && (isPiece(a) || isMarkerShape(a)) && isPiece(b) && isMarkerShape(combined)) {
+          const addsOnlyLetter = /[א-ת]/.test(a) && /^[א-ת]+$/.test(b);
+          if (small && near && hasBracket && !addsOnlyLetter && (isPiece(a) || isMarkerShape(a)) && isPiece(b) && isMarkerShape(combined)) {
             rIdx++;
             const minL = Math.min(cur.vpLeft, nxt.vpLeft);
             const maxR = Math.max(curR, nxtR);
@@ -1599,8 +1604,13 @@ function extractHotspotsFromTextContent(
         }
       });
     }
+    const bodyRuns = bucket.runs.filter((r) => r.pdfH >= bodyFontHeight * 0.85 && /[א-ת]{2}/.test(r.str));
+    const bodyBaseline = bodyRuns.length
+      ? bodyRuns.reduce((sum, r) => sum + r.vpTop + r.vpHeight, 0) / bodyRuns.length
+      : null;
     const markerContext = (run, token, tokenIdx = 0) => ({
       bodyFontHeight,
+      raised: bodyBaseline === null ? false : bodyBaseline - (run.vpTop + run.vpHeight) >= Math.max(0.8, run.vpHeight * 0.15),
       isolated: run.str.trim() === token || /\s/.test(run.str),
       isEntryStart: bucket.section === 'margin' && run === bucket.runs[0] && tokenIdx === 0,
       abbreviation: abbreviationRuns.has(run) || run.quoteAdjacent === true,
@@ -1932,7 +1942,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     labelHe: string;
   } | null>(null);
 
-  // Blinking Target Region when user taps a small index marker ((א), (א, א, 1..9) a second time
+  // Marker navigation is independent of the two-stage word-selection workflow.
   const [blinkingTarget, setBlinkingTarget] = useState<BlinkingTargetRegion | null>(null);
 
   // Drag / Long-press Copy/Paste state
@@ -1942,6 +1952,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerDownPosRef = useRef<{ x: number; y: number; idx: number } | null>(null);
   const suppressNextClickRef = useRef<boolean>(false);
+  const markerTouchRef = useRef<{ idx: number; x: number; y: number } | null>(null);
+  const lastMarkerTouchRef = useRef(0);
 
   // Guard ref to prevent infinite effect loop when externalStoppedRowStepTrigger fires
   const lastHandledTriggerSeqRef = useRef<number>(0);
@@ -4944,6 +4956,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   onTouchStart={(e) => {
                     if (h.isSmallMarker) {
                       suppressNextClickRef.current = false;
+                      const touch = e.touches.length === 1 ? e.touches[0] : null;
+                      markerTouchRef.current = touch ? { idx, x: touch.clientX, y: touch.clientY } : null;
                       e.stopPropagation();
                       return;
                     }
@@ -4960,12 +4974,32 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                       suppressNextClickRef.current = true;
                     }
                   }}
-                  onTouchMove={handleWordTouchMove}
-                  onTouchEnd={clearLongPressTimer}
-                  onTouchCancel={clearLongPressTimer}
+                  onTouchMove={(e) => {
+                    if (h.isSmallMarker) {
+                      const start = markerTouchRef.current;
+                      const touch = e.touches[0];
+                      if (!start || !touch || e.touches.length !== 1 || Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) markerTouchRef.current = null;
+                    } else handleWordTouchMove(e);
+                  }}
+                  onTouchEnd={(e) => {
+                    const start = markerTouchRef.current;
+                    markerTouchRef.current = null;
+                    if (h.isSmallMarker && start?.idx === idx && e.touches.length === 0) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      clearLongPressTimer();
+                      suppressNextClickRef.current = false;
+                      lastMarkerTouchRef.current = Date.now();
+                      setSelectedRange(null);
+                      setShowRangeHandles(false);
+                      triggerJumpAndBlinkForMarker(h);
+                    } else clearLongPressTimer();
+                  }}
+                  onTouchCancel={() => { markerTouchRef.current = null; clearLongPressTimer(); }}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
+                    if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
                     handleWordClick(e, idx);
                   }}
                   style={{
