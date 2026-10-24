@@ -11,7 +11,7 @@ import {
   SelectedDafTarget,
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
-import { detectSmallMarkerToken } from '../utils/referenceMarkerDetector';
+import { detectSmallMarkerToken, isCircleMarker } from '../utils/referenceMarkerDetector';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import {
   translateToGeorgianLive,
@@ -1007,7 +1007,7 @@ function extractHotspotsFromTextContent(
         .trim();
     }
     // Accept Hebrew letters, digits (for Torah Or 1..9), and parentheses/brackets (for (א), [א])
-    if (!str || !/[\u0590-\u05FF0-9\(\)\[\]]/.test(str)) continue;
+    if (!str || (!/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
     // Skip pure punctuation like standalone "." or ":" or "'" unless it's a bracket or digit
     if (/^[.,:;'"״׳\-–—]+$/.test(str)) continue;
 
@@ -1100,7 +1100,7 @@ function extractHotspotsFromTextContent(
       Math.abs(
         initialRuns[i + 1].leftPct - (cur.leftPct + (cur.vpWidth / vpW) * 100)
       ) < 1.25 &&
-      (cur.str.length <= 2 || initialRuns[i + 1].str.length <= 2) &&
+      /^[()\[\]\u05D0-\u05EA]{1,4}$/.test(cur.str + initialRuns[i + 1].str) &&
       (/[\(\)\[\]]/.test(cur.str) || /[\(\)\[\]]/.test(initialRuns[i + 1].str))
     ) {
       const nxt = initialRuns[++i];
@@ -1113,7 +1113,7 @@ function extractHotspotsFromTextContent(
       cur.pdfH = Math.min(cur.pdfH, nxt.pdfH);
     }
     // Discard lonely bracket without any letter or digit
-    if (!/[\u0590-\u05FF0-9]/.test(cur.str)) continue;
+    if (!/[\u0590-\u05FF0-9]/.test(cur.str) && !isCircleMarker(cur.str)) continue;
     runs.push(cur);
   }
 
@@ -1461,8 +1461,14 @@ function extractHotspotsFromTextContent(
       if (bucket.runs.length === 0) continue;
     }
 
+    const bodyFontHeight = Math.max(...bucket.runs.map((r) => r.pdfH));
+    const markerContext = (run, token) => ({
+      bodyFontHeight,
+      isolated: run.str.trim() === token || /\s/.test(run.str),
+      isEntryStart: bucket.section === 'margin' && run === bucket.runs[0],
+    });
     const rawLineJoined = bucket.runs
-      .filter((r) => !detectSmallMarkerToken(r.str.trim(), r.pdfH, bucket.section).isSmallMarker)
+      .filter((r) => !detectSmallMarkerToken(r.str.trim(), r.pdfH, bucket.section, markerContext(r, r.str.trim())).isSmallMarker)
       .map((r) => r.str)
       .join(' ')
       .replace(/\s+/g, ' ')
@@ -1511,13 +1517,13 @@ function extractHotspotsFromTextContent(
       const tokens = effectiveRunStr
         .split(/\s+/)
         .map((t) => (isSiddurPdf ? repairSiddurOcrWord(t.trim()) || t.trim() : t.trim()))
-        .filter((t) => t.length > 0 && /[\u0590-\u05FF0-9]/.test(t));
+        .filter((t) => t.length > 0);
 
       if (tokens.length === 0) continue;
 
       if (tokens.length === 1) {
         const rawTok = tokens[0];
-        const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section);
+        const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
         const cleanWord = markerCheck.isSmallMarker
           ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
           : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
@@ -1566,7 +1572,7 @@ function extractHotspotsFromTextContent(
         const mergedTokens: string[] = [];
         for (let t = 0; t < tokens.length; t++) {
           const tok = tokens[t];
-          if (!/[\u0590-\u05FF0-9]/.test(tok)) {
+          if (/^[()\[\]]+$/.test(tok)) {
             if (mergedTokens.length > 0) {
               mergedTokens[mergedTokens.length - 1] += tok;
             } else if (t + 1 < tokens.length) {
@@ -1587,7 +1593,7 @@ function extractHotspotsFromTextContent(
 
         for (let i = 0; i < effectiveTokens.length; i++) {
           const rawTok = effectiveTokens[i];
-          const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section);
+          const markerCheck = detectSmallMarkerToken(rawTok, run.pdfH, bucket.section, markerContext(run, rawTok));
           const cleanWord = markerCheck.isSmallMarker
             ? markerCheck.key || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '')
             : normalizeHebrewWord(rawTok) || rawTok.replace(/[^\u05D0-\u05EA0-9]/g, '');
@@ -2838,7 +2844,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       if (!key) return null;
 
       const isCircleTarget =
-        /^[⊙◉◎⊛●○]$/.test(markerHotspot.word) ||
+        isCircleMarker(markerHotspot.word) ||
         /^[\(\[][⊙◉◎⊛●○\*•°][\)\]]$/.test(markerHotspot.word) ||
         markerHotspot.markerTargetType === 'gilyon-hashas' ||
         key === 'גליון';
@@ -3919,7 +3925,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('talmud-focus-target-pct', {
-            detail: { ox: centerOx, oy: centerOy, targetScale: 1.45 },
+            detail: { ox: centerOx, oy: centerOy, targetScale: 1.45, scrollHandled: true },
           })
         );
       }
@@ -3954,7 +3960,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
       return true;
     },
-    [resolveMarkerTargetHotspots]
+    [resolveMarkerTargetHotspots, selectedRange]
   );
 
   // Requirement: Direct focus on connected text on the same Daf when a blue citation link is tapped (without opening any window or note popup!)
@@ -4768,6 +4774,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   data-marker-type={h.markerTargetType}
                   onMouseDown={(e) => {
                     if (h.isSmallMarker) {
+                      suppressNextClickRef.current = false;
                       e.stopPropagation();
                       return;
                     }
@@ -4777,6 +4784,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   onMouseUp={clearLongPressTimer}
                   onTouchStart={(e) => {
                     if (h.isSmallMarker) {
+                      suppressNextClickRef.current = false;
                       e.stopPropagation();
                       return;
                     }
