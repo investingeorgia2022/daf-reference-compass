@@ -2975,16 +2975,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         preferredType = 'ein-mishpat';
       }
 
-      // Expected side of the folio in authentic Vilna Tzurat HaDaf:
-      // Amud A (!isAmudBet): Ein Mishpat, Torah Or & Gilyon HaShas are on Outer Margin (Right, > 60%), Masoret / Bach are on Inner Gutter (Left, < 40%)
-      // Amud B (isAmudBet): Ein Mishpat, Torah Or & Gilyon HaShas are on Outer Margin (Left, < 40%), Masoret / Bach are on Inner Gutter (Right, > 60%)
-      const isOuterColComm =
-        preferredType === 'ein-mishpat' ||
-        preferredType === 'torah-or' ||
-        preferredType === 'gilyon-hashas';
-      const expectedSide: 'left' | 'right' = isOuterColComm
-        ? (isAmudBet ? 'left' : 'right')
-        : (isAmudBet ? 'right' : 'left');
+      // Expected side of the folio: prefer where this commentary's column was actually found on the page;
+      // otherwise use the Vilna layout (Ein Mishpat & Torah Or on the outer margin — left on amud A,
+      // right on amud B; Masoret, Bach, Gilyon and Gra on the inner margin).
+      const typedMarginHotspots = hotspots.filter(
+        (h) => h.section === 'margin' && h.marginCommType === preferredType
+      );
+      const isOuterColComm = preferredType === 'ein-mishpat' || preferredType === 'torah-or';
+      let expectedSide: 'left' | 'right' = isOuterColComm
+        ? (isAmudBet ? 'right' : 'left')
+        : (isAmudBet ? 'left' : 'right');
+      if (typedMarginHotspots.length > 0) {
+        const leftCount = typedMarginHotspots.filter((h) => h.leftPct < 50).length;
+        expectedSide = leftCount * 2 >= typedMarginHotspots.length ? 'left' : 'right';
+      }
+      const onExpectedSide = (h: VilnaPdfHotspot) =>
+        expectedSide === 'left' ? h.leftPct < 40 : h.leftPct > 60;
 
       // Case 1: User tapped a small marker in Mishnah / Gemara / Rashi / Tosafot -> jump to its Margin Commentary entry!
       if (markerHotspot.section !== 'margin') {
