@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import {
   X,
@@ -688,16 +689,12 @@ export const WordSentencePopover: React.FC<WordSentencePopoverProps> = ({
             : 'bg-[#FDF9F0]/99 border-[#A68256]/80 text-[#2C1D11] backdrop-blur-xl'
         }`}
       >
-        {/* Pointer triangle indicating whether the Note card is below or above the selected word */}
-        {!isNoteMaximized && (
-          <div
-            style={{ left: `${arrowLeftPx}px` }}
-            className={`absolute w-3 h-3 rotate-45 border-[#A68256]/80 ${
-              placeBelow
-                ? `-top-[7px] border-t-2 border-l-2 ${isDark ? 'bg-[#261A11]' : 'bg-[#FDF9F0]'}`
-                : `-bottom-[7px] border-b-2 border-r-2 ${isDark ? 'bg-[#261A11]' : 'bg-[#FDF9F0]'}`
-            }`}
-          />
+        {/* Portal keeps the pointer outside the scrollable note, which previously clipped it. */}
+        {!isNoteMaximized && liveWordRect.bottom > 0 && liveWordRect.top < viewportH && createPortal(
+          <svg className="word-note-pointer" data-word-note-pointer="true" width={viewportW} height={viewportH} aria-hidden="true">
+            <defs><marker id="word-note-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 Z" /></marker></defs>
+            <path markerEnd="url(#word-note-arrow)" d={`M ${noteLeft + arrowLeftPx + 6} ${placeBelow ? noteTopPx : viewportH - noteBottomPx} L ${clampedCenterX} ${placeBelow ? liveWordRect.bottom + 2 : liveWordRect.top - 2}`} />
+          </svg>, document.body
         )}
 
         {/* Header Row: Selected Word (Always shown in FULL, never truncated) + Transliteration + Audio Play/Stop + Note Toggle + Windows Controls */}

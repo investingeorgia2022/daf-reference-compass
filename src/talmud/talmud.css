@@ -560,4 +560,16 @@ button[data-crystal-gold="true"] div {
   scroll-margin: 20vh !important;
 }
 
+.word-note-pointer { position: fixed; inset: 0; z-index: 326; pointer-events: none; overflow: visible; }
+.word-note-pointer > path { fill: none; stroke: var(--study-accent); stroke-width: 2.5; }
+.word-note-pointer marker path { fill: var(--study-accent); }
+.biblical-verse-overlay { position: fixed; inset: 0; z-index: 360; background: var(--study-overlay); display: grid; place-items: center; padding: 16px; }
+.biblical-verse-window { width: min(620px,100%); max-height: 80dvh; overflow-y: auto; background: var(--study-surface); color: var(--study-ink); border: 1px solid var(--study-rule); border-radius: 8px; padding: 18px; }
+.biblical-verse-window header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--study-rule); padding-bottom: 12px; }
+.biblical-verse-window h2 { flex: 1; font-size: 20px; }
+.biblical-verse-window [role="status"], .biblical-verse-window [role="alert"] { display: flex; align-items: center; gap: 12px; padding: 24px 0; }
+.biblical-verse-text { font-family: 'Noto Serif Hebrew', serif; font-size: 24px; line-height: 1.9; padding-top: 16px; }
+.biblical-verse-text p { margin-bottom: 16px; }
+.biblical-verse-text span { color: var(--study-muted); font-size: 15px; }
+
 
