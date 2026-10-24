@@ -12,3 +12,7 @@
 - [x] Simplify dedication banner/dialog and prevent toolbar overlap.
 - [x] Consolidate study-center controls and make mobile labels readable.
 - [x] Run regression tests and verify the updated flows on phone and desktop.
+- [ ] Resolve Bach and Gilyon to their actual notes, not unrelated margin text.
+- [ ] Make adjacent markers independently tappable.
+- [ ] Open biblical citations as verses and point explanation windows to their selected words.
+- [ ] Verify screenshot examples and run regression tests.
