@@ -15,6 +15,7 @@
 
 - Vilna marker classification belongs in referenceMarkerDetector; canvas and PDF extraction share it to avoid divergent recognition rules.
 - PDF bare-letter recognition requires baseline evidence; preserve separate adjacent indices and mirrored Torah Or entry numbers to avoid false positives and incorrect quotation targets.
+- Torah Or destinations use torahOrNavigation's verified type/key/side lookup and printed ordinal, never heading or synthetic fallbacks; this makes exact quotation navigation independently testable.
 - Study-center tools use one searchable selector and one shared window-control scope; dedication dialogs sit above reading controls to avoid mobile overlap.
 - PDF marker navigation owns vertical scrolling through scrollToTarget after zoom settles; focus events marked scrollHandled only change zoom/pan to prevent competing scrolls.
 - Use PDF.js legacy browser build with its matching worker; it supplies missing browser primitives needed to render scans on older mobile browsers.

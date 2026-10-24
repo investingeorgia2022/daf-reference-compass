@@ -14,6 +14,7 @@ import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
+import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -3069,9 +3070,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const em = dafData.einMishpat?.find((e) => e.marker === key || normalizeHebrewWord(e.marker) === key);
           targetSentenceId = em ? `ein-mishpat-${em.id}` : `ein-mishpat-${key}`;
         } else if (preferredType === 'torah-or') {
-          const entryIndex = Number(key) - 1;
-          const to = dafData.torahOr?.[entryIndex];
-          targetSentenceId = to ? `torah-or-${to.id || entryIndex}` : undefined;
+          targetSentenceId = getTorahOrSentenceId(dafData.torahOr, key);
         } else if (preferredType === 'masoret') {
           const m = dafData.masoretHaShas?.find((ms) => ms.marker === key || normalizeHebrewWord(ms.marker) === key);
           targetSentenceId = m ? `masoret-${m.id}` : `masoret-${key}`;
@@ -3086,6 +3085,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const marginHotspots = hotspots.filter(
           (h) => h.section === 'margin' || (isSiddurPdf && h.section === 'rashi')
         );
+
+        if (preferredType === 'torah-or') {
+          const entry = getTorahOrEntryHotspots(hotspots, key, expectedSide);
+          return entry.length ? { targetHotspots: entry, commType: preferredType, key, targetSentenceId } : null;
+        }
 
         const isGilyonEntry = (h: VilnaPdfHotspot) =>
           h.marginCommType === 'gilyon-hashas' ||
