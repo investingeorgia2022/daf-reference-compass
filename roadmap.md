@@ -7,4 +7,8 @@
 - [x] Jump to the correct side column (amud A/B layout) and the matching entry.
 - [x] Detect side columns per scan (Berakhot vs Taanit scale).
 - [x] Open the daf directly instead of the Torah realm.
-- [ ] Torah Or numerals land on the Torah Or column top, not the exact numbered verse (entry numbers not readable in the scan text).
+- [ ] Recognize missed split markers and reject ordinary small commentary letters.
+- [ ] Navigate on one touch and resolve each Torah Or numeral to its own quotation.
+- [ ] Simplify dedication banner/dialog and prevent toolbar overlap.
+- [ ] Consolidate study-center controls and make mobile labels readable.
+- [ ] Run regression tests and verify the updated flows on phone and desktop.
