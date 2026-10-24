@@ -23,7 +23,7 @@ export function findMarginGutters(boxes: TextBoxPct[]): MarginGutters {
     if (b.topPct < 12 || b.topPct > 60) continue;
     const a = Math.max(0, Math.floor((Math.min(b.leftPct, b.rightPct) / 100) * BINS));
     const z = Math.min(BINS, Math.ceil((Math.max(b.leftPct, b.rightPct) / 100) * BINS));
-    for (let k = a; k < z; k++) bins[k]++;
+    for (let k = a; k < z; k++) bins[k] = (bins[k] ?? 0) + 1;
   }
 
   const gaps: Array<{ start: number; end: number }> = [];
