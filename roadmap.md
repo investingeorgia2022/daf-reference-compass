@@ -24,4 +24,11 @@
 - [x] Polish study center (სასწავლო ცენტრი) header, tool tabs, halacha chain.
 - [x] Stop floating sage/scroll-top buttons from overlapping content on mobile.
 - [x] Verify on 390x659 and run regression tests.
-- [ ] Show marker type + number badge next to the highlighted destination text after marker navigation.
+- [x] Show marker type + number badge next to the highlighted destination text after marker navigation.
+- [x] Audit app-wide reading, settings, study and navigation flows; fix high-confidence storage and export issues found.
+- [x] Unify study surfaces, loading/error states and accessible motion without changing the printed daf.
+- [x] Verify reader, single-touch markers, settings persistence and exports on phone and desktop; run 64 regression tests.
+- [x] Prepare source-only and complete-project ZIP archives with setup instructions and inspect before delivery.
+
+## Review limits
+The audit covered the main architecture and selected live flows, not every external source or every study tool. Browser history synchronization and slow-network return restoration remain review candidates, not verified fixes. AI portability requires host-provided Gateway configuration; no credentials are exported.

@@ -23,3 +23,7 @@
 - PDF marker touch boxes are partitioned by printed glyph boundaries; Gilyon notes resolve by source section, so adjacent links and distinct notes stay independent.
 - Biblical PDF citations use a separate verse window and chapter/verse parser; chapter-only citations resolve by unique quotation evidence, never a guessed verse.
 - Biblical study sources are filtered by verified verse anchors in biblicalStudy; the verse window reuses the existing translator and keeps source texts separate from generated translations.
+- PDF reference-origin labels follow measured target coordinates in a body portal so zoom never shrinks labels or hides them in a clipped margin.
+- App preferences hydrate through appPreferences and offline backup imports validate the entire payload before a transaction, preserving saved choices and valid cached pages.
+- Shared reading chrome uses global semantic study tokens; MotionConfig and page flips respect reduced-motion preferences.
+- Source archives exclude dependencies, build output, private configuration and nested export archives; complete project archives add public assets only.

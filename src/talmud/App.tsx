@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { AnimatePresence, motion, type Variants } from 'motion/react';
+import { loadAppSettings, readPreference, writePreference } from './utils/appPreferences';
 import {
   BookOpen,
   Sun,
@@ -545,32 +546,11 @@ const cascadingMenuItemVariants: Variants = {
 
 export function App() {
   const [theme, setTheme] = useState<AppTheme>(() => {
-    const saved = localStorage.getItem('talmud_theme_3d');
+    const saved = readPreference('talmud_theme_3d');
     return (saved as AppTheme) || 'sanctuary-3d';
   });
 
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    try {
-      const saved = localStorage.getItem('talmud_app_settings_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          defaultShowAboveDaf: parsed.defaultShowAboveDaf ?? true,
-          defaultShowBelowDaf: parsed.defaultShowBelowDaf ?? true,
-          uiLang: (parsed.uiLang as UILang) || (localStorage.getItem('talmud_ui_lang') as UILang) || 'ka',
-          dafFontSizeScale: parsed.dafFontSizeScale ?? 100,
-        };
-      }
-    } catch {
-      // ignore
-    }
-    return {
-      defaultShowAboveDaf: true,
-      defaultShowBelowDaf: false,
-      uiLang: (localStorage.getItem('talmud_ui_lang') as UILang) || 'ka',
-      dafFontSizeScale: 100,
-    };
-  });
+  const [settings, setSettings] = useState<AppSettings>(loadAppSettings);
 
   const [uiLang, setUiLang] = useState<UILang>(() => settings.uiLang || 'ka');
   const [dafFontSizeScale, setDafFontSizeScale] = useState<number>(
@@ -849,7 +829,7 @@ export function App() {
     setTimeout(restoreExactDomPosition, 180);
     setTimeout(restoreExactDomPosition, 420);
   }, [citationReturnStack]);
-  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(true);
+  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(false);
   const [floatingSourceDafRequest, setFloatingSourceDafRequest] =
     useState<FloatingSourceDafRequest | null>(null);
   const [isLogoMenuOpen, setIsLogoMenuOpen] = useState<boolean>(false);
@@ -1114,11 +1094,12 @@ export function App() {
   }, [handleChangeDafFontSizeScale]);
 
   useEffect(() => {
-    localStorage.setItem('talmud_theme_3d', theme);
+    writePreference('talmud_theme_3d', theme);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('talmud_ui_lang', uiLang);
+    writePreference('talmud_ui_lang', uiLang);
+    document.documentElement.lang = uiLang;
     setSettings((prev) => {
       const updated = { ...prev, uiLang };
       try {
@@ -1387,11 +1368,11 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('talmud_scholar_notes', JSON.stringify(notes));
+    writePreference('talmud_scholar_notes', JSON.stringify(notes));
   }, [notes]);
 
   useEffect(() => {
-    localStorage.setItem('talmud_completed_dapim', JSON.stringify(completedDapim));
+    writePreference('talmud_completed_dapim', JSON.stringify(completedDapim));
   }, [completedDapim]);
 
   const [sharedCalendarDate, setSharedCalendarDate] = useState<Date>(() => new Date());
@@ -2757,14 +2738,7 @@ export function App() {
 
   return (
     <div
-      style={{
-        backgroundImage:
-          theme === 'celestial-slate'
-            ? 'radial-gradient(circle at 50% 15%, #F0F7FF 0%, #E2EDF8 50%, #CBDCEE 100%)'
-            : isDark
-              ? 'radial-gradient(circle at 50% 15%, #0F2038 0%, #0A1628 52%, #08111F 100%)'
-              : 'radial-gradient(circle at 50% 15%, #EBF4FF 0%, #DCEBFA 52%, #D0E4F7 100%)',
-      }}
+      data-talmud-app="true"
       className={`min-h-screen w-full max-w-[100vw] overflow-x-hidden ${
         barsHidden || isDafMobileFullscreen ? 'pt-0 pb-0' : 'pt-[54px] sm:pt-[58px] pb-20'
       } transition-all duration-300 ${

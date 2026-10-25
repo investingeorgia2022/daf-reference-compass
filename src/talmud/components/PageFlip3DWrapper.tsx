@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 export function playBookPageTurnSound() {
   try {
@@ -88,13 +88,14 @@ export const PageFlip3DWrapper: React.FC<PageFlip3DWrapperProps> = React.memo(({
   children,
 }) => {
   const [prevKey, setPrevKey] = useState(pageKey);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (pageKey !== prevKey) {
       setPrevKey(pageKey);
-      playBookPageTurnSound();
+      if (!reducedMotion) playBookPageTurnSound();
     }
-  }, [pageKey, prevKey]);
+  }, [pageKey, prevKey, reducedMotion]);
 
   const effectiveDir = direction >= 0 ? 1 : -1;
 
@@ -111,26 +112,25 @@ export const PageFlip3DWrapper: React.FC<PageFlip3DWrapperProps> = React.memo(({
         <motion.div
           key={pageKey}
           custom={effectiveDir}
-          variants={pageFlipVariants}
+          variants={reducedMotion ? { enter: { opacity: 1 }, center: { opacity: 1 }, exit: { opacity: 1 } } : pageFlipVariants}
           initial="enter"
           animate="center"
           exit="exit"
           transition={{
-            duration: 0.34,
+            duration: reducedMotion ? 0 : 0.28,
             ease: [0.22, 1, 0.36, 1], // gentle organic 3D paper ease
           }}
           style={{
             transformOrigin: effectiveDir >= 0 ? 'right center' : 'left center',
             transformStyle: 'preserve-3d',
             backfaceVisibility: 'hidden',
-            willChange: 'transform, opacity, filter',
           }}
           className="relative w-full"
         >
           {children}
 
           {/* Gentle, hardware-accelerated tactile paper turn curl & spine reflection shimmer */}
-          <motion.div
+          {!reducedMotion && <motion.div
             initial={{ opacity: 0.35 }}
             animate={{ opacity: 0 }}
             transition={{ duration: 0.34, ease: 'easeOut' }}
@@ -141,7 +141,7 @@ export const PageFlip3DWrapper: React.FC<PageFlip3DWrapperProps> = React.memo(({
                   ? 'linear-gradient(90deg, rgba(0,0,0,0.12) 0%, rgba(255,255,255,0.06) 18%, transparent 50%)'
                   : 'linear-gradient(270deg, rgba(0,0,0,0.12) 0%, rgba(255,255,255,0.06) 18%, transparent 50%)',
             }}
-          />
+          />}
         </motion.div>
       </AnimatePresence>
     </div>

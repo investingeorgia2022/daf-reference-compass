@@ -3,19 +3,22 @@ const SEFARIA_CACHE = 'talmud-sefaria-texts-cache';
 const TRANSLATIONS_CACHE = 'talmud-translations-cache';
 const LOCAL_API_CACHE = 'talmud-local-api-cache';
 const FONTS_CACHE = 'google-fonts-cache';
-const APP_SHELL_CACHE = 'talmud-app-shell-v1';
+const APP_SHELL_CACHE = 'talmud-app-shell-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(APP_SHELL_CACHE).then((cache) => {
-      return cache.addAll(['/', '/index.html', '/icon.svg']).catch(() => {});
+      return cache.addAll(['/', '/icon.svg']).catch(() => {});
     })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(Promise.all([
+    self.clients.claim(),
+    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('talmud-app-shell-') && key !== APP_SHELL_CACHE).map(key => caches.delete(key)))),
+  ]));
 });
 
 async function cacheFirst(request, cacheName) {
@@ -68,7 +71,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 1. Sefaria Talmud Texts & Commentaries API — CacheFirst
-  if (url.hostname.includes('sefaria.org') && url.pathname.startsWith('/api/')) {
+  if ((url.hostname === 'sefaria.org' || url.hostname.endsWith('.sefaria.org')) && url.pathname.startsWith('/api/')) {
     event.respondWith(cacheFirst(req, SEFARIA_CACHE));
     return;
   }
@@ -89,26 +92,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 4. Local Talmud API — NetworkFirst with offline cache fallback
-  if (url.pathname.startsWith('/api/talmud/')) {
-    event.respondWith(networkFirst(req, LOCAL_API_CACHE));
-    return;
-  }
+  // Generated answers and private app API responses must never be shared-cache entries.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) return;
 
   // 5. Navigation requests — NetworkFirst with App Shell fallback
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches
+          if (res.ok) caches
             .open(APP_SHELL_CACHE)
-            .then((c) => c.put('/index.html', copy))
+            .then((c) => c.put('/', res.clone()))
             .catch(() => {});
           return res;
         })
         .catch(async () => {
           const cache = await caches.open(APP_SHELL_CACHE);
-          return (await cache.match('/index.html')) || (await cache.match('/'));
+          return (await cache.match('/')) || new Response('ოფლაინ გვერდი ჯერ არ არის შენახული', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
         })
     );
   }

@@ -569,7 +569,6 @@ button[data-crystal-gold="true"] div {
 }
 
 .word-note-pointer { position: fixed; inset: 0; z-index: 326; pointer-events: none; overflow: visible; }
-:root { --reference-target-highlight: rgba(250, 204, 21, 0.38); --reference-target-rule: rgba(180, 130, 10, 0.65); }
 [data-reference-highlight="true"] { box-shadow: inset 0 -1px var(--reference-target-rule); }
 .biblical-verse-text p[data-verse] { background: var(--reference-target-highlight); border-inline-start: 3px solid var(--reference-target-rule); padding: 8px 12px; border-radius: 4px; }
 .word-note-pointer > path { fill: none; stroke: var(--study-accent); stroke-width: 2.5; }
@@ -599,5 +598,36 @@ button[data-crystal-gold="true"] div {
 .verse-source a { display: block; color: var(--study-accent); font-size: 12px; margin-top: 12px; }
 .verse-chapter button { display: block; height: auto; white-space: normal; text-align: right; line-height: 1.8; width: 100%; margin: 8px 0; }
 @media (max-width: 480px) { .biblical-verse-overlay { padding: 8px; } .biblical-verse-window { padding: 14px; } }
+
+/* Shared reading chrome; the scanned daf retains its original paper and ink. */
+[data-talmud-app="true"] { background: var(--app-canvas); color: var(--study-ink); }
+[data-talmud-app] > header { background: var(--study-surface); color: var(--study-ink); border-color: var(--study-rule); box-shadow: var(--study-shadow); }
+[data-modern-dock] > div { background: var(--study-surface); color: var(--study-ink); border-color: var(--study-rule); box-shadow: var(--study-shadow); border-radius: 8px 8px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+[data-talmud-app] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--study-accent); outline-offset: 3px; }
+.reference-origin-label { position: fixed; z-index: 310; pointer-events: none; width: 224px; max-width: calc(100vw - 24px); padding: 9px 12px; background: var(--study-surface); color: var(--study-ink); border: 1px solid var(--study-accent); border-radius: 6px; box-shadow: var(--study-shadow); font-size: 12px; line-height: 1.5; }
+.reference-origin-label > span { display: block; overflow-wrap: anywhere; }
+.reference-origin-label > strong { display: block; color: var(--study-accent); font-size: 15px; margin-top: 3px; }
+.reference-origin-label::after { content: ''; position: absolute; top: 100%; left: 18px; height: 12px; border-left: 2px solid var(--study-accent); }
+.settings-overlay { z-index: 370; background: var(--study-overlay); }
+.settings-dialog { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); border-radius: 8px; border: 1px solid var(--study-rule); background: var(--study-surface); color: var(--study-ink); box-shadow: var(--study-shadow); }
+.settings-dialog > div { flex-shrink: 0; }
+.settings-dialog > div:nth-child(2) { background: var(--study-surface); border-color: var(--study-rule); }
+.settings-dialog .settings-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; max-height: none; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.settings-body > div { background: transparent; border-color: var(--study-rule); border-radius: 6px; box-shadow: none; }
+.study-core-tabs > button { min-height: 44px; }
+.study-center-actions { flex-wrap: wrap; }
+@keyframes studyReveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.study-tool-content > div { animation: studyReveal 180ms ease-out; }
+@media (max-width: 640px) {
+  .study-core-tabs { display: flex; overflow-x: auto; }
+  .study-core-tabs > button { flex: 1 0 76px; font-size: 11px; }
+  .settings-dialog h2 { white-space: normal; overflow: visible; }
+  .settings-dialog h2 + p { display: none; }
+  [data-study-center] { scroll-margin-bottom: 90px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .search-marquee-track { animation: none; }
+}
 
 

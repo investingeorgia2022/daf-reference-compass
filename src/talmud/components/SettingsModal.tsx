@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   X,
@@ -25,6 +25,9 @@ import {
 import { AppSettings, AppTheme, RecentlyViewedDaf, UILang } from '../types/talmud';
 import { TRACTATES } from '../data/tractates';
 import { SearchableSelect, SelectOption } from './SearchableSelect';
+import { writePreference } from '../utils/appPreferences';
+import sourceArchive from '@/assets/talmud-source.zip.asset.json';
+import projectArchive from '@/assets/talmud-project.zip.asset.json';
 
 export type AppLanguage = UILang;
 
@@ -80,6 +83,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   recentlyViewedDapim = [],
   onSelectRecentDaf,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab') return;
+      const dialog = document.querySelector('.settings-dialog');
+      const controls = Array.from(dialog?.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex="0"]') || []).filter(el => el.getClientRects().length > 0);
+      const first = controls[0]; const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    const timer = window.setTimeout(() => document.querySelector<HTMLElement>('.settings-dialog button')?.focus(), 100);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(timer); document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+      if (previous instanceof HTMLElement) previous.focus();
+    };
+  }, [isOpen, onClose]);
   const currentFontScale = dafFontSizeScale ?? settings.dafFontSizeScale ?? 100;
   const [recentSortOrder, setRecentSortOrder] = React.useState<'recent' | 'tractate'>('recent');
 
@@ -118,7 +143,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.44, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 overflow-y-auto"
+          className="settings-overlay fixed inset-0 flex items-center justify-center p-3 sm:p-5"
         >
           <motion.div
             key="settings-modal-card"
@@ -126,11 +151,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.97 }}
             transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
-            className={`w-full max-w-xl rounded-3xl border-2 shadow-2xl overflow-hidden ${
-              isDark
-                ? 'bg-[#1F150E] border-[#C49A6C]/60 text-[#FAF5EB]'
-                : 'bg-[#FBF7F0] border-[#8B5A2B]/55 text-[#2C1A10]'
-            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="პარამეტრები"
+            className="settings-dialog w-full max-w-xl overflow-hidden"
           >
         <div className="h-1.5 w-full bg-gradient-to-r from-[#5C3A21] via-[#C49A6C] to-[#5C3A21]" />
 
@@ -170,7 +194,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto">
+        <div className="settings-body p-4 sm:p-5 space-y-4">
           {/* 1. Theme Color Design Selection (დიზაინის გადართვა • ნაზი ცისფერი / სერი და სხვა თემები) */}
           <div
             className={`p-4 rounded-2xl border space-y-3.5 w-full ${
@@ -415,7 +439,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-6 gap-1.5 w-full pt-0.5">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-full pt-0.5">
               {[80, 90, 100, 115, 135, 160].map((preset) => (
                 <button
                   key={preset}
@@ -687,10 +711,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <div className="text-xs sm:text-sm font-extrabold flex items-center gap-1.5">
                   <Archive className="w-4 h-4 text-[#C49A6C] shrink-0" />
-                  <span>პროექტისა და APK-ს ექსპორტი (/export)</span>
+                  <span>პროექტის ჩამოტვირთვა</span>
                 </div>
                 <div className="text-[11px] opacity-80">
-                  ჩამოტვირთეთ კოდის ZIP არქივი, სრული პროექტი ან Android APK
+                  სორსის არქივი და სრული პროექტი
                 </div>
               </div>
             </div>
@@ -698,16 +722,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Source Code & Full Project ZIPs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
               <a
-                href="/export/talmud-source-code-only.zip"
+                href={sourceArchive.url}
                 download="talmud-source-code-only.zip"
                 className="w-full py-2.5 px-3 rounded-xl border border-amber-500/70 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
               >
                 <FileCode className="w-4 h-4 shrink-0" />
-                <span className="truncate">Source Code ZIP (~910 KB)</span>
+                <span className="truncate">Source Code ZIP</span>
               </a>
 
               <a
-                href="/export/talmud-project-source.zip"
+                href={projectArchive.url}
                 download="talmud-project-source.zip"
                 className={`w-full py-2.5 px-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95 ${
                   isDark
@@ -716,34 +740,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }`}
               >
                 <FolderArchive className="w-4 h-4 text-[#C49A6C] shrink-0" />
-                <span className="truncate">Full Project ZIP (~19 MB)</span>
+                <span className="truncate">Full Project ZIP</span>
               </a>
             </div>
 
-            {/* Android APK & APK Bundle */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-1 border-t border-black/10 dark:border-white/10">
-              <a
-                href="/export/Talmud-Bavli-3D-Georgia.apk"
-                download="Talmud-Bavli-3D-Georgia.apk"
-                className="w-full py-2 px-3 rounded-xl border border-[#C49A6C] bg-gradient-to-b from-[#6B4226] to-[#4A2E1B] hover:from-[#7D4E2D] text-[#FAF5EB] text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-amber-200 shrink-0" />
-                <span className="truncate">Android APK (1.5 MB)</span>
-              </a>
 
-              <a
-                href="/export/Talmud-Bavli-3D-APK-Export.zip"
-                download="Talmud-Bavli-3D-APK-Export.zip"
-                className={`w-full py-2 px-3 rounded-xl border text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
-                  isDark
-                    ? 'bg-[#1D130D] border-[#5C3A21] hover:border-[#C49A6C] text-[#FAF5EB]'
-                    : 'bg-[#FBF7F0] border-[#CBB89D] hover:border-[#6B4226] text-[#2C1A10]'
-                }`}
-              >
-                <Download className="w-3.5 h-3.5 text-[#C49A6C] shrink-0" />
-                <span className="truncate">APK Export პაკეტი (.ZIP)</span>
-              </a>
-            </div>
           </div>
 
 
@@ -900,8 +901,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   ...settings,
                   showNikudByDefault: nextNikud,
                 });
-                localStorage.setItem('talmud_sacred_nikud_v1', String(nextNikud));
-                localStorage.setItem('talmud_blessings_nikud_v1', String(nextNikud));
+                writePreference('talmud_sacred_nikud_v1', String(nextNikud));
+                writePreference('talmud_blessings_nikud_v1', String(nextNikud));
               }}
               className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-sm shrink-0 ${
                 (settings.showNikudByDefault ?? true)
