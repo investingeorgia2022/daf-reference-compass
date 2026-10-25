@@ -26,6 +26,8 @@ import { AppSettings, AppTheme, RecentlyViewedDaf, UILang } from '../types/talmu
 import { TRACTATES } from '../data/tractates';
 import { SearchableSelect, SelectOption } from './SearchableSelect';
 import { writePreference } from '../utils/appPreferences';
+import sourceArchive from '@/assets/talmud-source.zip.asset.json';
+import projectArchive from '@/assets/talmud-project.zip.asset.json';
 
 export type AppLanguage = UILang;
 
@@ -720,7 +722,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Source Code & Full Project ZIPs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
               <a
-                href="/export/talmud-source-code-only.zip"
+                href={sourceArchive.url}
                 download="talmud-source-code-only.zip"
                 className="w-full py-2.5 px-3 rounded-xl border border-amber-500/70 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
               >
@@ -729,7 +731,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </a>
 
               <a
-                href="/export/talmud-project-source.zip"
+                href={projectArchive.url}
                 download="talmud-project-source.zip"
                 className={`w-full py-2.5 px-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95 ${
                   isDark
