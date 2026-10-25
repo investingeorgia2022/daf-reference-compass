@@ -19,3 +19,8 @@
 - [x] Expand the biblical verse window with explanations and verse-specific commentaries.
 - [x] Test exact-verse connections and verify the explanation window.
 - [x] Highlight the exact destination text after reference-marker navigation.
+- [ ] Polish halacha topic window (Poskim grid): layout, truncated labels, window controls.
+- [ ] Polish halacha rulings list (שאלת גשמים cards) on mobile.
+- [ ] Polish study center (სასწავლო ცენტრი) header, tool tabs, halacha chain.
+- [ ] Stop floating sage/scroll-top buttons from overlapping content on mobile.
+- [ ] Verify on 390x659 and run regression tests.
