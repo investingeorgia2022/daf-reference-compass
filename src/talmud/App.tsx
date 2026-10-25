@@ -829,7 +829,7 @@ export function App() {
     setTimeout(restoreExactDomPosition, 180);
     setTimeout(restoreExactDomPosition, 420);
   }, [citationReturnStack]);
-  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(false);
+  const [isGlobeOpen, setIsGlobeOpen] = useState<boolean>(true);
   const [floatingSourceDafRequest, setFloatingSourceDafRequest] =
     useState<FloatingSourceDafRequest | null>(null);
   const [isLogoMenuOpen, setIsLogoMenuOpen] = useState<boolean>(false);
