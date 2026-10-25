@@ -115,6 +115,7 @@ body:has(.dedication-overlay) [data-scroll-top-float] { visibility: hidden; poin
 .study-core-tabs > button[aria-pressed="true"] { color: var(--study-accent-ink) !important; background: var(--study-accent) !important; }
 .study-tool-intro { background: transparent !important; border-color: var(--study-rule) !important; color: var(--study-ink) !important; }
 .halacha-study-entry { border-color: var(--study-rule) !important; color: var(--study-ink) !important; }
+.halacha-step-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--study-accent); color: var(--study-accent-ink); font-size: 10px; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0; }
 .study-tool-content { max-height: none; overflow: visible; }
 .study-tool-content > div { box-shadow: none; }
 @media (max-width: 640px) {
