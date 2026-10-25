@@ -117,7 +117,7 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-          className={`halacha-study-entry py-4 border-b space-y-3 ${
+          className={`halacha-study-entry p-3 sm:p-4 rounded-2xl border space-y-3 ${
             isDark
               ? 'bg-[#1D130D]/95 border-[#5C3A21]'
               : 'bg-[#FBF7F0] border-[#8B5A2B]/40 shadow-sm'
@@ -166,8 +166,9 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
               isDark ? 'bg-[#281A11] border-[#6B4226]' : 'bg-[#EFE5D0] border-[#8B5A2B]/35'
             }`}
           >
-            <div className="text-[11px] font-extrabold mb-1 text-[#C49A6C]">
-              საფეხური I · გემარის საფუძველი ({tractateNameKa} {dafData.dafId}):
+            <div className="flex items-center gap-1.5 text-[11px] font-extrabold mb-1 text-[#C49A6C]">
+              <span className="halacha-step-chip">I</span>
+              <span>გემარის საფუძველი ({tractateNameKa} {dafData.dafId}):</span>
             </div>
             <div dir="rtl" className="font-serif text-sm font-bold">
               {item.gemaraQuoteHe}
@@ -184,8 +185,8 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[11px] font-extrabold text-[#C49A6C]">
-                    II. რამბამი (רמב״ם)
+                  <span className="text-[11px] font-extrabold text-[#C49A6C] flex items-center gap-1.5">
+                    <span className="halacha-step-chip">II</span> რამბამი (רמב״ם)
                   </span>
                   <span dir="rtl" className="text-[11px] font-serif font-bold">
                     {item.rambam.refHe}
@@ -208,8 +209,8 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[11px] font-extrabold text-[#C49A6C]">
-                    III. არბაა ტურიმი (טור)
+                  <span className="text-[11px] font-extrabold text-[#C49A6C] flex items-center gap-1.5">
+                    <span className="halacha-step-chip">III</span> არბაა ტურიმი (טור)
                   </span>
                   <span dir="rtl" className="text-[11px] font-serif font-bold">
                     {item.tur.refHe}
@@ -232,8 +233,8 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[11px] font-extrabold text-[#C49A6C]">
-                    IV. შულხან არუხი (שו״ע)
+                  <span className="text-[11px] font-extrabold text-[#C49A6C] flex items-center gap-1.5">
+                    <span className="halacha-step-chip">IV</span> შულხან არუხი (שו״ע)
                   </span>
                   <span dir="rtl" className="text-[11px] font-serif font-bold">
                     {item.shulchanAruch.refHe}
