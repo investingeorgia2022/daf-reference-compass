@@ -403,7 +403,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
                       : 'bg-[#FBF7F0] border-[#8B5A2B]/40 text-[#2C1A10] hover:bg-white'
                 }`}
               >
-                <span className="truncate">{tab.label}</span>
+                <span className="min-w-0 flex-1 text-left leading-snug">{tab.label}</span>
                 <span dir="rtl" className="text-[10px] font-serif opacity-85 shrink-0">
                   {tab.badgeHe}
                 </span>
