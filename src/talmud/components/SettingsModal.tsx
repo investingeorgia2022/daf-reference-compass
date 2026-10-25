@@ -687,10 +687,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <div className="text-xs sm:text-sm font-extrabold flex items-center gap-1.5">
                   <Archive className="w-4 h-4 text-[#C49A6C] shrink-0" />
-                  <span>პროექტისა და APK-ს ექსპორტი (/export)</span>
+                  <span>პროექტის ჩამოტვირთვა</span>
                 </div>
                 <div className="text-[11px] opacity-80">
-                  ჩამოტვირთეთ კოდის ZIP არქივი, სრული პროექტი ან Android APK
+                  სორსის არქივი და სრული პროექტი
                 </div>
               </div>
             </div>
@@ -703,7 +703,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="w-full py-2.5 px-3 rounded-xl border border-amber-500/70 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
               >
                 <FileCode className="w-4 h-4 shrink-0" />
-                <span className="truncate">Source Code ZIP (~910 KB)</span>
+                <span className="truncate">Source Code ZIP</span>
               </a>
 
               <a
@@ -716,34 +716,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }`}
               >
                 <FolderArchive className="w-4 h-4 text-[#C49A6C] shrink-0" />
-                <span className="truncate">Full Project ZIP (~19 MB)</span>
+                <span className="truncate">Full Project ZIP</span>
               </a>
             </div>
 
-            {/* Android APK & APK Bundle */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-1 border-t border-black/10 dark:border-white/10">
-              <a
-                href="/export/Talmud-Bavli-3D-Georgia.apk"
-                download="Talmud-Bavli-3D-Georgia.apk"
-                className="w-full py-2 px-3 rounded-xl border border-[#C49A6C] bg-gradient-to-b from-[#6B4226] to-[#4A2E1B] hover:from-[#7D4E2D] text-[#FAF5EB] text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-amber-200 shrink-0" />
-                <span className="truncate">Android APK (1.5 MB)</span>
-              </a>
 
-              <a
-                href="/export/Talmud-Bavli-3D-APK-Export.zip"
-                download="Talmud-Bavli-3D-APK-Export.zip"
-                className={`w-full py-2 px-3 rounded-xl border text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
-                  isDark
-                    ? 'bg-[#1D130D] border-[#5C3A21] hover:border-[#C49A6C] text-[#FAF5EB]'
-                    : 'bg-[#FBF7F0] border-[#CBB89D] hover:border-[#6B4226] text-[#2C1A10]'
-                }`}
-              >
-                <Download className="w-3.5 h-3.5 text-[#C49A6C] shrink-0" />
-                <span className="truncate">APK Export პაკეტი (.ZIP)</span>
-              </a>
-            </div>
           </div>
 
 
