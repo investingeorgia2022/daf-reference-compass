@@ -113,7 +113,8 @@ body:has(.dedication-overlay) [data-scroll-top-float] { visibility: hidden; poin
 .study-core-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); scrollbar-width: thin; background: var(--study-surface) !important; border-color: var(--study-rule) !important; }
 .study-core-tabs > button { min-width: 0; padding: 8px 4px; color: var(--study-ink) !important; background: transparent !important; border-color: var(--study-rule) !important; }
 .study-core-tabs > button[aria-pressed="true"] { color: var(--study-accent-ink) !important; background: var(--study-accent) !important; }
-.study-tool-intro, .halacha-study-entry { background: transparent !important; border-color: var(--study-rule) !important; color: var(--study-ink) !important; }
+.study-tool-intro { background: transparent !important; border-color: var(--study-rule) !important; color: var(--study-ink) !important; }
+.halacha-study-entry { border-color: var(--study-rule) !important; color: var(--study-ink) !important; }
 .study-tool-content { max-height: none; overflow: visible; }
 .study-tool-content > div { box-shadow: none; }
 @media (max-width: 640px) {

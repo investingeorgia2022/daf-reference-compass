@@ -117,7 +117,7 @@ export const HalachaBridgePanel: React.FC<SharedModuleProps> = ({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-          className={`halacha-study-entry py-4 border-b space-y-3 ${
+          className={`halacha-study-entry p-3 sm:p-4 rounded-2xl border space-y-3 ${
             isDark
               ? 'bg-[#1D130D]/95 border-[#5C3A21]'
               : 'bg-[#FBF7F0] border-[#8B5A2B]/40 shadow-sm'
