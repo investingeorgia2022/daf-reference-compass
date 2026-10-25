@@ -18,6 +18,7 @@ import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrN
 import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
+import { ReferenceOriginLabel } from './ReferenceOriginLabel';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -101,6 +102,7 @@ interface BlinkingTargetRegion {
   heightPct: number;
   hotspotIds: Set<string>;
   activatedAt: number;
+  originMarker?: string;
 }
 
 interface VilnaPdfInteractiveViewerProps {
@@ -4045,6 +4047,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         key: `${resolved.commType}:${resolved.key}:${Date.now()}`,
         labelHe: `${meta.he} (${resolved.key})`,
         labelKa: `${meta.ka} (${resolved.key})`,
+        originMarker: `${meta.he} · ${markerHotspot.word === '$' ? '⦸' : markerHotspot.word}`,
         leftPct: boxLeft,
         topPct: boxTop,
         widthPct: boxWidth,
@@ -4439,6 +4442,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   return (
     <div className="w-full flex flex-col items-center">
+      {blinkingTarget?.originMarker && (
+        <ReferenceOriginLabel container={pageContainerRef} label={blinkingTarget.labelKa} origin={blinkingTarget.originMarker} />
+      )}
       {/* ORIGINAL VILNA DAF PDF CANVAS CONTAINER — NO ZOOM BUTTONS ON THE DAF AREA ITSELF */}
       <div className={`w-full flex justify-center ${isFullScreen ? 'w-full min-h-full p-0 m-0' : 'overflow-x-auto py-0'}`}>
         <div

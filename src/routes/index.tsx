@@ -1,5 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 // The Talmud app uses browser-only APIs (pdf.js, canvas, localStorage) at import time,
 // so it is loaded only in the browser.
@@ -25,8 +26,9 @@ export const Route = createFileRoute("/")({
 
 function Loading() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1A130D", color: "#E8D9B5", fontFamily: "'Noto Sans Georgian', sans-serif" }}>
-      იტვირთება… טוען
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-background text-foreground" role="status">
+      <Loader2 className="size-6 animate-spin motion-reduce:animate-none text-primary" aria-hidden="true" />
+      <span className="text-sm">იტვირთება… טוען</span>
     </div>
   );
 }
