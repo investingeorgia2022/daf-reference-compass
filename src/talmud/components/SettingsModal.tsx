@@ -25,6 +25,7 @@ import {
 import { AppSettings, AppTheme, RecentlyViewedDaf, UILang } from '../types/talmud';
 import { TRACTATES } from '../data/tractates';
 import { SearchableSelect, SelectOption } from './SearchableSelect';
+import { writePreference } from '../utils/appPreferences';
 
 export type AppLanguage = UILang;
 
@@ -118,7 +119,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.44, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 overflow-y-auto"
+          className="settings-overlay fixed inset-0 flex items-center justify-center p-3 sm:p-5"
         >
           <motion.div
             key="settings-modal-card"
@@ -126,11 +127,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.97 }}
             transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
-            className={`w-full max-w-xl rounded-3xl border-2 shadow-2xl overflow-hidden ${
-              isDark
-                ? 'bg-[#1F150E] border-[#C49A6C]/60 text-[#FAF5EB]'
-                : 'bg-[#FBF7F0] border-[#8B5A2B]/55 text-[#2C1A10]'
-            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="პარამეტრები"
+            className="settings-dialog w-full max-w-xl overflow-hidden"
           >
         <div className="h-1.5 w-full bg-gradient-to-r from-[#5C3A21] via-[#C49A6C] to-[#5C3A21]" />
 
@@ -170,7 +170,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto">
+        <div className="settings-body p-4 sm:p-5 space-y-4">
           {/* 1. Theme Color Design Selection (დიზაინის გადართვა • ნაზი ცისფერი / სერი და სხვა თემები) */}
           <div
             className={`p-4 rounded-2xl border space-y-3.5 w-full ${
@@ -415,7 +415,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-6 gap-1.5 w-full pt-0.5">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-full pt-0.5">
               {[80, 90, 100, 115, 135, 160].map((preset) => (
                 <button
                   key={preset}
@@ -900,8 +900,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   ...settings,
                   showNikudByDefault: nextNikud,
                 });
-                localStorage.setItem('talmud_sacred_nikud_v1', String(nextNikud));
-                localStorage.setItem('talmud_blessings_nikud_v1', String(nextNikud));
+                writePreference('talmud_sacred_nikud_v1', String(nextNikud));
+                writePreference('talmud_blessings_nikud_v1', String(nextNikud));
               }}
               className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-sm shrink-0 ${
                 (settings.showNikudByDefault ?? true)
