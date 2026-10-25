@@ -24,3 +24,4 @@
 - [ ] Polish study center (სასწავლო ცენტრი) header, tool tabs, halacha chain.
 - [ ] Stop floating sage/scroll-top buttons from overlapping content on mobile.
 - [ ] Verify on 390x659 and run regression tests.
+- [ ] Show marker type + number badge next to the highlighted destination text after marker navigation.
