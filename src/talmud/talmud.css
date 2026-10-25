@@ -219,7 +219,7 @@ body:has(.dedication-overlay) [data-scroll-top-float] { visibility: hidden; poin
   transform: translate3d(0, 0, 0) scale(0.992);
 }
 
-/* Transparent interactive hotspots on Vilna PDF & 1:1 Cloned Digital PDF Daf */
+/* Transparent interactive hotspots on Vilna PDF Daf */
 .pdf-hotspot-btn,
 .pdf-clone-word-btn {
   background: transparent !important;

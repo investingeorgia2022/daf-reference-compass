@@ -78,7 +78,6 @@ export interface TalmudScrollBookmark {
   scrollRatio: number;
   folioRatio: number;
   layoutMode: DafLayoutMode;
-  vilnaSubMode: 'digital-linefree' | 'pdf-interactive' | 'both';
   anchorSentenceId: string | null;
   anchorSnippetHe: string;
   sectionLabelKa: string;
@@ -311,9 +310,6 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
 }) => {
   const isSiddurDaf = String(dafData.tractateId || '').startsWith('Siddur_');
   const [dafLayoutMode, setDafLayoutMode] = useState<DafLayoutMode>('vilna-classic');
-  const [vilnaSubMode, setVilnaSubMode] = useState<'digital-linefree' | 'pdf-interactive' | 'both'>(
-    'both'
-  );
   const [internalFullViewport, setInternalFullViewport] = useState<boolean>(false);
   const isDafFullViewport =
     externalFullViewport !== undefined ? externalFullViewport : internalFullViewport;
@@ -3091,7 +3087,6 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
         scrollRatio,
         folioRatio,
         layoutMode: dafLayoutMode,
-        vilnaSubMode,
         anchorSentenceId: anchorSentenceId || null,
         anchorSnippetHe,
         sectionLabelKa,
@@ -3145,7 +3140,6 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
       dafMarkHe,
       isDafFullViewport,
       dafLayoutMode,
-      vilnaSubMode,
       effectiveMishnah,
       effectiveGemara,
       effectiveRashi,
@@ -3179,12 +3173,9 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
         return;
       }
 
-      // Restore layout mode & sub-mode if different
+      // Restore layout mode if different
       if (bm.layoutMode && bm.layoutMode !== dafLayoutMode) {
         setDafLayoutMode(bm.layoutMode);
-      }
-      if (bm.vilnaSubMode && bm.vilnaSubMode !== vilnaSubMode) {
-        setVilnaSubMode(bm.vilnaSubMode);
       }
       if (bm.anchorSentenceId) {
         setMarkedReadingSentenceId(bm.anchorSentenceId);
@@ -3241,7 +3232,6 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
       dafData.tractateId,
       dafData.dafId,
       dafLayoutMode,
-      vilnaSubMode,
       isDafFullViewport,
       onNavigateToTractateDaf,
     ]
