@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   X,
@@ -81,6 +81,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   recentlyViewedDapim = [],
   onSelectRecentDaf,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab') return;
+      const dialog = document.querySelector('.settings-dialog');
+      const controls = Array.from(dialog?.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex="0"]') || []).filter(el => el.getClientRects().length > 0);
+      const first = controls[0]; const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    const timer = window.setTimeout(() => document.querySelector<HTMLElement>('.settings-dialog button')?.focus(), 100);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(timer); document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+      if (previous instanceof HTMLElement) previous.focus();
+    };
+  }, [isOpen, onClose]);
   const currentFontScale = dafFontSizeScale ?? settings.dafFontSizeScale ?? 100;
   const [recentSortOrder, setRecentSortOrder] = React.useState<'recent' | 'tractate'>('recent');
 
