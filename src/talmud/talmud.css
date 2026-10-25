@@ -604,10 +604,11 @@ button[data-crystal-gold="true"] div {
 [data-talmud-app] > header { background: var(--study-surface); color: var(--study-ink); border-color: var(--study-rule); box-shadow: var(--study-shadow); }
 [data-modern-dock] > div { background: var(--study-surface); color: var(--study-ink); border-color: var(--study-rule); box-shadow: var(--study-shadow); border-radius: 8px 8px 0 0; padding-bottom: env(safe-area-inset-bottom); }
 [data-talmud-app] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--study-accent); outline-offset: 3px; }
-.reference-origin-label { position: fixed; z-index: 310; pointer-events: none; width: 224px; max-width: calc(100vw - 24px); padding: 9px 12px; background: var(--study-surface); color: var(--study-ink); border: 1px solid var(--study-accent); border-radius: 6px; box-shadow: var(--study-shadow); font-size: 12px; line-height: 1.5; }
-.reference-origin-label > span { display: block; overflow-wrap: anywhere; }
-.reference-origin-label > strong { display: block; color: var(--study-accent); font-size: 15px; margin-top: 3px; }
-.reference-origin-label::after { content: ''; position: absolute; top: 100%; left: 18px; height: 12px; border-left: 2px solid var(--study-accent); }
+.reference-origin-label { position: fixed; z-index: 310; pointer-events: none; display: inline-flex; align-items: center; gap: 5px; max-width: 172px; padding: 2px 8px; background: color-mix(in oklab, var(--study-surface) 78%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: var(--study-ink); border: 1px solid color-mix(in oklab, var(--study-accent) 45%, transparent); border-radius: 999px; box-shadow: 0 1px 4px color-mix(in oklab, black 18%, transparent); font-size: 10px; line-height: 1.4; white-space: nowrap; opacity: .92; animation: refLabelIn .25s ease-out; transition: opacity .6s ease; }
+.reference-origin-label.is-fading { opacity: 0; }
+.reference-origin-label > span { overflow: hidden; text-overflow: ellipsis; opacity: .8; }
+.reference-origin-label > strong { color: var(--study-accent); font-size: 11px; font-weight: 600; }
+@keyframes refLabelIn { from { opacity: 0; transform: translateY(3px); } to { opacity: .92; transform: none; } }
 .settings-overlay { z-index: 370; background: var(--study-overlay); }
 .settings-dialog { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); border-radius: 8px; border: 1px solid var(--study-rule); background: var(--study-surface); color: var(--study-ink); box-shadow: var(--study-shadow); }
 .settings-dialog > div { flex-shrink: 0; }
