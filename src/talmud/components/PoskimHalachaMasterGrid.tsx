@@ -448,7 +448,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
                   }`}
                 >
                   <span>{tr.label}</span>
-                  <span dir="rtl" className="hidden sm:inline font-serif text-[10px] opacity-80">
+                  <span dir="rtl" className="pill-hebrew-optional font-serif text-[10px] opacity-80">
                     ({tr.he})
                   </span>
                 </button>
@@ -543,7 +543,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
                             : 'bg-sky-100 border-sky-700/40 text-sky-950'
                       }`}
                     >
-                      {isSephardic ? '🕍 სეფარადული ფოსეკი (ספרד)' : '📜 აშკენაზური ფოსეკი (אשכנז)'}
+                      {isSephardic ? '🕍 სეფარადული (ספרד)' : '📜 აშკენაზური (אשכנז)'}
                     </span>
 
                     <div className="flex items-center gap-1.5 shrink-0">
