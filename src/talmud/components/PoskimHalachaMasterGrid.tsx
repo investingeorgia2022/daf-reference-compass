@@ -300,21 +300,20 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
             : 'bg-gradient-to-br from-[#FFFDF8] via-[#F4E9D5] to-[#E8D7B9] border-[#6B4226]/55 text-[#21150C]'
         }`}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2.5 mb-2.5">
-          <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-start justify-between gap-2.5 mb-2.5">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#C49A6C] to-[#6B4226] text-[#FAF5EB] shadow-md shrink-0">
               <Scale className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-xs sm:text-sm font-black tracking-tight">
-                  ბოლო ეპოქის ჰალახის კანონმდებელთა ძლიერი ბადე • פוסקי הדורות האחרונים (ספרד ואשכנז)
-                </h3>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#6B4226] text-[#FAF5EB] border border-[#C49A6C]/50">
-                  {POSEK_AUTHORITY_PROFILES.length} უმაღლესი ფოსეკი
-                </span>
-              </div>
-              <p className="text-[11px] opacity-85">
+            <div className="min-w-0">
+              <h3 className="text-[13px] sm:text-sm font-black tracking-tight leading-snug">
+                ბოლო ეპოქის ჰალახის კანონმდებელთა ძლიერი ბადე
+                <span dir="rtl" className="font-serif"> • פוסקי הדורות האחרונים (ספרד ואשכנז)</span>
+              </h3>
+              <span className="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-[#6B4226] text-[#FAF5EB] border border-[#C49A6C]/50">
+                {POSEK_AUTHORITY_PROFILES.length} უმაღლესი ფოსეკი
+              </span>
+              <p className="text-[10px] sm:text-[11px] opacity-75 leading-relaxed mt-1.5 line-clamp-3">
                 რავ ყოვადია იოსეფი • რავ ბენ ციონ აბა შაული • ბენ იშ ხაი • ქაფ ჰახაიმი • რავ მოშე ლევი • მიშნა ბრურა • რავ ოირბახი • რავ განცფრიდი/გრენცფილდი • რავ მოშე ფაინშტეინი • ხაზონ იში და სხვ.
               </p>
             </div>
