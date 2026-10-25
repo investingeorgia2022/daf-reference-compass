@@ -3455,12 +3455,12 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
                 setKacunaExpanded((prev) => !prev);
               }}
               aria-label="AI ასისტენტი"
-              className="pointer-events-auto relative w-10 h-10 sm:w-12 sm:h-12 cursor-pointer rounded-full focus:outline-none group shrink-0 shadow-[0_6px_18px_rgba(14,116,144,0.16)] flex items-center justify-center opacity-90 hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              className="pointer-events-auto relative w-9 h-9 sm:w-12 sm:h-12 cursor-pointer rounded-full focus:outline-none group shrink-0 shadow-[0_6px_18px_rgba(14,116,144,0.16)] flex items-center justify-center opacity-90 hover:opacity-100 focus-visible:opacity-100 transition-opacity"
             >
               <LifelikeGlassOrbKacunaAvatar
                 speaking={kacunaSpeaking}
                 stopped={kacunaStopped}
-                sizeClass="w-10 h-10 sm:w-12 sm:h-12"
+                sizeClass="w-9 h-9 sm:w-12 sm:h-12"
               />
             </motion.button>
 
@@ -3510,7 +3510,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
                 boxShadow:
                   '0 4px 14px rgba(14,116,144,0.09), inset 0 1px 1.5px rgba(255,255,255,0.75)',
               }}
-              className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/65 hover:border-sky-300/80 text-sky-900/85 hover:text-amber-800 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all shrink-0 opacity-90 hover:opacity-100 focus-visible:opacity-100"
+              className="pointer-events-auto w-9 h-9 sm:w-12 sm:h-12 rounded-full border border-white/65 hover:border-sky-300/80 text-sky-900/85 hover:text-amber-800 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all shrink-0 opacity-90 hover:opacity-100 focus-visible:opacity-100"
             >
               <ArrowUp className="w-4 h-4 text-sky-700/85 stroke-[1.85] shrink-0" />
               <span className="text-[8px] font-medium tracking-tight text-slate-700/90 leading-none">
