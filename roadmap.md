@@ -25,3 +25,7 @@
 - [x] Stop floating sage/scroll-top buttons from overlapping content on mobile.
 - [x] Verify on 390x659 and run regression tests.
 - [ ] Show marker type + number badge next to the highlighted destination text after marker navigation.
+- [ ] Audit app-wide reading, settings, study and navigation flows; fix concrete issues found.
+- [ ] Unify study surfaces, loading/error states and accessible motion without changing the printed daf.
+- [ ] Verify key flows on phone and desktop and run the regression suite.
+- [ ] Deliver inspected source-only and complete-project ZIP archives with setup instructions.
