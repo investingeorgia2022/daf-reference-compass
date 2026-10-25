@@ -31,10 +31,7 @@ import {
   repairSiddurOcrLine,
   lookupSiddurLineTranslationKa,
 } from '../utils/siddurPdfCanonicalFixer';
-import {
-  renderDynamicVilnaDafToCanvas,
-  tintCitationHotspotsBlueOnCanvas,
-} from '../utils/dynamicVilnaCanvasRenderer';
+import { tintCitationHotspotsBlueOnCanvas } from '../utils/pdfCitationTint';
 import {
   CrystalDiamondJumpButton,
   WindowsWindowControls,
@@ -2941,20 +2938,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         if (isCancelled || errMsg.includes('cancel') || errMsg.includes('abort')) {
           return;
         }
-        if (!isCancelled && canvasRef.current) {
-          const latest = latestDataRef.current;
-          const parsed = renderDynamicVilnaDafToCanvas(
-            canvasRef.current,
-            latest.dafData,
-            tractateNameHe,
-            tractateNameKa,
-            dafMarkHe,
-            latest.effectiveMishnah,
-            latest.effectiveGemara,
-            latest.effectiveRashi,
-            latest.effectiveTosafot
-          );
-          setHotspots(parsed);
+        if (!isCancelled) {
+          setHotspots([]);
         }
       } finally {
         if (!isCancelled) {
