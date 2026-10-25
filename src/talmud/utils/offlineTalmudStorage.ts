@@ -15,6 +15,7 @@ import {
   mapSefariaCommentatorMeta,
 } from '../data/sefariaCommentators';
 import { translateToGeorgianLive } from './georgianTranslator';
+import { validateOfflineBackup } from './offlineBackupValidation';
 
 const DB_NAME = 'talmud_bavli_offline_db_v1';
 const DB_VERSION = 1;
@@ -765,7 +766,7 @@ export async function downloadTractateOfflinePack(params: {
 
     // Check if already cached via pack-download to speed up resumes
     const existing = await getDafFromOfflineStorage(tractate.id, dafId);
-    if (!existing || existing.dafData.gemara.length <= 1) {
+    if (!existing || existing.dafData.gemara.length <= 1 || (translateGeorgian && !existing.includeTranslations)) {
       await downloadAndCacheDafOffline(tractate, dafId, {
         translateGeorgian,
         source: 'pack-download',
@@ -811,23 +812,17 @@ export async function exportOfflineLibraryBackup(): Promise<string> {
 }
 
 export async function importOfflineLibraryBackup(jsonString: string): Promise<number> {
-  const parsed = JSON.parse(jsonString);
-  const records: CachedDafRecord[] = Array.isArray(parsed?.records)
-    ? parsed.records
-    : [];
+  const records = validateOfflineBackup(JSON.parse(jsonString));
   if (records.length === 0) return 0;
 
   const db = await openOfflineDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_DAPIM, 'readwrite');
     const store = tx.objectStore(STORE_DAPIM);
-    for (const rec of records) {
-      if (rec && rec.key && rec.dafData) {
-        store.put(rec);
-      }
-    }
+    for (const rec of records) store.put(rec);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error('შენახვა შეწყდა'));
   });
   db.close();
   notifyOfflineStorageChanged();
