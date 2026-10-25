@@ -319,7 +319,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto sm:justify-end">
             <button
               type="button"
               onClick={() => {
@@ -329,7 +329,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
                   return next;
                 });
               }}
-              className={`px-3 py-1.5 rounded-xl border text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+              className={`px-2.5 py-1.5 rounded-xl border text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
                 isLineSweepMode
                   ? 'bg-emerald-800 text-white border-emerald-400 shadow-sm'
                   : isDark
@@ -343,7 +343,7 @@ export const PoskimHalachaMasterGrid: React.FC<PoskimHalachaMasterGridProps> = (
             <button
               type="button"
               onClick={() => setShowNikud((v) => !v)}
-              className={`px-3 py-1.5 rounded-xl border text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+              className={`px-2.5 py-1.5 rounded-xl border text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
                 showNikud
                   ? 'bg-[#6B4226] text-[#FAF5EB] border-[#C49A6C]'
                   : isDark
