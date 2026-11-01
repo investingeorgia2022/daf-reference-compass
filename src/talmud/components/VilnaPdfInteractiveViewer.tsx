@@ -4457,6 +4457,20 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       return;
     }
 
+    // While a long-press selection is active, tapping another word in the same column extends it.
+    if (showRangeHandles && selectedRange && !hotspots[idx]?.isSmallMarker) {
+      const a = Math.min(selectedRange.startIdx, selectedRange.endIdx);
+      const b = Math.max(selectedRange.startIdx, selectedRange.endIdx);
+      if (idx < a || idx > b) {
+        if (hotspots[idx]?.section === hotspots[a]?.section) {
+          const next = idx < a ? { startIdx: idx, endIdx: b } : { startIdx: a, endIdx: idx };
+          setSelectedRange(next);
+          commitSelectionRange(next.startIdx, next.endIdx, false);
+          return;
+        }
+      }
+    }
+
     const clickedHotspot = hotspots[idx];
     if (!clickedHotspot) return;
     if (openBiblicalCitation(idx)) return;
@@ -4587,10 +4601,14 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       <div className={`w-full flex justify-center ${isFullScreen ? 'w-full min-h-full p-0 m-0' : 'overflow-x-auto py-0'}`}>
         <div
           ref={pageContainerRef}
+          onContextMenu={(e) => e.preventDefault()}
           style={{
             width: '100%',
             maxWidth: isFullScreen ? '100%' : '960px',
             aspectRatio: `${pdfAspectRatio}`,
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
           }}
           className={`relative select-none shadow-[0_14px_40px_rgba(0,0,0,0.42)] transition-all duration-200 ${
             isFullScreen ? 'rounded-none border-0 w-full p-0 m-0' : 'rounded-none sm:rounded-xl border overflow-hidden'
@@ -4942,7 +4960,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 width: `${selectedUnionBoxPct.widthPct}%`,
                 height: `${selectedUnionBoxPct.heightPct}%`,
               }}
-              className="absolute z-30 pointer-events-none"
+              className="absolute z-40 pointer-events-none"
             >
               {/* Requirement 4: Translucent Faceted Diamond Jump Button in overall design colors, rendered via fixed Portal so it is 100% independent of Daf/Screen Zoom */}
               {activeSelectedDafCitation && onNavigateToCitation && selectedUnionScreenRect && (
@@ -5007,7 +5025,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
               {/* Requirement 3: Only show the two draggable range-expansion balls after a 2nd-press long-press on the selected word (or when dragging multi-word range) */}
               {showRangeHandles &&
-                wordExplainStage === 'marked' &&
                 !isSingleSmallMarkerSelected && (
                 <>
                   {/* Right (Start in RTL) Copy/Paste Drag Handle with generous touch area */}
@@ -5016,13 +5033,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     onTouchStart={(e) => startHandleDrag(e, 'start-handle')}
                     title="გადასწიეთ მარჯვნივ/მარცხნივ რამდენიმე სიტყვის მოსანიშნად"
                     style={{
-                      right: '-11px',
-                      bottom: '-11px',
+                      right: '-22px',
+                      bottom: '-30px',
                       touchAction: 'none',
                     }}
-                    className="pointer-events-auto absolute w-6 h-6 flex items-center justify-center cursor-ew-resize"
+                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600 border border-white/90 shadow-sm" />
+                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
                   </div>
 
                   {/* Left (End in RTL) Copy/Paste Drag Handle with generous touch area */}
@@ -5031,13 +5048,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     onTouchStart={(e) => startHandleDrag(e, 'end-handle')}
                     title="გადასწიეთ მარცხნივ/მარჯვნივ რამდენიმე სიტყვის მოსანიშნად"
                     style={{
-                      left: '-11px',
-                      bottom: '-11px',
+                      left: '-22px',
+                      bottom: '-30px',
                       touchAction: 'none',
                     }}
-                    className="pointer-events-auto absolute w-6 h-6 flex items-center justify-center cursor-ew-resize"
+                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600 border border-white/90 shadow-sm" />
+                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
                   </div>
                 </>
               )}
@@ -5172,7 +5189,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 style={{
                   position: 'fixed',
                   left: `${Math.max(12, Math.min(window.innerWidth - 180, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 90))}px`,
-                  top: `${selectedUnionScreenRect.bottom + 52 < window.innerHeight ? selectedUnionScreenRect.bottom + 8 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
+                  top: `${selectedUnionScreenRect.bottom + 84 < window.innerHeight ? selectedUnionScreenRect.bottom + 40 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
                 className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-xl bg-stone-900/95 dark:bg-[#1C120C]/95 text-stone-100 border border-amber-500/50 shadow-2xl backdrop-blur-md select-none"
