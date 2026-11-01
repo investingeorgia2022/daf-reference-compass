@@ -26,7 +26,7 @@ describe('dibbur hamatchil matching', () => {
 
   it('links Rashi to green main text and Tosafot to bordeaux', () => {
     const gemara = row('gemara', ['מאימתי', 'קורין', 'את', 'שמע', 'בערבין'], 10);
-    const rashi = row('rashi', ['מאימתי.', 'פירוש', 'דבר:'], 30);
+    const rashi = row('rashi', ['מאימתי', 'פירוש', 'דבר:'], 30);
     const tos = row('tosafot', ['את', 'שמע.', 'פירוש:'], 50);
     const { roles } = buildDibburHamatchilLinks([...gemara, ...rashi, ...tos]);
     expect(roles.get(gemara[0].id)?.rashi).toBeTruthy();

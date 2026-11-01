@@ -127,12 +127,17 @@ export function extractDibburim<T extends DhHotspotLike>(ordered: T[]): T[][] {
     if (cur) {
       const n = normalizeHebrewWord(raw);
       if (n) cur.push(h);
-      if (/[.\-–־]\s*$/.test(raw) || cur.length >= 10) {
-        if (cur.length > 0 && cur.length < 10) out.push(cur);
+      const isEtc = ETC.has(plain(n));
+      if (/[.\-–־]\s*$/.test(raw) || isEtc || cur.length >= 8) {
+        if (cur.length > 0) out.push(cur);
         cur = null;
       }
     }
-    if (/:\s*$/.test(raw)) { atStart = true; cur = null; }
+    if (/:\s*$/.test(raw)) {
+      if (cur && cur.length > 0) out.push(cur);
+      atStart = true;
+      cur = null;
+    }
   }
   return out;
 }
@@ -172,11 +177,23 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
   for (const commentator of ['rashi', 'tosafot'] as DhCommentator[]) {
     const ordered = readingOrder(hotspots.filter((h) => h.section === commentator));
     let cursor = 0;
-    extractDibburim(ordered).forEach((dh, i) => {
-      const found = findInMain(dh.map((h) => h.word), mainWords, cursor);
+    extractDibburim(ordered).forEach((candidate, i) => {
+      let dh = candidate;
+      // The scan has no reliable end mark for an opening, so take the longest
+      // prefix of the candidate words that is quoted verbatim in the main text.
+      const words = dh.filter((h) => !ETC.has(plain(normalizeHebrewWord(h.word))));
+      let found: { start: number; end: number } | null = null;
+      let k = words.length;
+      for (; k >= 1; k--) {
+        if (k === 1 && plain(normalizeHebrewWord(words[0].word)).length < 4) break;
+        found = findInMain(words.slice(0, k).map((h) => h.word), mainWords, cursor);
+        if (found) break;
+      }
       if (!found) return;
-      const toks = dh.filter((h) => !ETC.has(plain(normalizeHebrewWord(h.word))));
-      if (toks.length === 1 && plain(normalizeHebrewWord(toks[0].word)).length < 3) return;
+      const lastId = words[k - 1].id;
+      const cut = dh.findIndex((h) => h.id === lastId);
+      const next = dh[cut + 1];
+      dh = dh.slice(0, cut + 1 + (next && ETC.has(plain(normalizeHebrewWord(next.word))) ? 1 : 0));
       cursor = found.start;
       const key = `${commentator}:${i}`;
       const link: DhLink = {
