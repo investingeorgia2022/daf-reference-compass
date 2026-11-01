@@ -3546,6 +3546,16 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     [dibburLinks, hotspots, citationHotspotIdsSet]
   );
 
+  // A dibbur-hamatchil destination glows for a few seconds, then fades by itself.
+  useEffect(() => {
+    if (!blinkingTarget?.key.startsWith('dh:')) return;
+    const key = blinkingTarget.key;
+    const t = window.setTimeout(() => {
+      setBlinkingTarget((cur) => (cur && cur.key === key ? null : cur));
+    }, 3200);
+    return () => window.clearTimeout(t);
+  }, [blinkingTarget]);
+
   // Detect if the currently selected hotspot(s) represent a Talmudic Daf citation (like (.דף לג) -> Berakhot 33a)
   const activeSelectedDafCitation = useMemo(() => {
     if (!selectedRange || hotspots.length === 0) return null;

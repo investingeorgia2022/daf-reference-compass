@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { buildDibburHamatchilLinks, matchTokenAt, wordsMatch, splitSideAt } from '@/talmud/utils/dibburHamatchilMatcher';
 
+// Vilna type sizes (pt): commentary body 11.2, bold Rashi 11.4, bold Tosafot 11.9, large Tosafot opening 16.4, Gemara 13.7.
+const BODY = 11.2, RASHI_BOLD = 11.4, TOS_BOLD = 11.9, TOS_BIG = 16.4, GEM = 13.7;
 let n = 0;
-const row = (section: string, words: string[], top: number) =>
-  words.map((word, i) => ({
+const row = (section: string, words: Array<[string, number, ('.' | ':')?]>, top: number) =>
+  words.map(([word, glyphH, stopAfter], i) => ({
     id: `${section}-${n++}`,
     word,
     section,
@@ -12,7 +14,11 @@ const row = (section: string, words: string[], top: number) =>
     topPct: top,
     widthPct: 6,
     heightPct: 1,
+    glyphH,
+    stopAfter,
   }));
+const gem = (words: string[], top = 10) => row('gemara', words.map((w) => [w, GEM] as [string, number]), top);
+const body = (w: string): [string, number] => [w, BODY];
 
 describe('dibbur hamatchil matching', () => {
   it('matches words ignoring prefixes and nikud', () => {
@@ -24,33 +30,47 @@ describe('dibbur hamatchil matching', () => {
     expect(matchTokenAt('אע"פ', ['אף', 'על', 'פי', 'כן'], 0)).toBe(3);
   });
 
-  it('links Rashi to green main text and Tosafot to bordeaux', () => {
-    const gemara = row('gemara', ['מאימתי', 'קורין', 'את', 'שמע', 'בערבין'], 10);
-    const rashi = row('rashi', ['מאימתי', 'פירוש', 'דבר:'], 30);
-    const tos = row('tosafot', ['את', 'שמע.', 'פירוש:'], 50);
-    const { roles } = buildDibburHamatchilLinks([...gemara, ...rashi, ...tos]);
-    expect(roles.get(gemara[0].id)?.rashi).toBeTruthy();
-    expect(roles.get(gemara[2].id)?.tosafot).toBeTruthy();
-    expect(roles.get(gemara[1].id)).toBeUndefined();
-    expect(roles.get(rashi[0].id)?.rashi).toBeTruthy();
+  it('only bold Rashi words form a Rashi opening; plain body words are never linked', () => {
+    const g = gem(['מאימתי', 'קורין', 'את', 'שמע', 'בערבין']);
+    const r = row('rashi', [['קורין', RASHI_BOLD], ['את', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], body('בערבין'), body('מאימתי')], 30);
+    const { roles } = buildDibburHamatchilLinks([...g, ...r]);
+    expect(roles.get(g[1].id)).toEqual({ rashi: 'rashi:0' });
+    expect(roles.get(g[3].id)).toEqual({ rashi: 'rashi:0' });
+    expect(roles.get(g[0].id)).toBeUndefined();
+    expect(roles.get(g[4].id)).toBeUndefined();
+    expect(roles.get(r[3].id)).toBeUndefined();
   });
 
-  it('splits a shared quotation: first half Rashi, second half Tosafot', () => {
-    const gemara = row('gemara', ['מאימתי', 'קורין', 'את', 'שמע'], 10);
-    const rashi = row('rashi', ['מאימתי', 'קורין', 'את', 'שמע.', 'x:'], 30);
-    const tos = row('tosafot', ['מאימתי', 'קורין', 'את', 'שמע.', 'x:'], 50);
-    const { roles } = buildDibburHamatchilLinks([...gemara, ...rashi, ...tos]);
-    expect(roles.get(gemara[0].id)).toEqual({ rashi: 'rashi:0' });
-    expect(roles.get(gemara[1].id)).toEqual({ rashi: 'rashi:0' });
-    expect(roles.get(gemara[2].id)).toEqual({ tosafot: 'tosafot:0' });
-    expect(roles.get(gemara[3].id)).toEqual({ tosafot: 'tosafot:0' });
+  it('a Tosafot opening (large first word, bold continuation) is linked as Tosafot, not Rashi', () => {
+    const g = gem(['מאימתי', 'קורין', 'את', 'שמע']);
+    const t = row('tosafot', [['מאימתי', TOS_BIG], ['קורין', TOS_BOLD], ['וכו', TOS_BOLD], body('פירוש')], 50);
+    const { roles } = buildDibburHamatchilLinks([...g, ...t]);
+    expect(roles.get(g[0].id)).toEqual({ tosafot: 'tosafot:0' });
+    expect(roles.get(g[1].id)).toEqual({ tosafot: 'tosafot:0' });
+    expect(roles.get(t[2].id)).toEqual({ tosafot: 'tosafot:0' });
+    expect(roles.get(t[3].id)).toBeUndefined();
+  });
+
+  it('a word quoted by both Rashi and Tosafot is split between them', () => {
+    const g = gem(['מאימתי', 'קורין']);
+    const r = row('rashi', [['מאימתי', RASHI_BOLD], ['קורין', RASHI_BOLD, '.'], body('x')], 30);
+    const t = row('tosafot', [['מאימתי', TOS_BIG], ['קורין', TOS_BOLD, '.'], body('x')], 50);
+    const { roles } = buildDibburHamatchilLinks([...g, ...r, ...t]);
+    expect(roles.get(g[0].id)).toEqual({ rashi: 'rashi:0', tosafot: 'tosafot:0', splitWord: true });
+  });
+
+  it('two openings on one line are separated by the printed period', () => {
+    const g = gem(['קורין', 'את', 'שמע', 'משעה', 'שהכהנים', 'נכנסים']);
+    const r = row('rashi', [['קורין', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
+    const { links } = buildDibburHamatchilLinks([...g, ...r]);
+    expect(links.map((l) => l.dhIds.length)).toEqual([2, 2]);
   });
 
   it('ignores blue markers inside a quotation', () => {
-    const g = row('gemara', ['מאימתי', 'א', 'קורין'], 10);
+    const g = row('gemara', [['מאימתי', GEM], ['א', GEM], ['קורין', GEM]], 10);
     (g[1] as any).isSmallMarker = true;
-    const rashi = row('rashi', ['מאימתי', 'קורין.', 'x:'], 30);
-    const { roles } = buildDibburHamatchilLinks([...g, ...rashi]);
+    const r = row('rashi', [['מאימתי', RASHI_BOLD], ['קורין', RASHI_BOLD, '.'], body('x')], 30);
+    const { roles } = buildDibburHamatchilLinks([...g, ...r]);
     expect(roles.get(g[2].id)?.rashi).toBe('rashi:0');
     expect(roles.get(g[1].id)).toBeUndefined();
   });
