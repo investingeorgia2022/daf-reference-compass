@@ -3538,6 +3538,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         hotspotIds: ids,
         activatedAt: Date.now(),
       });
+      window.dispatchEvent(
+        new CustomEvent('talmud-focus-target-pct', {
+          detail: { ox: (left + right) / 2, oy: (top + bottom) / 2, keepScale: true, scrollHandled: true },
+        })
+      );
       requestAnimationFrame(() => {
         const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${targets[0].id}"]`);
         if (el instanceof HTMLElement) scrollToTarget(el);

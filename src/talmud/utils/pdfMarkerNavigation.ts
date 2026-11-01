@@ -44,7 +44,8 @@ export function getGilyonNote<T extends MarginSpot>(spots: T[], sourceSection: s
   const leads = column.filter(s => /^(?:ב?מתני|ב?משנה|ב?גמ|ב?תוס|ב?רש)/.test(s.word));
   const pattern = sourceSection === 'mishnah' ? /^(?:ב?מתני|ב?משנה)/ : sourceSection === 'tosafot' ? /^ב?תוס/ : sourceSection === 'rashi' ? /^ב?רש/ : /^ב?גמ/;
   const lead = leads.find(s => pattern.test(s.word));
-  if (!lead) return [];
+  // No section heading printed for this source: fall back to the whole Gilyon column.
+  if (!lead) return column.filter(s => !/^גליון/.test(s.word));
   const next = leads.find(s => s.topPct > lead.topPct + 0.4);
   return column.filter(s => s.topPct >= lead.topPct - 0.35 && (!next || s.topPct < next.topPct - 0.35));
 }
