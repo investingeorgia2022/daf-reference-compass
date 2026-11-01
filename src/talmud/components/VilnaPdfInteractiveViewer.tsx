@@ -4033,7 +4033,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             navigator.vibrate(30);
           } catch {}
         }
-      }, 280);
+      }, 450);
     }
   };
 
@@ -5113,7 +5113,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 style={{
                   position: 'fixed',
                   left: `${Math.max(12, Math.min(window.innerWidth - 180, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 90))}px`,
-                  top: `${selectedUnionScreenRect.top > 60 ? selectedUnionScreenRect.top - 46 : selectedUnionScreenRect.bottom + 8}px`,
+                  top: `${selectedUnionScreenRect.bottom + 52 < window.innerHeight ? selectedUnionScreenRect.bottom + 8 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
                 className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-xl bg-stone-900/95 dark:bg-[#1C120C]/95 text-stone-100 border border-amber-500/50 shadow-2xl backdrop-blur-md select-none"
