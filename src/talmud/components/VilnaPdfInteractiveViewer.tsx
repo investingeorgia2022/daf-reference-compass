@@ -2253,6 +2253,47 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return pdfLines.find((l) => l.rowId === stoppedRowId) || pdfLines[0] || null;
   }, [pdfLines, stoppedRowId]);
 
+  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line)
+  const commentaryRowsKey = `talmud_commentary_rows_${dafData.tractateId}_${dafData.dafId}`;
+  const [commentaryRows, setCommentaryRows] = useState<{ rashi?: string; tosafot?: string }>({});
+  useEffect(() => {
+    try {
+      setCommentaryRows(JSON.parse(localStorage.getItem(commentaryRowsKey) || '{}') || {});
+    } catch {
+      setCommentaryRows({});
+    }
+  }, [commentaryRowsKey]);
+  const commentaryLines = useMemo(
+    () =>
+      (['rashi', 'tosafot'] as const)
+        .map((sec) => pdfLines.find((l) => l.rowId === commentaryRows[sec] && l.section === sec))
+        .filter((l): l is PdfDafLine => !!l && l.rowId !== activeStoppedLine?.rowId),
+    [pdfLines, commentaryRows, activeStoppedLine]
+  );
+  const markReadingLineAt = useCallback(
+    (h: VilnaPdfHotspot | undefined) => {
+      if (!h || !h.rowId) return;
+      if (h.section === 'mishnah' || h.section === 'gemara') {
+        updateStoppedRow(h.rowId);
+      } else if (h.section === 'rashi' || h.section === 'tosafot') {
+        const sec = h.section;
+        setCommentaryRows((prev) => {
+          const next = { ...prev, [sec]: h.rowId };
+          try {
+            localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+        // If the main line was sitting in this commentary, move it back to the Gemara
+        if (activeStoppedLine && activeStoppedLine.section === sec) {
+          const firstMain = pdfLines.find((l) => l.section === 'mishnah' || l.section === 'gemara');
+          if (firstMain) updateStoppedRow(firstMain.rowId);
+        }
+      }
+    },
+    [updateStoppedRow, commentaryRowsKey, activeStoppedLine, pdfLines]
+  );
+
   const stepStoppedLine = useCallback(
     (dir: 'prev' | 'next') => {
       if (pdfLines.length === 0) return;
@@ -3722,11 +3763,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   // Live screen position tracker for the selected citation union box so CrystalDiamondJumpButton renders via fixed Portal completely independent of Daf zoom
   useEffect(() => {
-    if (
-      !selectedUnionBoxPct ||
-      (!activeSelectedDafCitation && !activeSelectedMarkerTarget) ||
-      typeof window === 'undefined'
-    ) {
+    if (!selectedUnionBoxPct || typeof window === 'undefined') {
       setSelectedUnionScreenRect(null);
       return;
     }
@@ -3974,7 +4011,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         e.touches[0].clientX - pointerDownPosRef.current.x,
         e.touches[0].clientY - pointerDownPosRef.current.y
       );
-      if (dist > 10) {
+      if (dist > 18) {
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
@@ -3998,11 +4035,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     clientY: number,
     _isTouch: boolean
   ) => {
-    if (
-      typeof document !== 'undefined' &&
-      (document.body.dataset.talmudPanning === 'true' ||
-        document.querySelector('[data-daf-pan-mode="true"]'))
-    ) {
+    if (typeof document !== 'undefined' && document.body.dataset.talmudPanning === 'true') {
       return;
     }
     pointerDownPosRef.current = { x: clientX, y: clientY, idx };
@@ -4013,14 +4046,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       idx >= Math.min(selectedRange.startIdx, selectedRange.endIdx) &&
       idx <= Math.max(selectedRange.startIdx, selectedRange.endIdx);
 
-    // Long-press (~280ms) on any regular word initiates range selection handles and allows sliding finger right/left to mark a text range
+    // Long-press (~450ms) on any regular word starts copy/paste range selection
     if (!hotspots[idx]?.isSmallMarker) {
       longPressTimerRef.current = setTimeout(() => {
-        if (
-          typeof document !== 'undefined' &&
-          (document.body.dataset.talmudPanning === 'true' ||
-            document.querySelector('[data-daf-pan-mode="true"]'))
-        ) {
+        if (typeof document !== 'undefined' && document.body.dataset.talmudPanning === 'true') {
           return;
         }
         suppressNextClickRef.current = true;
@@ -4053,7 +4082,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       e.touches[0].clientX - pointerDownPosRef.current.x,
       e.touches[0].clientY - pointerDownPosRef.current.y
     );
-    if (dist > 10) {
+    if (dist > 18) {
       clearLongPressTimer();
       suppressNextClickRef.current = true;
     }
@@ -4592,6 +4621,24 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             }}
           />
 
+          {/* Independent Rashi / Tosafot reading lines — same sheer band style as the Gemara line */}
+          {!loadingPdf &&
+            commentaryLines.map((line) => (
+              <div
+                key={`commentary-line-${line.section}`}
+                data-reading-line-section={line.section}
+                style={{
+                  left: `${Math.max(0.4, line.leftPct)}%`,
+                  top: `${line.topPct}%`,
+                  width: `${Math.min(99.2, line.widthPct)}%`,
+                  height: `${line.heightPct}%`,
+                  backgroundColor: 'rgba(212, 163, 115, 0.10)',
+                  borderBottom: '1px solid rgba(139, 90, 43, 0.36)',
+                }}
+                className="absolute z-25 pointer-events-none rounded-[2px] transition-all duration-150 ease-out"
+              />
+            ))}
+
           {/* READING BOOKMARK LINE — LIGHT, HIGH-TRANSPARENCY BAND SPANNING FULL LINE + DELICATE HANDLE */}
           {!loadingPdf && hotspots.length > 0 && activeStoppedLine && (
             <div
@@ -5082,6 +5129,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    if (
+                      !h.isSmallMarker &&
+                      !suppressNextClickRef.current &&
+                      document.body.dataset.talmudPanning !== 'true'
+                    ) {
+                      markReadingLineAt(h);
+                    }
                     if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, idx);
                   }}
