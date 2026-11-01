@@ -84,6 +84,9 @@ export function wordsMatch(a: string, b: string): boolean {
   const pb = plainWord(b);
   if (!pa || !pb) return false;
   if (pa === pb) return true;
+  // Hebrew plural -ים and Aramaic plural -ין are the same word (טובלים / טובלין).
+  const plur = (w: string) => (w.length >= 4 && /י[מנ]$/.test(w) ? w.slice(0, -1) : w);
+  if (plur(pa) === plur(pb) && plur(pa) !== pa) return true;
   const va = stripPrefixes(pa);
   const vb = stripPrefixes(pb);
   return va.some((x) => x.length >= 3 && vb.includes(x));

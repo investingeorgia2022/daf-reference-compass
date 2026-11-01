@@ -39,4 +39,9 @@ describe('biblical citations instead of commentary indices', () => {
   });
   it('preserves explicit verse numbers', () => { expect(parseBiblicalCitation('(שמות יד כד)')).toMatchObject({chapter:14,verse:24}); });
   it('does not substitute a verse when quotation evidence is absent', () => { expect(findQuotedVerse(['פסוק אחד','פסוק שני'],'מילה אחרת')).toBeUndefined(); });
+});describe('Gilyon note without a matching section heading', () => {
+  it('falls back to the Gilyon notes instead of doing nothing', () => {
+    const spots = ['גליון הש','בגמ','דברי','הערה'].map((word,i) => ({ word, section:'margin',marginCommType:'gilyon-hashas',leftPct:88,topPct:20+i }));
+    expect(getGilyonNote(spots,'mishnah','right').map(s=>s.word)).toEqual(['בגמ','דברי','הערה']);
+  });
 });

@@ -86,3 +86,8 @@ describe('dibbur hamatchil matching', () => {
     expect(splitSideAt(20, { left: 0, width: 100 })).toBe('tosafot');
   });
 });
+import { wordsMatch as wm } from '../talmud/utils/dibburHamatchilMatcher';
+describe('plural endings', () => {
+  it('matches Rashi טובלים with Gemara טובלין', () => { expect(wm('טובלים', 'טובלין')).toBe(true); });
+  it('does not merge unrelated words', () => { expect(wm('טובלים', 'טובלת')).toBe(false); });
+});
