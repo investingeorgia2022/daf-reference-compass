@@ -5025,7 +5025,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
               {/* Requirement 3: Only show the two draggable range-expansion balls after a 2nd-press long-press on the selected word (or when dragging multi-word range) */}
               {showRangeHandles &&
-                wordExplainStage === 'marked' &&
                 !isSingleSmallMarkerSelected && (
                 <>
                   {/* Right (Start in RTL) Copy/Paste Drag Handle with generous touch area */}
@@ -5034,13 +5033,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     onTouchStart={(e) => startHandleDrag(e, 'start-handle')}
                     title="გადასწიეთ მარჯვნივ/მარცხნივ რამდენიმე სიტყვის მოსანიშნად"
                     style={{
-                      right: '-11px',
-                      bottom: '-11px',
+                      right: '-22px',
+                      bottom: '-30px',
                       touchAction: 'none',
                     }}
-                    className="pointer-events-auto absolute w-6 h-6 flex items-center justify-center cursor-ew-resize"
+                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600 border border-white/90 shadow-sm" />
+                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
                   </div>
 
                   {/* Left (End in RTL) Copy/Paste Drag Handle with generous touch area */}
@@ -5049,13 +5048,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     onTouchStart={(e) => startHandleDrag(e, 'end-handle')}
                     title="გადასწიეთ მარცხნივ/მარჯვნივ რამდენიმე სიტყვის მოსანიშნად"
                     style={{
-                      left: '-11px',
-                      bottom: '-11px',
+                      left: '-22px',
+                      bottom: '-30px',
                       touchAction: 'none',
                     }}
-                    className="pointer-events-auto absolute w-6 h-6 flex items-center justify-center cursor-ew-resize"
+                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600 border border-white/90 shadow-sm" />
+                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
                   </div>
                 </>
               )}
