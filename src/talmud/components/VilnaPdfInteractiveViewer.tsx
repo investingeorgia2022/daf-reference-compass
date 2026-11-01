@@ -1015,6 +1015,7 @@ export function extractHotspotsFromTextContent(
   const vpW = Math.max(1, viewport.width);
   const vpH = Math.max(1, viewport.height);
   const initialRuns: RawPdfRun[] = [];
+  const stopMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '.' | ':' }> = [];
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
@@ -1049,12 +1050,23 @@ export function extractHotspotsFromTextContent(
     }
     // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
     const isQuoteOnly = /^["'״׳`]+$/.test(str);
+    const transform = rawItem.transform as number[] | undefined;
+    // Standalone "." / ":" runs end a dibbur hamatchil; remember where they sit before dropping them.
+    if (str && /^[.:'"״׳\s]+$/.test(str) && /[.:]/.test(str) && transform && transform.length >= 6) {
+      const [sx1, sy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
+      const [sx2] = viewport.convertToViewportPoint((Number(transform[4]) || 0) + Math.max(1, Number(rawItem.width) || 2), Number(transform[5]) || 0);
+      stopMarks.push({
+        leftPct: (Math.min(sx1, sx2) / vpW) * 100,
+        rightPct: (Math.max(sx1, sx2) / vpW) * 100,
+        baselinePct: (sy / vpH) * 100,
+        mark: str.includes(':') ? ':' : '.',
+      });
+    }
     // Accept Hebrew letters, digits (for Torah Or 1..9), and parentheses/brackets (for (א), [א])
     if (!str || (!isQuoteOnly && !/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
     // Skip pure punctuation like standalone "." or ":" unless it's a bracket, digit or quote
     if (!isQuoteOnly && /^[.,:;'"״׳\-–—]+$/.test(str)) continue;
 
-    const transform = rawItem.transform as number[] | undefined;
     if (!transform || transform.length < 6) continue;
 
     const pdfX = Number(transform[4]) || 0;
