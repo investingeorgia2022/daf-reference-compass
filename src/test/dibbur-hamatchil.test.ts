@@ -19,6 +19,11 @@ const row = (section: string, words: Array<[string, number, ('.' | ':')?]>, top:
   }));
 const gem = (words: string[], top = 10) => row('gemara', words.map((w) => [w, GEM] as [string, number]), top);
 const body = (w: string): [string, number] => [w, BODY];
+// Ordinary commentary prose so the page has a measurable body size.
+const prose = () => [
+  ...row('rashi', ['והיינו', 'דאמרינן', 'בגמרא', 'לקמן'].map(body), 80),
+  ...row('tosafot', ['והיינו', 'דאמרינן', 'בגמרא', 'לקמן'].map(body), 85),
+];
 
 describe('dibbur hamatchil matching', () => {
   it('matches words ignoring prefixes and nikud', () => {
@@ -33,7 +38,7 @@ describe('dibbur hamatchil matching', () => {
   it('only bold Rashi words form a Rashi opening; plain body words are never linked', () => {
     const g = gem(['מאימתי', 'קורין', 'את', 'שמע', 'בערבין']);
     const r = row('rashi', [['קורין', RASHI_BOLD], ['את', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], body('בערבין'), body('מאימתי')], 30);
-    const { roles } = buildDibburHamatchilLinks([...g, ...r]);
+    const { roles } = buildDibburHamatchilLinks([...prose(), ...g, ...r]);
     expect(roles.get(g[1].id)).toEqual({ rashi: 'rashi:0' });
     expect(roles.get(g[3].id)).toEqual({ rashi: 'rashi:0' });
     expect(roles.get(g[0].id)).toBeUndefined();
@@ -44,7 +49,7 @@ describe('dibbur hamatchil matching', () => {
   it('a Tosafot opening (large first word, bold continuation) is linked as Tosafot, not Rashi', () => {
     const g = gem(['מאימתי', 'קורין', 'את', 'שמע']);
     const t = row('tosafot', [['מאימתי', TOS_BIG], ['קורין', TOS_BOLD], ['וכו', TOS_BOLD], body('פירוש')], 50);
-    const { roles } = buildDibburHamatchilLinks([...g, ...t]);
+    const { roles } = buildDibburHamatchilLinks([...prose(), ...g, ...t]);
     expect(roles.get(g[0].id)).toEqual({ tosafot: 'tosafot:0' });
     expect(roles.get(g[1].id)).toEqual({ tosafot: 'tosafot:0' });
     expect(roles.get(t[2].id)).toEqual({ tosafot: 'tosafot:0' });
@@ -55,14 +60,14 @@ describe('dibbur hamatchil matching', () => {
     const g = gem(['מאימתי', 'קורין']);
     const r = row('rashi', [['מאימתי', RASHI_BOLD], ['קורין', RASHI_BOLD, '.'], body('x')], 30);
     const t = row('tosafot', [['מאימתי', TOS_BIG], ['קורין', TOS_BOLD, '.'], body('x')], 50);
-    const { roles } = buildDibburHamatchilLinks([...g, ...r, ...t]);
+    const { roles } = buildDibburHamatchilLinks([...prose(), ...g, ...r, ...t]);
     expect(roles.get(g[0].id)).toEqual({ rashi: 'rashi:0', tosafot: 'tosafot:0', splitWord: true });
   });
 
   it('two openings on one line are separated by the printed period', () => {
     const g = gem(['קורין', 'את', 'שמע', 'משעה', 'שהכהנים', 'נכנסים']);
     const r = row('rashi', [['קורין', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
-    const { links } = buildDibburHamatchilLinks([...g, ...r]);
+    const { links } = buildDibburHamatchilLinks([...prose(), ...g, ...r]);
     expect(links.map((l) => l.dhIds.length)).toEqual([2, 2]);
   });
 
@@ -70,7 +75,7 @@ describe('dibbur hamatchil matching', () => {
     const g = row('gemara', [['מאימתי', GEM], ['א', GEM], ['קורין', GEM]], 10);
     (g[1] as any).isSmallMarker = true;
     const r = row('rashi', [['מאימתי', RASHI_BOLD], ['קורין', RASHI_BOLD, '.'], body('x')], 30);
-    const { roles } = buildDibburHamatchilLinks([...g, ...r]);
+    const { roles } = buildDibburHamatchilLinks([...prose(), ...g, ...r]);
     expect(roles.get(g[2].id)?.rashi).toBe('rashi:0');
     expect(roles.get(g[1].id)).toBeUndefined();
   });
