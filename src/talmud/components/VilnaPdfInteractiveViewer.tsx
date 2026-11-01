@@ -4457,6 +4457,20 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       return;
     }
 
+    // While a long-press selection is active, tapping another word in the same column extends it.
+    if (showRangeHandles && selectedRange && !hotspots[idx]?.isSmallMarker) {
+      const a = Math.min(selectedRange.startIdx, selectedRange.endIdx);
+      const b = Math.max(selectedRange.startIdx, selectedRange.endIdx);
+      if (idx < a || idx > b) {
+        if (hotspots[idx]?.section === hotspots[a]?.section) {
+          const next = idx < a ? { startIdx: idx, endIdx: b } : { startIdx: a, endIdx: idx };
+          setSelectedRange(next);
+          commitSelectionRange(next.startIdx, next.endIdx, false);
+          return;
+        }
+      }
+    }
+
     const clickedHotspot = hotspots[idx];
     if (!clickedHotspot) return;
     if (openBiblicalCitation(idx)) return;
@@ -4587,10 +4601,14 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       <div className={`w-full flex justify-center ${isFullScreen ? 'w-full min-h-full p-0 m-0' : 'overflow-x-auto py-0'}`}>
         <div
           ref={pageContainerRef}
+          onContextMenu={(e) => e.preventDefault()}
           style={{
             width: '100%',
             maxWidth: isFullScreen ? '100%' : '960px',
             aspectRatio: `${pdfAspectRatio}`,
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
           }}
           className={`relative select-none shadow-[0_14px_40px_rgba(0,0,0,0.42)] transition-all duration-200 ${
             isFullScreen ? 'rounded-none border-0 w-full p-0 m-0' : 'rounded-none sm:rounded-xl border overflow-hidden'
