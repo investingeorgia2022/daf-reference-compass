@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { extractHotspotsFromTextContent } from '../talmud/components/VilnaPdfInteractiveViewer';
 import { buildDibburHamatchilLinks } from '../talmud/utils/dibburHamatchilMatcher';
 it('dump', async () => {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = process.cwd() + '/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs';
   const file = process.env.DH_PDF || 'public/vilna-pdf/Berakhot-2a.pdf';
   const doc = await pdfjsLib.getDocument({ data: new Uint8Array(fs.readFileSync(file)) }).promise;
   const page = await doc.getPage(1);
