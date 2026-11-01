@@ -2253,6 +2253,47 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return pdfLines.find((l) => l.rowId === stoppedRowId) || pdfLines[0] || null;
   }, [pdfLines, stoppedRowId]);
 
+  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line)
+  const commentaryRowsKey = `talmud_commentary_rows_${dafData.tractateId}_${dafData.dafId}`;
+  const [commentaryRows, setCommentaryRows] = useState<{ rashi?: string; tosafot?: string }>({});
+  useEffect(() => {
+    try {
+      setCommentaryRows(JSON.parse(localStorage.getItem(commentaryRowsKey) || '{}') || {});
+    } catch {
+      setCommentaryRows({});
+    }
+  }, [commentaryRowsKey]);
+  const commentaryLines = useMemo(
+    () =>
+      (['rashi', 'tosafot'] as const)
+        .map((sec) => pdfLines.find((l) => l.rowId === commentaryRows[sec] && l.section === sec))
+        .filter((l): l is PdfDafLine => !!l && l.rowId !== activeStoppedLine?.rowId),
+    [pdfLines, commentaryRows, activeStoppedLine]
+  );
+  const markReadingLineAt = useCallback(
+    (h: VilnaPdfHotspot | undefined) => {
+      if (!h || !h.rowId) return;
+      if (h.section === 'mishnah' || h.section === 'gemara') {
+        updateStoppedRow(h.rowId);
+      } else if (h.section === 'rashi' || h.section === 'tosafot') {
+        const sec = h.section;
+        setCommentaryRows((prev) => {
+          const next = { ...prev, [sec]: h.rowId };
+          try {
+            localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+        // If the main line was sitting in this commentary, move it back to the Gemara
+        if (activeStoppedLine && activeStoppedLine.section === sec) {
+          const firstMain = pdfLines.find((l) => l.section === 'mishnah' || l.section === 'gemara');
+          if (firstMain) updateStoppedRow(firstMain.rowId);
+        }
+      }
+    },
+    [updateStoppedRow, commentaryRowsKey, activeStoppedLine, pdfLines]
+  );
+
   const stepStoppedLine = useCallback(
     (dir: 'prev' | 'next') => {
       if (pdfLines.length === 0) return;
