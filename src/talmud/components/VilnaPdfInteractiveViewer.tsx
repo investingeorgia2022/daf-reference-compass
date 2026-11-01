@@ -1144,6 +1144,27 @@ export function extractHotspotsFromTextContent(
 
   if (initialRuns.length === 0) return [];
 
+  // Enlarged opening words of Rashi / Tosafot sit in the top commentary lines but are taller than
+  // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of
+  // the commentary text printed on the same baseline right next to them.
+  if (!isSiddurPdf && !isChumashPdf) {
+    for (const r of initialRuns) {
+      if (r.topPct >= 9 || r.pdfH < 12.9 || r.pdfH > 18.5) continue;
+      if (r.section === 'rashi' || r.section === 'tosafot' || r.section === 'gemara') continue;
+      const rBottom = r.vpTop + r.vpHeight;
+      const rRight = r.vpLeft + r.vpWidth;
+      let best: { gap: number; section: RawPdfRun['section'] } | null = null;
+      for (const o of initialRuns) {
+        if (o === r || (o.section !== 'rashi' && o.section !== 'tosafot') || o.pdfH >= 12.6) continue;
+        if (Math.abs(o.vpTop + o.vpHeight - rBottom) > Math.max(4, o.vpHeight * 0.6)) continue;
+        const gap = Math.max(o.vpLeft - rRight, r.vpLeft - (o.vpLeft + o.vpWidth), 0);
+        if (gap / vpW > 0.035) continue;
+        if (!best || gap < best.gap) best = { gap, section: o.section };
+      }
+      if (best) r.section = best.section;
+    }
+  }
+
   // Step 1: Pre-merge adjacent bracket/parenthesis tokens in stream order
   // (e.g., "(" + "א" + ")" -> "(א)" for Hagahot HaBach, "(" + "א" -> "(א" for Masoret HaShas)
   const runs: RawPdfRun[] = [];
