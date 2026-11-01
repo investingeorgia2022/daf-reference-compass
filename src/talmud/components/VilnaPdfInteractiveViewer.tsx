@@ -76,6 +76,10 @@ export interface VilnaPdfHotspot {
   inkTopPct?: number;
   inkWidthPct?: number;
   inkHeightPct?: number;
+  /** Printed glyph height of the PDF run (pt); separates bold dibbur-hamatchil type from body text. */
+  glyphH?: number;
+  /** A "." or ":" is printed right after this word. */
+  stopAfter?: '.' | ':';
 }
 
 export interface PdfDafLine {
@@ -1756,6 +1760,7 @@ export function extractHotspotsFromTextContent(
           markerKey: markerCheck.key || run.marginEntryKey,
           marginCommType: run.marginCommType,
           marginEntryKey: run.marginEntryKey,
+          glyphH: run.pdfH,
           ...(markerCheck.isSmallMarker
             ? {
                 inkLeftPct: leftPct,
@@ -1841,6 +1846,7 @@ export function extractHotspotsFromTextContent(
               markerKey: markerCheck.key || run.marginEntryKey,
               marginCommType: run.marginCommType,
               marginEntryKey: run.marginEntryKey,
+              glyphH: run.pdfH,
               ...(markerCheck.isSmallMarker
                 ? {
                     inkLeftPct: rawLeftPct,
