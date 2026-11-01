@@ -27,3 +27,4 @@
 - App preferences hydrate through appPreferences and offline backup imports validate the entire payload before a transaction, preserving saved choices and valid cached pages.
 - Shared reading chrome uses global semantic study tokens; MotionConfig and page flips respect reduced-motion preferences.
 - Source archives exclude dependencies, build output, private configuration and nested export archives; complete project archives add public assets only.
+- Rashi/Tosafot dibbur-hamatchil links live in dibburHamatchilMatcher (longest verbatim prefix, abbreviation-aware, markers skipped); canvas ink tint and taps share its roles so colours and navigation never diverge.
