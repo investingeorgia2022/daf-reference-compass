@@ -150,6 +150,13 @@ export function dibburStyle(h: DhHotspotLike, bodyH: number): DhCommentator | nu
   return null;
 }
 
+/** Large square opening word of Tosafot (wherever the zone rules placed it). */
+function isLargeTosafotWord(h: DhHotspotLike, bodyH: number): boolean {
+  if ((h.section !== 'gemara' && h.section !== 'mishnah') || h.isSmallMarker || !h.glyphH || !bodyH) return false;
+  const r = h.glyphH / bodyH;
+  return r > 1.38 && r < 1.7 && !HEADINGS.has(plainWord(h.word));
+}
+
 interface Piece<T> { commentator: DhCommentator; words: T[] }
 
 /**
@@ -157,11 +164,13 @@ interface Piece<T> { commentator: DhCommentator; words: T[] }
  * opening-type words; a run cut at the end of a line continues on the next line of the same column.
  */
 export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T>[] {
-  const comm = hotspots.filter(
+  const comm0 = hotspots.filter(
     (h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker && plainWord(h.word)
   );
-  const bodyH = modeHeight(comm);
+  const bodyH = modeHeight(comm0);
   if (!bodyH) return [];
+  // Large Tosafot opening words printed beside the Gemara are sometimes grouped with Gemara lines.
+  const comm = [...comm0, ...hotspots.filter((h) => isLargeTosafotWord(h, bodyH))];
 
   // Split every printed row into column segments at wide horizontal gaps.
   const rows = new Map<string, T[]>();
@@ -213,9 +222,9 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       const sameLine = segs.findIndex(
         (n, j) =>
           j !== si &&
-          n.words[0].section === seg.words[0].section &&
+          dibburStyle(n.words[0], bodyH) === cur!.commentator &&
           n.right <= seg.left + 0.6 &&
-          seg.left - n.right < 2.5 &&
+          seg.left - n.right < 1.2 &&
           Math.abs(n.top + n.h - bottom) < Math.max(0.6, n.h * 0.6)
       );
       if (sameLine >= 0 && !pending.has(sameLine)) {
@@ -261,8 +270,15 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
   links: DhLink[];
   roles: Map<string, DhHotspotRole>;
 } {
+  const commBodyH = modeHeight(
+    hotspots.filter((h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker)
+  );
   const mainAll = hotspots.filter(
-    (h) => (h.section === 'gemara' || h.section === 'mishnah') && !h.isSmallMarker && plainWord(h.word)
+    (h) =>
+      (h.section === 'gemara' || h.section === 'mishnah') &&
+      !h.isSmallMarker &&
+      plainWord(h.word) &&
+      !isLargeTosafotWord(h, commBodyH)
   );
   // Small inline citations such as (דף ג.) are not part of the quoted text.
   const mainH = modeHeight(mainAll);
@@ -292,7 +308,11 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     const key = `${piece.commentator}:${counter[piece.commentator]++}`;
     if (!found) {
       // Still an opening: colour it in its column even when the quotation is not on this page.
-      for (const h of piece.words) roles.set(h.id, { [piece.commentator]: key });
+      for (const h of piece.words) {
+        if (h.section === 'rashi' || h.section === 'tosafot' || isLargeTosafotWord(h, commBodyH)) {
+          roles.set(h.id, { [piece.commentator]: key });
+        }
+      }
       continue;
     }
     cursor[piece.commentator] = found.start;
