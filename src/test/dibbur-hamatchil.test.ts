@@ -66,9 +66,9 @@ describe('dibbur hamatchil matching', () => {
 
   it('two openings on one line are separated by the printed period', () => {
     const g = gem(['קורין', 'את', 'שמע', 'משעה', 'שהכהנים', 'נכנסים']);
-    const r = row('rashi', [['קורין', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
+    const r = row('rashi', [['קורין', RASHI_BOLD], ['את', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
     const { links } = buildDibburHamatchilLinks([...prose(), ...g, ...r]);
-    expect(links.map((l) => l.dhIds.length)).toEqual([2, 2]);
+    expect(links.map((l) => l.dhIds.length)).toEqual([3, 2]);
   });
 
   it('ignores blue markers inside a quotation', () => {
