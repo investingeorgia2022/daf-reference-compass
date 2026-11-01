@@ -5033,6 +5033,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     boxShadow: 'none',
                     outline: 'none',
                   }}
+                  data-section={h.section}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
                   className={`absolute p-0 m-0 rounded-none cursor-pointer transition-colors duration-150 pointer-events-auto select-none ${
                     isMarkerOrCitation ? 'talmud-blue-marker' : ''
