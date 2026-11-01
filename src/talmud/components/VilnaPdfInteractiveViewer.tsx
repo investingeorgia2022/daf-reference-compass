@@ -31,7 +31,8 @@ import {
   repairSiddurOcrLine,
   lookupSiddurLineTranslationKa,
 } from '../utils/siddurPdfCanonicalFixer';
-import { tintCitationHotspotsBlueOnCanvas } from '../utils/pdfCitationTint';
+import { tintCitationHotspotsBlueOnCanvas, tintHotspotsInkOnCanvas, RASHI_INK, TOSAFOT_INK } from '../utils/pdfCitationTint';
+import { buildDibburHamatchilLinks, splitSideAt } from '../utils/dibburHamatchilMatcher';
 import {
   CrystalDiamondJumpButton,
   WindowsWindowControls,
@@ -2929,6 +2930,15 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               tractateNameKa
             );
             tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
+            const dhColors = new Map();
+            const { roles } = buildDibburHamatchilLinks(parsed);
+            for (const [id, role] of roles) {
+              if (citSet.has(id)) continue;
+              if (role.splitWord) dhColors.set(id, { first: RASHI_INK, second: TOSAFOT_INK });
+              else if (role.rashi) dhColors.set(id, { first: RASHI_INK });
+              else if (role.tosafot) dhColors.set(id, { first: TOSAFOT_INK });
+            }
+            tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
           } catch {
             // ignore
           }
@@ -3429,6 +3439,55 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     }
     return set;
   }, [hotspots, dafData.tractateId, tractateNameHe, tractateNameKa, resolveMarkerTargetHotspots]);
+
+  // Rashi (green) / Tosafot (bordeaux) dibbur-hamatchil ↔ main-text links.
+  const dibburLinks = useMemo(() => {
+    const { links, roles } = buildDibburHamatchilLinks(hotspots);
+    return { byKey: new Map(links.map((l) => [l.key, l])), roles };
+  }, [hotspots]);
+
+  const jumpToDibbur = useCallback(
+    (h: VilnaPdfHotspot, clientX: number, rect: DOMRect | null): boolean => {
+      const role = dibburLinks.roles.get(h.id);
+      if (!role || h.isSmallMarker || citationHotspotIdsSet.has(h.id)) return false;
+      let side: 'rashi' | 'tosafot' | undefined;
+      if (role.splitWord && rect) side = splitSideAt(clientX, rect);
+      else side = role.rashi ? 'rashi' : role.tosafot ? 'tosafot' : undefined;
+      const key = side ? role[side] : undefined;
+      const link = key ? dibburLinks.byKey.get(key) : undefined;
+      if (!link) return false;
+      const fromMain = h.section === 'gemara' || h.section === 'mishnah';
+      const ids = new Set(fromMain ? link.dhIds : link.mainIds);
+      const targets = hotspots.filter((x) => ids.has(x.id));
+      if (targets.length === 0) return false;
+      const left = Math.min(...targets.map((t) => t.leftPct));
+      const top = Math.min(...targets.map((t) => t.topPct));
+      const right = Math.max(...targets.map((t) => t.leftPct + t.widthPct));
+      const bottom = Math.max(...targets.map((t) => t.topPct + t.heightPct));
+      const isRashi = link.commentator === 'rashi';
+      const dhText = hotspots.filter((x) => link.dhIds.includes(x.id)).map((x) => x.word).join(' ');
+      setSelectedRange(null);
+      setShowRangeHandles(false);
+      setBlinkingTarget({
+        key: `dh:${link.key}:${Date.now()}`,
+        labelHe: isRashi ? 'רש״י' : 'תוספות',
+        labelKa: fromMain ? (isRashi ? 'რაში' : 'თოსაფოთი') : 'გემარა',
+        originMarker: `${isRashi ? 'רש״י' : 'תוס׳'} · ${dhText.slice(0, 24)}`,
+        leftPct: left,
+        topPct: top,
+        widthPct: right - left,
+        heightPct: bottom - top,
+        hotspotIds: ids,
+        activatedAt: Date.now(),
+      });
+      requestAnimationFrame(() => {
+        const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${targets[0].id}"]`);
+        if (el instanceof HTMLElement) scrollToTarget(el);
+      });
+      return true;
+    },
+    [dibburLinks, hotspots, citationHotspotIdsSet]
+  );
 
   // Detect if the currently selected hotspot(s) represent a Talmudic Daf citation (like (.דף לג) -> Berakhot 33a)
   const activeSelectedDafCitation = useMemo(() => {
@@ -4958,6 +5017,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, idx);
                   }}
                   style={{
@@ -4973,6 +5033,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     boxShadow: 'none',
                     outline: 'none',
                   }}
+                  data-section={h.section}
+                  data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
                   className={`absolute p-0 m-0 rounded-none cursor-pointer transition-colors duration-150 pointer-events-auto select-none ${
                     isMarkerOrCitation ? 'talmud-blue-marker' : ''
                   }`}

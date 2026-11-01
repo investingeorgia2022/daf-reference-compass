@@ -60,3 +60,49 @@ export function tintCitationHotspotsBlueOnCanvas(
     }
   }
 }
+
+export type InkRgb = [number, number, number];
+export const RASHI_INK: InkRgb = [21, 128, 61]; // #15803d
+export const TOSAFOT_INK: InkRgb = [159, 18, 57]; // #9f1239
+
+/**
+ * Recolours only ink pixels of the given hotspots. `split` paints the right
+ * (reading-first) half with `first` and the left half with `second`.
+ */
+export function tintHotspotsInkOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  hotspots: VilnaPdfHotspot[],
+  colors: Map<string, { first: InkRgb; second?: InkRgb }>
+): void {
+  if (!ctx || canvasWidth <= 0 || canvasHeight <= 0 || colors.size === 0) return;
+  for (const h of hotspots) {
+    const c = colors.get(h.id);
+    if (!c) continue;
+    const rx = Math.max(0, Math.floor((h.leftPct / 100) * canvasWidth));
+    const ry = Math.max(0, Math.floor((h.topPct / 100) * canvasHeight));
+    const rw = Math.min(canvasWidth - rx, Math.ceil((h.widthPct / 100) * canvasWidth) + 1);
+    const rh = Math.min(canvasHeight - ry, Math.ceil((h.heightPct / 100) * canvasHeight) + 1);
+    if (rw <= 1 || rh <= 1) continue;
+    try {
+      const img = ctx.getImageData(rx, ry, rw, rh);
+      const d = img.data;
+      const mid = rw / 2;
+      for (let p = 0; p < d.length; p += 4) {
+        if (d[p + 3] < 30) continue;
+        const lum = (0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2]) / 255;
+        if (lum >= 0.84) continue;
+        const x = (p / 4) % rw;
+        const col = c.second && x < mid ? c.second : c.first;
+        const s = Math.min(1, (0.86 - lum) / 0.58);
+        d[p] = Math.round(d[p] * (1 - s) + col[0] * s);
+        d[p + 1] = Math.round(d[p + 1] * (1 - s) + col[1] * s);
+        d[p + 2] = Math.round(d[p + 2] * (1 - s) + col[2] * s);
+      }
+      ctx.putImageData(img, rx, ry);
+    } catch {
+      // ignore
+    }
+  }
+}
