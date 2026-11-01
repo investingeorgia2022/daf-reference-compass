@@ -207,7 +207,21 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       if (cur && (w.stopAfter || ETC.has(plainWord(w.word)))) cur = null;
     });
     if (cur) {
-      // Opening still open at the line end: continue on the next line of this column.
+      // Opening still open: an enlarged first word forms its own segment, so first look for the
+      // segment printed right after it on the same baseline.
+      const bottom = seg.top + seg.h;
+      const sameLine = segs.findIndex(
+        (n, j) =>
+          j !== si &&
+          n.right <= seg.left + 0.6 &&
+          seg.left - n.right < 2.5 &&
+          Math.abs(n.top + n.h - bottom) < Math.max(0.6, n.h * 0.6)
+      );
+      if (sameLine >= 0 && !pending.has(sameLine)) {
+        pending.set(sameLine, cur);
+        return;
+      }
+      // Otherwise continue on the next line of this column.
       for (let j = si + 1; j < segs.length; j++) {
         const n = segs[j];
         if (n.top <= seg.top + seg.h * 0.4) continue;
@@ -266,14 +280,21 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     if (words.length === 0) continue;
     let found: { start: number; end: number } | null = null;
     const minK = words.length === 1 ? 1 : 2;
-    for (let k = words.length; k >= minK; k--) {
-      if (k === 1 && plainWord(words[0].word).length < 3) break;
-      found = findInMain(words.slice(0, k).map((h) => h.word), mainWords, cursor[piece.commentator]);
-      if (found) break;
+    // Longest verbatim prefix first; then (for split abbreviations like קמ"ל) skip up to two leading tokens.
+    outer: for (let skip = 0; skip <= Math.min(2, words.length - 2); skip++) {
+      for (let k = words.length - skip; k >= (skip ? 2 : minK); k--) {
+        if (k === 1 && plainWord(words[0].word).length < 3) break;
+        found = findInMain(words.slice(skip, skip + k).map((h) => h.word), mainWords, cursor[piece.commentator]);
+        if (found) break outer;
+      }
     }
-    if (!found) continue;
-    cursor[piece.commentator] = found.start;
     const key = `${piece.commentator}:${counter[piece.commentator]++}`;
+    if (!found) {
+      // Still an opening: colour it in its column even when the quotation is not on this page.
+      for (const h of piece.words) roles.set(h.id, { [piece.commentator]: key });
+      continue;
+    }
+    cursor[piece.commentator] = found.start;
     const link: DhLink = {
       key,
       commentator: piece.commentator,
