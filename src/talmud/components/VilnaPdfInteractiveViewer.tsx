@@ -991,7 +991,7 @@ function matchHotspotToSentence(
  * + marginal commentary entries (הגהות הב"ח, מסורת הש"ס, עין משפט, תורה אור, הגהות הגר"א)
  * from PDF.js textContent.
  */
-export function extractHotspotsFromTextContent(
+function extractHotspotsFromTextContent(
   items: Array<Record<string, unknown>>,
   viewport: pdfjsLib.PageViewport,
   isAmudBet: boolean,
@@ -5090,7 +5090,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     boxShadow: 'none',
                     outline: 'none',
                   }}
-                  data-section={h.section}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
                   className={`absolute p-0 m-0 rounded-none cursor-pointer transition-colors duration-150 pointer-events-auto select-none ${
                     isMarkerOrCitation ? 'talmud-blue-marker' : ''
