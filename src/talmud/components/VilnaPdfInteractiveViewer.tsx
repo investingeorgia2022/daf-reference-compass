@@ -4621,6 +4621,24 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             }}
           />
 
+          {/* Independent Rashi / Tosafot reading lines — same sheer band style as the Gemara line */}
+          {!loadingPdf &&
+            commentaryLines.map((line) => (
+              <div
+                key={`commentary-line-${line.section}`}
+                data-reading-line-section={line.section}
+                style={{
+                  left: `${Math.max(0.4, line.leftPct)}%`,
+                  top: `${line.topPct}%`,
+                  width: `${Math.min(99.2, line.widthPct)}%`,
+                  height: `${line.heightPct}%`,
+                  backgroundColor: 'rgba(212, 163, 115, 0.10)',
+                  borderBottom: '1px solid rgba(139, 90, 43, 0.36)',
+                }}
+                className="absolute z-25 pointer-events-none rounded-[2px] transition-all duration-150 ease-out"
+              />
+            ))}
+
           {/* READING BOOKMARK LINE — LIGHT, HIGH-TRANSPARENCY BAND SPANNING FULL LINE + DELICATE HANDLE */}
           {!loadingPdf && hotspots.length > 0 && activeStoppedLine && (
             <div
@@ -5111,6 +5129,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    if (
+                      !h.isSmallMarker &&
+                      !suppressNextClickRef.current &&
+                      document.body.dataset.talmudPanning !== 'true'
+                    ) {
+                      markReadingLineAt(h);
+                    }
                     if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, idx);
                   }}
