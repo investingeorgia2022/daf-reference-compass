@@ -2012,6 +2012,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const dragModeRef = useRef<'none' | 'range' | 'start-handle' | 'end-handle'>('none');
   const dragAnchorIdxRef = useRef<number | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastWordTapRef = useRef<{ idx: number; time: number } | null>(null);
   const pointerDownPosRef = useRef<{ x: number; y: number; idx: number } | null>(null);
   const suppressNextClickRef = useRef<boolean>(false);
   const markerTouchRef = useRef<{ idx: number; x: number; y: number } | null>(null);
@@ -4501,32 +4502,24 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       }
     }
 
-    const isInsideExistingSelection =
-      selectedRange !== null &&
-      idx >= Math.min(selectedRange.startIdx, selectedRange.endIdx) &&
-      idx <= Math.max(selectedRange.startIdx, selectedRange.endIdx);
-
-    if (isInsideExistingSelection) {
-      // Second tap on a regular word or multi-word selection -> Commit exact selection & open Note popup!
-      commitSelectionRange(selectedRange!.startIdx, selectedRange!.endIdx, true);
-      return;
-    }
-
-    // First tap on a Daf citation (for another Daf) -> highlight the full citation span (without range balls)!
-    if (detectedCitation) {
+    // Double tap on a word -> mark it and open its explanation window.
+    // A single tap on ordinary text does nothing (taps are reserved for navigation).
+    const now = Date.now();
+    const last = lastWordTapRef.current;
+    lastWordTapRef.current = { idx, time: now };
+    if (last && last.idx === idx && now - last.time < 380) {
+      lastWordTapRef.current = null;
+      const range = detectedCitation
+        ? { startIdx: detectedCitation.startIdx, endIdx: detectedCitation.endIdx }
+        : { startIdx: idx, endIdx: idx };
       setShowRangeHandles(false);
-      setSelectedRange({
-        startIdx: detectedCitation.startIdx,
-        endIdx: detectedCitation.endIdx,
-      });
-      commitSelectionRange(detectedCitation.startIdx, detectedCitation.endIdx, false);
+      setSelectedRange(range);
+      commitSelectionRange(range.startIdx, range.endIdx, true);
       return;
     }
-
-    // First tap on a new word or small marker -> Mark only (do NOT open Note yet, and do NOT show range balls on 1st tap) & highlight matching commentaries!
-    setShowRangeHandles(false);
-    setSelectedRange({ startIdx: idx, endIdx: idx });
-    commitSelectionRange(idx, idx, false);
+    if (selectedRange && !showRangeHandles) {
+      setSelectedRange(null);
+    }
   };
 
   const startHandleDrag = (
