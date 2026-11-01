@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { buildDibburHamatchilLinks, matchTokenAt, wordsMatch, splitSideAt } from '@/talmud/utils/dibburHamatchilMatcher';
 

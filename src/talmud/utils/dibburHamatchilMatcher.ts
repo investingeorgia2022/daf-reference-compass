@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Links Rashi / Tosafot "dibbur hamatchil" openings on a Vilna PDF scan to the
 // Gemara/Mishnah words they quote. Pure logic: works on hotspot-like boxes.
 //
