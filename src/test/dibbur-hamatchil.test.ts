@@ -12,7 +12,7 @@ const row = (section: string, words: Array<[string, number, ('.' | ':')?]>, top:
     rowId: `${section}-${top}`,
     leftPct: 90 - i * 8,
     topPct: top,
-    widthPct: 6,
+    widthPct: 7.5,
     heightPct: 1,
     glyphH,
     stopAfter,
