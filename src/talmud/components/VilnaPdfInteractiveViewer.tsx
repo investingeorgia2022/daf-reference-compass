@@ -3722,11 +3722,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   // Live screen position tracker for the selected citation union box so CrystalDiamondJumpButton renders via fixed Portal completely independent of Daf zoom
   useEffect(() => {
-    if (
-      !selectedUnionBoxPct ||
-      (!activeSelectedDafCitation && !activeSelectedMarkerTarget) ||
-      typeof window === 'undefined'
-    ) {
+    if (!selectedUnionBoxPct || typeof window === 'undefined') {
       setSelectedUnionScreenRect(null);
       return;
     }
@@ -3974,7 +3970,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         e.touches[0].clientX - pointerDownPosRef.current.x,
         e.touches[0].clientY - pointerDownPosRef.current.y
       );
-      if (dist > 10) {
+      if (dist > 18) {
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
@@ -3998,11 +3994,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     clientY: number,
     _isTouch: boolean
   ) => {
-    if (
-      typeof document !== 'undefined' &&
-      (document.body.dataset.talmudPanning === 'true' ||
-        document.querySelector('[data-daf-pan-mode="true"]'))
-    ) {
+    if (typeof document !== 'undefined' && document.body.dataset.talmudPanning === 'true') {
       return;
     }
     pointerDownPosRef.current = { x: clientX, y: clientY, idx };
@@ -4013,14 +4005,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       idx >= Math.min(selectedRange.startIdx, selectedRange.endIdx) &&
       idx <= Math.max(selectedRange.startIdx, selectedRange.endIdx);
 
-    // Long-press (~280ms) on any regular word initiates range selection handles and allows sliding finger right/left to mark a text range
+    // Long-press (~450ms) on any regular word starts copy/paste range selection
     if (!hotspots[idx]?.isSmallMarker) {
       longPressTimerRef.current = setTimeout(() => {
-        if (
-          typeof document !== 'undefined' &&
-          (document.body.dataset.talmudPanning === 'true' ||
-            document.querySelector('[data-daf-pan-mode="true"]'))
-        ) {
+        if (typeof document !== 'undefined' && document.body.dataset.talmudPanning === 'true') {
           return;
         }
         suppressNextClickRef.current = true;
@@ -4053,7 +4041,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       e.touches[0].clientX - pointerDownPosRef.current.x,
       e.touches[0].clientY - pointerDownPosRef.current.y
     );
-    if (dist > 10) {
+    if (dist > 18) {
       clearLongPressTimer();
       suppressNextClickRef.current = true;
     }
