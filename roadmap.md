@@ -32,3 +32,7 @@
 
 ## Review limits
 The audit covered the main architecture and selected live flows, not every external source or every study tool. Browser history synchronization and slow-network return restoration remain review candidates, not verified fixes. AI portability requires host-provided Gateway configuration; no credentials are exported.
+- [x] Double tap opens a word's explanation; long hold selects text with a copy/explain menu below it.
+- [x] Keep the zoomed daf centred sideways and vertically on the target after jumps.
+- [x] Gilyon HaShas jump falls back to its notes when no section heading matches.
+- [x] Match ים/ין plural endings in Rashi/Tosafot openings.
