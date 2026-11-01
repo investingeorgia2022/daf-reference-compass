@@ -1923,6 +1923,24 @@ export function extractHotspotsFromTextContent(
     });
   }
 
+  // Attach printed "." / ":" (separate PDF runs) to the commentary word they follow (RTL: on its left).
+  for (const h of hotspots) {
+    if (h.section !== 'rashi' && h.section !== 'tosafot') continue;
+    if (/[.:]["'״׳]?$/.test(h.word.trim())) {
+      h.stopAfter = /:["'״׳]?$/.test(h.word.trim()) ? ':' : '.';
+      continue;
+    }
+    const bottom = h.topPct + h.heightPct;
+    const mark = stopMarks.find(
+      (m) =>
+        m.rightPct >= h.leftPct - 1.1 &&
+        m.rightPct <= h.leftPct + 0.5 &&
+        m.baselinePct <= bottom + h.heightPct * 0.35 &&
+        m.baselinePct >= h.topPct + h.heightPct * 0.3
+    );
+    if (mark) h.stopAfter = mark.mark;
+  }
+
   return getIndependentMarkerBoxes(hotspots);
 }
 
