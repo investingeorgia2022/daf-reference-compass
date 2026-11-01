@@ -3440,6 +3440,55 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return set;
   }, [hotspots, dafData.tractateId, tractateNameHe, tractateNameKa, resolveMarkerTargetHotspots]);
 
+  // Rashi (green) / Tosafot (bordeaux) dibbur-hamatchil ↔ main-text links.
+  const dibburLinks = useMemo(() => {
+    const { links, roles } = buildDibburHamatchilLinks(hotspots);
+    return { byKey: new Map(links.map((l) => [l.key, l])), roles };
+  }, [hotspots]);
+
+  const jumpToDibbur = useCallback(
+    (h: VilnaPdfHotspot, clientX: number, rect: DOMRect | null): boolean => {
+      const role = dibburLinks.roles.get(h.id);
+      if (!role || h.isSmallMarker || citationHotspotIdsSet.has(h.id)) return false;
+      let side: 'rashi' | 'tosafot' | undefined;
+      if (role.splitWord && rect) side = splitSideAt(clientX, rect);
+      else side = role.rashi ? 'rashi' : role.tosafot ? 'tosafot' : undefined;
+      const key = side ? role[side] : undefined;
+      const link = key ? dibburLinks.byKey.get(key) : undefined;
+      if (!link) return false;
+      const fromMain = h.section === 'gemara' || h.section === 'mishnah';
+      const ids = new Set(fromMain ? link.dhIds : link.mainIds);
+      const targets = hotspots.filter((x) => ids.has(x.id));
+      if (targets.length === 0) return false;
+      const left = Math.min(...targets.map((t) => t.leftPct));
+      const top = Math.min(...targets.map((t) => t.topPct));
+      const right = Math.max(...targets.map((t) => t.leftPct + t.widthPct));
+      const bottom = Math.max(...targets.map((t) => t.topPct + t.heightPct));
+      const isRashi = link.commentator === 'rashi';
+      const dhText = hotspots.filter((x) => link.dhIds.includes(x.id)).map((x) => x.word).join(' ');
+      setSelectedRange(null);
+      setShowRangeHandles(false);
+      setBlinkingTarget({
+        key: `dh:${link.key}:${Date.now()}`,
+        labelHe: isRashi ? 'רש״י' : 'תוספות',
+        labelKa: fromMain ? (isRashi ? 'რაში' : 'თოსაფოთი') : 'გემარა',
+        originMarker: `${isRashi ? 'רש״י' : 'תוס׳'} · ${dhText.slice(0, 24)}`,
+        leftPct: left,
+        topPct: top,
+        widthPct: right - left,
+        heightPct: bottom - top,
+        hotspotIds: ids,
+        activatedAt: Date.now(),
+      });
+      requestAnimationFrame(() => {
+        const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${targets[0].id}"]`);
+        if (el instanceof HTMLElement) scrollToTarget(el);
+      });
+      return true;
+    },
+    [dibburLinks, hotspots, citationHotspotIdsSet]
+  );
+
   // Detect if the currently selected hotspot(s) represent a Talmudic Daf citation (like (.דף לג) -> Berakhot 33a)
   const activeSelectedDafCitation = useMemo(() => {
     if (!selectedRange || hotspots.length === 0) return null;
