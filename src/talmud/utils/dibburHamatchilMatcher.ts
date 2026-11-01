@@ -300,7 +300,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     // Longest verbatim prefix first; then (for split abbreviations like קמ"ל) skip up to two leading tokens.
     outer: for (let skip = 0; skip <= Math.max(0, Math.min(2, words.length - 2)); skip++) {
       for (let k = words.length - skip; k >= (skip ? 2 : minK); k--) {
-        if (k === 1 && plainWord(words[0].word).length < 3) break;
+        if (k === 1 && plainWord(words[skip].word).length < 4) break;
         found = findInMain(words.slice(skip, skip + k).map((h) => h.word), mainWords, cursor[piece.commentator]);
         if (found) break outer;
       }
