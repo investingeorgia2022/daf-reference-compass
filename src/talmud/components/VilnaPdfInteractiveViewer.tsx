@@ -76,6 +76,10 @@ export interface VilnaPdfHotspot {
   inkTopPct?: number;
   inkWidthPct?: number;
   inkHeightPct?: number;
+  /** Printed glyph height of the PDF run (pt); separates bold dibbur-hamatchil type from body text. */
+  glyphH?: number;
+  /** A "." or ":" is printed right after this word. */
+  stopAfter?: '.' | ':';
 }
 
 export interface PdfDafLine {
@@ -1015,6 +1019,7 @@ function extractHotspotsFromTextContent(
   const vpW = Math.max(1, viewport.width);
   const vpH = Math.max(1, viewport.height);
   const initialRuns: RawPdfRun[] = [];
+  const stopMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '.' | ':' }> = [];
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
@@ -1049,12 +1054,23 @@ function extractHotspotsFromTextContent(
     }
     // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
     const isQuoteOnly = /^["'״׳`]+$/.test(str);
+    const transform = rawItem.transform as number[] | undefined;
+    // Standalone "." / ":" runs end a dibbur hamatchil; remember where they sit before dropping them.
+    if (str && /^[.:'"״׳\s]+$/.test(str) && /[.:]/.test(str) && transform && transform.length >= 6) {
+      const [sx1, sy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
+      const [sx2] = viewport.convertToViewportPoint((Number(transform[4]) || 0) + Math.max(1, Number(rawItem.width) || 2), Number(transform[5]) || 0);
+      stopMarks.push({
+        leftPct: (Math.min(sx1, sx2) / vpW) * 100,
+        rightPct: (Math.max(sx1, sx2) / vpW) * 100,
+        baselinePct: (sy / vpH) * 100,
+        mark: str.includes(':') ? ':' : '.',
+      });
+    }
     // Accept Hebrew letters, digits (for Torah Or 1..9), and parentheses/brackets (for (א), [א])
     if (!str || (!isQuoteOnly && !/[\u0590-\u05FF0-9\(\)\[\]]/.test(str) && !isCircleMarker(str))) continue;
     // Skip pure punctuation like standalone "." or ":" unless it's a bracket, digit or quote
     if (!isQuoteOnly && /^[.,:;'"״׳\-–—]+$/.test(str)) continue;
 
-    const transform = rawItem.transform as number[] | undefined;
     if (!transform || transform.length < 6) continue;
 
     const pdfX = Number(transform[4]) || 0;
@@ -1131,6 +1147,27 @@ function extractHotspotsFromTextContent(
   }
 
   if (initialRuns.length === 0) return [];
+
+  // Enlarged opening words of Rashi / Tosafot sit in the top commentary lines but are taller than
+  // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of
+  // the commentary text printed on the same baseline right next to them.
+  if (!isSiddurPdf && !isChumashPdf) {
+    for (const r of initialRuns) {
+      if (r.topPct >= 9 || r.pdfH < 12.9 || r.pdfH > 18.5) continue;
+      if (r.section === 'rashi' || r.section === 'tosafot' || r.section === 'gemara') continue;
+      const rBottom = r.vpTop + r.vpHeight;
+      const rRight = r.vpLeft + r.vpWidth;
+      let best: { gap: number; section: RawPdfRun['section'] } | null = null;
+      for (const o of initialRuns) {
+        if (o === r || (o.section !== 'rashi' && o.section !== 'tosafot') || o.pdfH >= 12.6) continue;
+        if (Math.abs(o.vpTop + o.vpHeight - rBottom) > Math.max(4, o.vpHeight * 0.6)) continue;
+        const gap = Math.max(o.vpLeft - rRight, r.vpLeft - (o.vpLeft + o.vpWidth), 0);
+        if (gap / vpW > 0.035) continue;
+        if (!best || gap < best.gap) best = { gap, section: o.section };
+      }
+      if (best) r.section = best.section;
+    }
+  }
 
   // Step 1: Pre-merge adjacent bracket/parenthesis tokens in stream order
   // (e.g., "(" + "א" + ")" -> "(א)" for Hagahot HaBach, "(" + "א" -> "(א" for Masoret HaShas)
@@ -1723,6 +1760,7 @@ function extractHotspotsFromTextContent(
           markerKey: markerCheck.key || run.marginEntryKey,
           marginCommType: run.marginCommType,
           marginEntryKey: run.marginEntryKey,
+          glyphH: run.pdfH,
           ...(markerCheck.isSmallMarker
             ? {
                 inkLeftPct: leftPct,
@@ -1808,6 +1846,7 @@ function extractHotspotsFromTextContent(
               markerKey: markerCheck.key || run.marginEntryKey,
               marginCommType: run.marginCommType,
               marginEntryKey: run.marginEntryKey,
+              glyphH: run.pdfH,
               ...(markerCheck.isSmallMarker
                 ? {
                     inkLeftPct: rawLeftPct,
@@ -1882,6 +1921,24 @@ function extractHotspotsFromTextContent(
     hotspots.forEach((h, i) => {
       h.id = `pdf-word-${i}`;
     });
+  }
+
+  // Attach printed "." / ":" (separate PDF runs) to the commentary word they follow (RTL: on its left).
+  for (const h of hotspots) {
+    if (h.section !== 'rashi' && h.section !== 'tosafot') continue;
+    if (/[.:]["'״׳]?$/.test(h.word.trim())) {
+      h.stopAfter = /:["'״׳]?$/.test(h.word.trim()) ? ':' : '.';
+      continue;
+    }
+    const bottom = h.topPct + h.heightPct;
+    const mark = stopMarks.find(
+      (m) =>
+        m.rightPct >= h.leftPct - 1.1 &&
+        m.rightPct <= h.leftPct + 0.5 &&
+        m.baselinePct <= bottom + h.heightPct * 0.35 &&
+        m.baselinePct >= h.topPct + h.heightPct * 0.3
+    );
+    if (mark) h.stopAfter = mark.mark;
   }
 
   return getIndependentMarkerBoxes(hotspots);
@@ -3489,6 +3546,16 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     [dibburLinks, hotspots, citationHotspotIdsSet]
   );
 
+  // A dibbur-hamatchil destination glows for a few seconds, then fades by itself.
+  useEffect(() => {
+    if (!blinkingTarget?.key.startsWith('dh:')) return;
+    const key = blinkingTarget.key;
+    const t = window.setTimeout(() => {
+      setBlinkingTarget((cur) => (cur && cur.key === key ? null : cur));
+    }, 3200);
+    return () => window.clearTimeout(t);
+  }, [blinkingTarget]);
+
   // Detect if the currently selected hotspot(s) represent a Talmudic Daf citation (like (.דף לג) -> Berakhot 33a)
   const activeSelectedDafCitation = useMemo(() => {
     if (!selectedRange || hotspots.length === 0) return null;
@@ -5033,7 +5100,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     boxShadow: 'none',
                     outline: 'none',
                   }}
-                  data-section={h.section}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
                   className={`absolute p-0 m-0 rounded-none cursor-pointer transition-colors duration-150 pointer-events-auto select-none ${
                     isMarkerOrCitation ? 'talmud-blue-marker' : ''
