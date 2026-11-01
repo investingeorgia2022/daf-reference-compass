@@ -5017,6 +5017,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, idx);
                   }}
                   style={{
@@ -5032,6 +5033,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     boxShadow: 'none',
                     outline: 'none',
                   }}
+                  data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
                   className={`absolute p-0 m-0 rounded-none cursor-pointer transition-colors duration-150 pointer-events-auto select-none ${
                     isMarkerOrCitation ? 'talmud-blue-marker' : ''
                   }`}
