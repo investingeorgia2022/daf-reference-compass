@@ -16,6 +16,6 @@ it('dump', async () => {
   const { extractDibburim } = await import('../talmud/utils/dibburHamatchilMatcher');
   const pcs = extractDibburim(hs as any).map((p: any) => 'PIECE ' + p.commentator + ': ' + p.words.map((w: any) => w.word).join(' '));
   const out0 = links.map((l) => `${l.commentator}: [${l.dhIds.map((i) => byId.get(i)!.word).join(' ')}] -> [${l.mainIds.map((i) => byId.get(i)!.word).join(' ')}]`);
-  const big = hs.filter((h: any) => /מאימתי/.test(h.word)).map((h: any) => `${h.word} ${h.section} ${h.pdfFont||''} L${h.leftPct.toFixed(1)} T${h.topPct.toFixed(1)}`);
+  const big = hs.filter((h: any) => /מאימתי|ליתני|^הכי|^אי$|מברך|^והא/.test(h.word)).map((h: any) => `${h.word} ${h.section} g${h.glyphH} r${h.rowId} s${h.stopAfter||''} L${h.leftPct.toFixed(1)} T${h.topPct.toFixed(1)}`);
   fs.writeFileSync('/tmp/dh/out.txt', [...big, '---', ...pcs, '---', ...out0].join('\n'));
 }, 60000);

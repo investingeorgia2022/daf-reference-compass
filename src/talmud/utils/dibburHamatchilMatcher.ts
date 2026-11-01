@@ -213,6 +213,7 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       const sameLine = segs.findIndex(
         (n, j) =>
           j !== si &&
+          n.words[0].section === seg.words[0].section &&
           n.right <= seg.left + 0.6 &&
           seg.left - n.right < 2.5 &&
           Math.abs(n.top + n.h - bottom) < Math.max(0.6, n.h * 0.6)
@@ -281,7 +282,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     let found: { start: number; end: number } | null = null;
     const minK = words.length === 1 ? 1 : 2;
     // Longest verbatim prefix first; then (for split abbreviations like קמ"ל) skip up to two leading tokens.
-    outer: for (let skip = 0; skip <= Math.min(2, words.length - 2); skip++) {
+    outer: for (let skip = 0; skip <= Math.max(0, Math.min(2, words.length - 2)); skip++) {
       for (let k = words.length - skip; k >= (skip ? 2 : minK); k--) {
         if (k === 1 && plainWord(words[0].word).length < 3) break;
         found = findInMain(words.slice(skip, skip + k).map((h) => h.word), mainWords, cursor[piece.commentator]);
