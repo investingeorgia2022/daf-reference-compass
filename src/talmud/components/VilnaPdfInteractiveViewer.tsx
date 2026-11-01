@@ -987,7 +987,7 @@ function matchHotspotToSentence(
  * + marginal commentary entries (הגהות הב"ח, מסורת הש"ס, עין משפט, תורה אור, הגהות הגר"א)
  * from PDF.js textContent.
  */
-function extractHotspotsFromTextContent(
+export function extractHotspotsFromTextContent(
   items: Array<Record<string, unknown>>,
   viewport: pdfjsLib.PageViewport,
   isAmudBet: boolean,
