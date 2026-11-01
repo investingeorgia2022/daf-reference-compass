@@ -31,7 +31,8 @@ import {
   repairSiddurOcrLine,
   lookupSiddurLineTranslationKa,
 } from '../utils/siddurPdfCanonicalFixer';
-import { tintCitationHotspotsBlueOnCanvas } from '../utils/pdfCitationTint';
+import { tintCitationHotspotsBlueOnCanvas, tintHotspotsInkOnCanvas, RASHI_INK, TOSAFOT_INK } from '../utils/pdfCitationTint';
+import { buildDibburHamatchilLinks, splitSideAt } from '../utils/dibburHamatchilMatcher';
 import {
   CrystalDiamondJumpButton,
   WindowsWindowControls,
@@ -2929,6 +2930,15 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               tractateNameKa
             );
             tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
+            const dhColors = new Map();
+            const { roles } = buildDibburHamatchilLinks(parsed);
+            for (const [id, role] of roles) {
+              if (citSet.has(id)) continue;
+              if (role.splitWord) dhColors.set(id, { first: RASHI_INK, second: TOSAFOT_INK });
+              else if (role.rashi) dhColors.set(id, { first: RASHI_INK });
+              else if (role.tosafot) dhColors.set(id, { first: TOSAFOT_INK });
+            }
+            tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
           } catch {
             // ignore
           }
