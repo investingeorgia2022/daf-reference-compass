@@ -4960,7 +4960,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 width: `${selectedUnionBoxPct.widthPct}%`,
                 height: `${selectedUnionBoxPct.heightPct}%`,
               }}
-              className="absolute z-30 pointer-events-none"
+              className="absolute z-40 pointer-events-none"
             >
               {/* Requirement 4: Translucent Faceted Diamond Jump Button in overall design colors, rendered via fixed Portal so it is 100% independent of Daf/Screen Zoom */}
               {activeSelectedDafCitation && onNavigateToCitation && selectedUnionScreenRect && (
@@ -5189,7 +5189,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 style={{
                   position: 'fixed',
                   left: `${Math.max(12, Math.min(window.innerWidth - 180, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 90))}px`,
-                  top: `${selectedUnionScreenRect.bottom + 52 < window.innerHeight ? selectedUnionScreenRect.bottom + 8 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
+                  top: `${selectedUnionScreenRect.bottom + 84 < window.innerHeight ? selectedUnionScreenRect.bottom + 40 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
                 className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-xl bg-stone-900/95 dark:bg-[#1C120C]/95 text-stone-100 border border-amber-500/50 shadow-2xl backdrop-blur-md select-none"
