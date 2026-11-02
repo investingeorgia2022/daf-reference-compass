@@ -29,7 +29,8 @@ import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
 } from '../utils/georgianTranslator';
-import { VilnaPdfInteractiveViewer } from './VilnaPdfInteractiveViewer';
+import { VilnaPdfInteractiveViewer, hasAuthenticVilnaScan } from './VilnaPdfInteractiveViewer';
+import { CitedDafTextView } from './CitedDafTextView';
 import { WindowsWindowControls } from './WindowsWindowControls';
 
 export interface FloatingSourceCitationRequest {
@@ -1025,6 +1026,18 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
                   }}
                   className="mx-auto"
                 >
+                  {!hasAuthenticVilnaScan(currentTractate.id, activeDafId) ? (
+                    // No printed scan of this daf ships with the app: show its real text
+                    // instead of a different daf's page.
+                    <CitedDafTextView
+                      dafData={citedDafData}
+                      tractateNameHe={currentTractate.nameHe}
+                      dafMarkHe={dafMarkHe}
+                      snippetHe={activeSnippetHe}
+                      loading={loadingLiveSource}
+                      isDark={isDark}
+                    />
+                  ) : (
                   <VilnaPdfInteractiveViewer
                     dafData={citedDafData}
                     tractateNameHe={currentTractate.nameHe}
@@ -1061,6 +1074,7 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
                     }}
                     onSelectWordOrSentence={onSelectWordOrSentence}
                   />
+                  )}
                 </div>
               </div>
 
