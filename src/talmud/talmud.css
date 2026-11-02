@@ -632,3 +632,141 @@ button[data-crystal-gold="true"] div {
 }
 
 
+
+/* ===== Crystal orb buttons (top + bottom bars) ===== */
+[data-crystal-bar] button[class*="w-9"][class*="h-9"],
+[data-crystal-bar] button[class*="w-8"][class*="h-8"],
+.crystal-orb {
+  position: relative;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(148, 197, 235, 0.55) !important;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.35) 16%, transparent 34%),
+    radial-gradient(circle at 50% 60%, #dbeefb 0%, #a9cfee 55%, #6f9fcb 100%) !important;
+  box-shadow: 0 3px 10px rgba(30,64,110,0.22), inset 0 -3px 6px rgba(30,64,110,0.25), inset 0 1px 2px rgba(255,255,255,0.9) !important;
+  color: #0b4a7a !important;
+  overflow: hidden;
+  isolation: isolate;
+}
+.dark [data-crystal-bar] button[class*="w-9"][class*="h-9"],
+.dark [data-crystal-bar] button[class*="w-8"][class*="h-8"],
+.dark .crystal-orb {
+  border-color: rgba(125, 180, 230, 0.45) !important;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255,255,255,0.7) 0%, rgba(186,230,253,0.25) 14%, transparent 32%),
+    radial-gradient(circle at 50% 62%, #1d4f7c 0%, #0f2c4c 58%, #050f1f 100%) !important;
+  box-shadow: 0 0 14px rgba(56,189,248,0.25), inset 0 -4px 8px rgba(0,0,0,0.55), inset 0 1px 2px rgba(255,255,255,0.45) !important;
+  color: #fcd34d !important;
+}
+/* meridians + equator, slowly rotating */
+[data-crystal-bar] button[class*="w-9"][class*="h-9"]::before,
+[data-crystal-bar] button[class*="w-8"][class*="h-8"]::before,
+.crystal-orb::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(transparent calc(50% - 0.5px), rgba(255,255,255,0.45) 50%, transparent calc(50% + 0.5px)),
+    repeating-radial-gradient(ellipse 22% 100% at 50% 50%, transparent 0 92%, rgba(255,255,255,0.4) 94%, transparent 100%);
+  animation: crystal-orb-spin 7s linear infinite;
+  opacity: 0.75;
+}
+.dark [data-crystal-bar] button::before, .dark .crystal-orb::before { opacity: 0.55; }
+[data-crystal-bar] button[class*="w-9"][class*="h-9"].bg-amber-500,
+[data-crystal-bar] button[class*="w-8"][class*="h-8"][class*="bg-emerald"],
+[data-crystal-bar] button[class*="w-8"][class*="h-8"][class*="bg-[#C89456]"] {
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.75), 0 0 14px rgba(245,158,11,0.45) !important;
+}
+@keyframes crystal-orb-spin { from { background-position: 0 0, 0 0; transform: scaleX(1); } 50% { transform: scaleX(-1); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { [data-crystal-bar] button::before, .crystal-orb::before { animation: none; } }
+
+/* ===== Concave "pocket" ends where the sliding track meets static buttons ===== */
+.crystal-pocket {
+  position: relative;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.05);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.12);
+  -webkit-mask:
+    radial-gradient(circle 22px at 0 50%, transparent 21px, #000 22px) left / 51% 100% no-repeat,
+    radial-gradient(circle 22px at 100% 50%, transparent 21px, #000 22px) right / 51% 100% no-repeat;
+          mask:
+    radial-gradient(circle 22px at 0 50%, transparent 21px, #000 22px) left / 51% 100% no-repeat,
+    radial-gradient(circle 22px at 100% 50%, transparent 21px, #000 22px) right / 51% 100% no-repeat;
+  padding-inline: 18px !important;
+}
+.crystal-pocket-left-only {
+  -webkit-mask: radial-gradient(circle 22px at 0 50%, transparent 21px, #000 22px);
+          mask: radial-gradient(circle 22px at 0 50%, transparent 21px, #000 22px);
+  padding-inline: 18px 6px !important;
+}
+.dark .crystal-pocket { background: rgba(0,0,0,0.28); box-shadow: inset 0 2px 8px rgba(0,0,0,0.55); }
+[data-crystal-bar] .crystal-pocket + button, [data-crystal-bar] button + .crystal-pocket { margin-inline: -10px; }
+
+/* ===== Mishnah map / guide windows ===== */
+.mg-backdrop { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(20,12,6,0.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.mg-window { width: min(560px, 100%); max-height: min(86dvh, 820px); display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 28px; border: 1.5px solid #c99a55; background: linear-gradient(180deg, #fffaf1, #f6ead6); color: #2a1a0c;
+  box-shadow: 0 24px 60px rgba(60,35,10,0.35), inset 0 1px 0 rgba(255,255,255,0.8); }
+.dark .mg-window { border-color: #a8742f; background: linear-gradient(180deg, #2a1b10, #1a110a); color: #faf2e2; box-shadow: 0 24px 70px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,220,160,0.08); }
+.mg-head { display: grid; grid-template-columns: 44px 1fr 40px; align-items: center; gap: 12px; padding: 18px 18px 14px; border-bottom: 1px solid rgba(201,154,85,0.35); }
+.mg-head-icon { width: 44px; height: 44px; border-radius: 9999px; display: grid; place-items: center; color: #3a2108;
+  background: radial-gradient(circle at 32% 28%, #ffe2a6, #f59e0b 60%, #b45309); box-shadow: 0 4px 12px rgba(245,158,11,0.35); }
+.mg-head-text { min-width: 0; text-align: center; }
+.mg-head-text h2 { font-weight: 900; font-size: 17px; line-height: 1.25; }
+.mg-head-text p { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.mg-he-sub { font-family: 'Frank Ruhl Libre', serif; color: #b45309; font-weight: 800; font-size: 15px !important; opacity: 1 !important; }
+.dark .mg-he-sub { color: #fbbf24; }
+.mg-close { width: 40px; height: 40px; border-radius: 9999px; display: grid; place-items: center; border: 1px solid rgba(201,154,85,0.5); transition: background .2s; }
+.mg-close:hover { background: rgba(201,154,85,0.15); }
+.mg-progress { padding: 12px 20px 14px; border-bottom: 1px solid rgba(201,154,85,0.25); }
+.mg-bar { height: 10px; border-radius: 9999px; background: #94a3b8; overflow: hidden; }
+.mg-bar span { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 9999px; transition: width .6s; }
+.mg-legend { display: flex; justify-content: space-between; font-size: 12px; margin-top: 6px; }
+.mg-m { color: #b45309; } .dark .mg-m { color: #fbbf24; } .mg-g { color: #64748b; } .dark .mg-g { color: #a5b4cb; }
+.mg-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 12px 16px; padding: 4px; border-radius: 18px; background: rgba(201,154,85,0.12); border: 1px solid rgba(201,154,85,0.3); }
+.mg-tabs button { padding: 9px 6px; border-radius: 14px; font-size: 12px; font-weight: 800; line-height: 1.25; transition: all .25s; opacity: .8; }
+.mg-tabs button.on { background: linear-gradient(180deg, #fbbf24, #f59e0b); color: #2a1503; opacity: 1; box-shadow: 0 3px 10px rgba(245,158,11,0.35); }
+.mg-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.mg-status { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 13px; opacity: .75; padding: 12px; }
+.mg-section { display: flex; flex-direction: column; gap: 12px; }
+.mg-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; color: #b45309; padding-bottom: 6px; border-bottom: 1px solid rgba(201,154,85,0.35); }
+.dark .mg-section-title { color: #fbbf24; }
+.mg-section-title span { width: 8px; height: 8px; border-radius: 9999px; background: #f59e0b; }
+.mg-section-title em { margin-inline-start: auto; font-style: normal; font-weight: 600; font-size: 11px; opacity: .7; color: inherit; }
+.mg-card { text-align: start; width: 100%; padding: 14px 16px; border-radius: 20px; border: 1px solid rgba(201,154,85,0.45); background: rgba(255,255,255,0.55); transition: transform .2s, box-shadow .2s, border-color .2s; }
+.dark .mg-card { background: rgba(255,255,255,0.03); border-color: rgba(201,154,85,0.3); }
+button.mg-card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(120,70,20,0.15); }
+.mg-card.is-current { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.35), 0 8px 22px rgba(245,158,11,0.15); }
+.mg-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mg-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 9999px; font-size: 12px; font-weight: 900; background: #f59e0b; color: #2a1503; }
+.mg-badge-soft { background: rgba(245,158,11,0.15); color: #b45309; border: 1px solid rgba(245,158,11,0.5); }
+.dark .mg-badge-soft { color: #fbbf24; }
+.mg-pos, .mg-here { margin-inline-start: auto; font-size: 11px; opacity: .7; }
+.mg-here { opacity: 1; color: #b45309; font-weight: 800; } .dark .mg-here { color: #fbbf24; }
+.mg-sages { font-size: 12px; opacity: .8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mg-check { margin-inline-start: auto; color: #f59e0b; flex-shrink: 0; }
+.mg-he { font-family: 'Frank Ruhl Libre', 'David Libre', serif; font-size: 18px; font-weight: 700; line-height: 1.6; }
+.mg-he-full { font-size: 19px; line-height: 1.85; text-align: justify; }
+.mg-divider { height: 1px; margin: 10px 0; background: rgba(201,154,85,0.35); }
+.mg-ka { font-size: 13.5px; line-height: 1.65; opacity: .9; }
+.mg-ka b { color: #b45309; } .dark .mg-ka b { color: #fbbf24; }
+.mg-dim { opacity: .55; font-style: italic; }
+button .mg-ka { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mg-explain { margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); }
+.mg-explain h4 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 900; color: #b45309; margin-bottom: 6px; }
+.dark .mg-explain h4 { color: #fbbf24; }
+.mg-explain p { font-size: 13.5px; line-height: 1.7; }
+.mg-foot { padding: 12px 16px 16px; border-top: 1px solid rgba(201,154,85,0.3); }
+.mg-foot-split { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.mg-foot-split span { opacity: .7; }
+.mg-primary { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 18px; font-weight: 900; font-size: 14px;
+  background: linear-gradient(180deg, #fbbf24, #f59e0b); color: #2a1503; box-shadow: 0 6px 18px rgba(245,158,11,0.35); transition: transform .15s; }
+.mg-primary:active, .mg-secondary:active { transform: scale(0.98); }
+.mg-secondary { padding: 10px 22px; border-radius: 9999px; font-weight: 800; border: 1px solid rgba(201,154,85,0.6); }
+
+/* Mishnah pill in the dock */
+.mishnah-pill { height: 36px; padding: 0 14px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-weight: 900; font-size: 12px;
+  border: 1.5px solid #c99a55; background: linear-gradient(180deg, #fffaf1, #f3e3c6); color: #2a1a0c; box-shadow: 0 2px 8px rgba(120,70,20,0.15); transition: transform .15s; }
+.dark .mishnah-pill { background: linear-gradient(180deg, #33210f, #1f140a); color: #faf2e2; border-color: #a8742f; }
+.mishnah-pill:active { transform: scale(0.96); }
+.mishnah-pill .he { font-family: 'Frank Ruhl Libre', serif; color: #b45309; } .dark .mishnah-pill .he { color: #fbbf24; }
