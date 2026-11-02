@@ -3502,18 +3502,10 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
               }}
               title="თავში დაბრუნება (Return to Top)"
               aria-label="თავში დაბრუნება"
-              style={{
-                background:
-                  'radial-gradient(circle at 30% 24%, rgba(255,255,255,0.52) 0%, rgba(224,242,254,0.28) 58%, rgba(186,230,253,0.16) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                boxShadow:
-                  '0 4px 14px rgba(14,116,144,0.09), inset 0 1px 1.5px rgba(255,255,255,0.75)',
-              }}
-              className="pointer-events-auto w-9 h-9 sm:w-12 sm:h-12 rounded-full border border-white/65 hover:border-sky-300/80 text-sky-900/85 hover:text-amber-800 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all shrink-0 opacity-90 hover:opacity-100 focus-visible:opacity-100"
+              className="crystal-orb pointer-events-auto w-9 h-9 sm:w-12 sm:h-12 rounded-full shadow-[0_6px_18px_rgba(14,116,144,0.16)] flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all shrink-0 opacity-90 hover:opacity-100 focus-visible:opacity-100"
             >
-              <ArrowUp className="w-4 h-4 text-sky-700/85 stroke-[1.85] shrink-0" />
-              <span className="text-[8px] font-medium tracking-tight text-slate-700/90 leading-none">
+              <ArrowUp className="w-4 h-4 stroke-[2.2] shrink-0" />
+              <span className="text-[8px] font-bold tracking-tight leading-none">
                 თავში
               </span>
             </motion.button>
