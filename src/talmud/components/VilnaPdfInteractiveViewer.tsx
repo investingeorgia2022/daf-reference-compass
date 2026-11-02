@@ -1970,6 +1970,7 @@ function extractHotspotsFromTextContent(
           aligned: matches.length,
           bySection: ['gemara','mishnah','rashi','tosafot'].map((sec) => [sec, hotspots.filter((h) => h.section === sec && !h.isSmallMarker).length, hotspots.filter((h) => h.section === sec && h.textSource === 'sefaria').length]),
           sefaria: [effectiveMishnah.length + effectiveGemara.length, effectiveRashi.length, effectiveTosafot.length],
+          dump: JSON.stringify({ hs: hotspots.filter((h) => !h.isSmallMarker).map((h) => [h.section, h.cleanWord, +h.topPct.toFixed(2), +h.leftPct.toFixed(2), +h.heightPct.toFixed(2)]), m: effectiveMishnah.map((x) => [x.id, x.hebrewText || x.hebrew]), g: effectiveGemara.map((x) => [x.id, x.hebrewText || x.hebrew]), r: effectiveRashi.map((x) => [x.id, x.hebrewText || x.hebrew]), t: effectiveTosafot.map((x) => [x.id, x.hebrewText || x.hebrew]) }),
           sampleRashi: hotspots.filter((h) => h.section === 'rashi').slice(0, 25).map((h) => h.cleanWord).join(' '),
           sampleRashiSef: (effectiveRashi[0]?.hebrewText || effectiveRashi[0]?.hebrew || '').slice(0, 160),
           sampleGem: hotspots.filter((h) => h.section === 'gemara').slice(0, 25).map((h) => h.cleanWord).join(' '),
