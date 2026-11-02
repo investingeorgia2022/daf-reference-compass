@@ -1820,8 +1820,8 @@ export function App() {
         }
 
         // For non-curated dapim, accurately classify Mishnah vs Gemara segments!
-        const heSegments = flattenSefariaTextArray(json.he).slice(0, 16);
-        const enSegments = flattenSefariaTextArray(json.text).slice(0, 16);
+        const heSegments = flattenSefariaTextArray(json.he);
+        const enSegments = flattenSefariaTextArray(json.text);
 
         if (heSegments.length > 0) {
           const isFirstDaf2a = selectedDafId === '2a';
@@ -1831,8 +1831,8 @@ export function App() {
             hasGemaraBeforeFirstNewMishnah,
           } = classifyDafSegments(heSegments, enSegments, isFirstDaf2a);
 
-          const rashiLinks = allRashiLinks.slice(0, 18);
-          const tosafotLinks = allTosafotLinks.slice(0, 14);
+          const rashiLinks = allRashiLinks;
+          const tosafotLinks = allTosafotLinks;
           const masoretLinks = extractedCommentaries
             .filter(
               (c) =>
