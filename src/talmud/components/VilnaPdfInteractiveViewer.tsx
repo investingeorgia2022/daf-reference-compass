@@ -4592,6 +4592,30 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const isSingleSmallMarkerSelected =
     selectedHotspotsSlice.length === 1 && Boolean(selectedHotspotsSlice[0]?.isSmallMarker);
 
+  // Nearest daf-reference word within a finger's reach of the tap (same row only).
+  const resolveCitationTapIndex = (idx: number, x: number, y: number): number => {
+    const spot = hotspots[idx];
+    if (!spot || citationHotspotIdsSet.has(spot.id) || spot.isSmallMarker) return idx;
+    const slop = 14;
+    let best = idx;
+    let bestDist = Infinity;
+    for (let k = Math.max(0, idx - 4); k <= Math.min(hotspots.length - 1, idx + 4); k++) {
+      const cand = hotspots[k];
+      if (!cand || cand.rowId !== spot.rowId || !citationHotspotIdsSet.has(cand.id)) continue;
+      const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${cand.id}"]`);
+      if (!(el instanceof HTMLElement)) continue;
+      const r = el.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      const d = Math.hypot(dx, dy);
+      if (d <= slop && d < bestDist) {
+        bestDist = d;
+        best = k;
+      }
+    }
+    return best;
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
       {blinkingTarget?.originMarker && (
