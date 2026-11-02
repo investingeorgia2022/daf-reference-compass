@@ -1608,7 +1608,7 @@ export const AnimatedGlobeIconWrapper: React.FC<{
     return (
       <span
         style={{ perspective: '300px', transformStyle: 'preserve-3d' }}
-        className={`inline-flex items-center justify-center shrink-0 ${className}`}
+        className={`agw-icon icon-orb ${className}`}
       >
         {content}
       </span>

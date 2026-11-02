@@ -793,3 +793,9 @@ button .mg-ka { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient:
 .mishnah-pill:active { transform: scale(0.96); }
 .mishnah-pill .he { font-family: 'Frank Ruhl Libre', serif; color: #b45309; } .dark .mishnah-pill .he { color: #fbbf24; }
 .dark .mg-tabs button:not(.on) { color: #f3e6cf !important; }
+
+/* Icons already sitting inside a full-size crystal orb button don't need a second orb */
+[data-crystal-bar] button[class*="w-9"][class*="h-9"] .agw-icon,
+.crystal-orb .agw-icon { background: none; box-shadow: none; width: auto; height: auto; overflow: visible; color: inherit; }
+[data-crystal-bar] button[class*="w-9"][class*="h-9"] .agw-icon::before,
+.crystal-orb .agw-icon::before { display: none; }
