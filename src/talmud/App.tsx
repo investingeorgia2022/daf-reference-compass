@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { installGeminiFetchHeaders } from './utils/geminiSettings';
+installGeminiFetchHeaders();
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { loadAppSettings, readPreference, writePreference } from './utils/appPreferences';
