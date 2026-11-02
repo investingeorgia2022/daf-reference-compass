@@ -19,7 +19,7 @@ export function shasPdfUrl(tractate: string, daf: string): string | null {
   const slug = SHAS_SLUG[tractate];
   const m = /^(\d{1,3})([ab])$/i.exec(daf.trim());
   if (!slug || !m) return null;
-  return `https://www.shas.org/daf-pdf/api/?masechta=${slug}&daf=${parseInt(m[1], 10)}&amud=${m[2].toLowerCase()}`;
+  return `https://www.shas.org/daf-pdf/api/?masechta=${slug}&daf=${parseInt(m[1] ?? "2", 10)}&amud=${(m[2] ?? "a").toLowerCase()}`;
 }
 
 export const Route = createFileRoute("/api/talmud/vilna-pdf")({
