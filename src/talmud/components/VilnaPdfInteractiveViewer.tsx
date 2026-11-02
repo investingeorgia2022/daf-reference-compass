@@ -2931,7 +2931,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       try {
         const fetchValidPdfBuffer = async (urlToFetch: string): Promise<ArrayBuffer> => {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 6500);
+          const timer = setTimeout(
+            () => controller.abort(),
+            urlToFetch.startsWith('/api/talmud/vilna-pdf') ? 20000 : 6500
+          );
           try {
             const resp = await fetch(urlToFetch, { signal: controller.signal });
             if (!resp.ok) {
