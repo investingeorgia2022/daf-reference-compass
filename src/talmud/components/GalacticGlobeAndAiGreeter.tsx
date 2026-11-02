@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { geminiHeaders } from '../utils/geminiSettings';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -3266,7 +3267,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
             style={{
               pointerEvents: 'none',
             }}
-            className={`fixed bottom-[104px] sm:bottom-[110px] left-3 right-3 sm:left-5 sm:right-5 z-[295] flex flex-col items-start gap-2 ${
+            className={`fixed bottom-[86px] sm:bottom-[92px] left-3 right-3 sm:left-5 sm:right-5 z-[295] flex flex-col items-start gap-2 ${
               isAnyBottomSheetExpanded ? 'invisible pointer-events-none' : ''
             }`}
           >
