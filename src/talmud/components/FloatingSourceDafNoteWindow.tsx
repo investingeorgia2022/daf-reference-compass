@@ -136,6 +136,7 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
   const [isMaximized, setIsMaximized] = useState<boolean>(false);
   // Start at 100% zoom inside the Source Window so the full Vilna PDF file is displayed cleanly just like the main Talmud Daf
   const [noteZoom, setNoteZoom] = useState<number>(100);
+  const [viewTab, setViewTab] = useState<'classic' | 'text'>('classic');
   const [autoTranslateInNote, setAutoTranslateInNote] = useState<boolean>(false);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [resizeDelta, setResizeDelta] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -1026,9 +1027,37 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
                   }}
                   className="mx-auto"
                 >
-                  {!hasAuthenticVilnaScan(currentTractate.id, activeDafId) ? (
-                    // No printed scan of this daf ships with the app: show its real text
-                    // instead of a different daf's page.
+                  <div className="sticky top-0 z-30 mb-1.5 flex justify-center">
+                    <div
+                      role="tablist"
+                      className={`inline-flex gap-1 rounded-full border p-0.5 text-[11px] font-semibold shadow-sm backdrop-blur ${
+                        isDark ? 'border-amber-900/50 bg-black/60' : 'border-amber-800/25 bg-white/75'
+                      }`}
+                    >
+                      {([
+                        ['classic', 'კლასიკური დაფი'],
+                        ['text', 'ტექსტი'],
+                      ] as const).map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          role="tab"
+                          aria-selected={viewTab === key}
+                          onClick={() => setViewTab(key)}
+                          className={`rounded-full px-3 py-1 transition-colors ${
+                            viewTab === key
+                              ? 'bg-amber-700 text-amber-50'
+                              : isDark
+                                ? 'text-amber-200/80'
+                                : 'text-amber-900/80'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {viewTab === 'text' ? (
                     <CitedDafTextView
                       dafData={citedDafData}
                       tractateNameHe={currentTractate.nameHe}
