@@ -1,5 +1,5 @@
 import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
-import { geminiGenerateJson, GeminiKeyError, readUserGemini, type AiTier, type UserGemini } from "./geminiRouter";
+import { geminiGenerateJson, GeminiKeyError, GeminiBusyError, readUserGemini, type AiTier, type UserGemini } from "./geminiRouter";
 
 export interface AiCtx { user: UserGemini | null; tier: AiTier }
 
@@ -68,6 +68,7 @@ export const str = (v: unknown, max = 4000) => (typeof v === "string" ? v.slice(
 
 export function errorResponse(e: unknown): Response {
   if (e instanceof GeminiKeyError) return Response.json({ error: "invalid_gemini_key" }, { status: 401 });
+  if (e instanceof GeminiBusyError) return Response.json({ error: "gemini_busy" }, { status: e.status });
   if (e instanceof GatewayError) {
     const status = e.httpStatus === 429 || e.httpStatus === 402 ? e.httpStatus : 502;
     return Response.json({ error: "ai_unavailable", code: e.code }, { status });
