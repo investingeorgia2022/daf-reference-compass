@@ -18,6 +18,7 @@ import { Route as ApiTalmudMishnahGuideRouteImport } from './routes/api/talmud/m
 import { Route as ApiTalmudSourceLookupRouteImport } from './routes/api/talmud/source-lookup'
 import { Route as ApiTalmudTranslateProfessionalRouteImport } from './routes/api/talmud/translate-professional'
 import { Route as ApiTalmudTtsRouteImport } from './routes/api/talmud/tts'
+import { Route as ApiTalmudVilnaPdfRouteImport } from './routes/api/talmud/vilna-pdf'
 import { Route as ApiTalmudVoiceTranscribeRouteImport } from './routes/api/talmud/voice-transcribe'
 
 const IndexRoute = IndexRouteImport.update({
@@ -66,6 +67,11 @@ const ApiTalmudTtsRoute = ApiTalmudTtsRouteImport.update({
   path: '/api/talmud/tts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTalmudVilnaPdfRoute = ApiTalmudVilnaPdfRouteImport.update({
+  id: '/api/talmud/vilna-pdf',
+  path: '/api/talmud/vilna-pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTalmudVoiceTranscribeRoute =
   ApiTalmudVoiceTranscribeRouteImport.update({
     id: '/api/talmud/voice-transcribe',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/tts': typeof ApiTalmudTtsRoute
+  '/api/talmud/vilna-pdf': typeof ApiTalmudVilnaPdfRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesByTo {
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/tts': typeof ApiTalmudTtsRoute
+  '/api/talmud/vilna-pdf': typeof ApiTalmudVilnaPdfRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesById {
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/tts': typeof ApiTalmudTtsRoute
+  '/api/talmud/vilna-pdf': typeof ApiTalmudVilnaPdfRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRouteTypes {
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/tts'
+    | '/api/talmud/vilna-pdf'
     | '/api/talmud/voice-transcribe'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/tts'
+    | '/api/talmud/vilna-pdf'
     | '/api/talmud/voice-transcribe'
   id:
     | '__root__'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/tts'
+    | '/api/talmud/vilna-pdf'
     | '/api/talmud/voice-transcribe'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +171,7 @@ export interface RootRouteChildren {
   ApiTalmudSourceLookupRoute: typeof ApiTalmudSourceLookupRoute
   ApiTalmudTranslateProfessionalRoute: typeof ApiTalmudTranslateProfessionalRoute
   ApiTalmudTtsRoute: typeof ApiTalmudTtsRoute
+  ApiTalmudVilnaPdfRoute: typeof ApiTalmudVilnaPdfRoute
   ApiTalmudVoiceTranscribeRoute: typeof ApiTalmudVoiceTranscribeRoute
 }
 
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTalmudTtsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/talmud/vilna-pdf': {
+      id: '/api/talmud/vilna-pdf'
+      path: '/api/talmud/vilna-pdf'
+      fullPath: '/api/talmud/vilna-pdf'
+      preLoaderRoute: typeof ApiTalmudVilnaPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/talmud/voice-transcribe': {
       id: '/api/talmud/voice-transcribe'
       path: '/api/talmud/voice-transcribe'
@@ -247,6 +267,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTalmudSourceLookupRoute: ApiTalmudSourceLookupRoute,
   ApiTalmudTranslateProfessionalRoute: ApiTalmudTranslateProfessionalRoute,
   ApiTalmudTtsRoute: ApiTalmudTtsRoute,
+  ApiTalmudVilnaPdfRoute: ApiTalmudVilnaPdfRoute,
   ApiTalmudVoiceTranscribeRoute: ApiTalmudVoiceTranscribeRoute,
 }
 export const routeTree = rootRouteImport
