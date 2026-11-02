@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/talmud/tts")({
         if (!text) return Response.json({ error: "no_text" }, { status: 400 });
         try {
           const wav = await geminiSpeak(user.key, text);
-          return new Response(wav, { headers: { "content-type": "audio/wav", "cache-control": "no-store" } });
+          return new Response(wav.buffer as ArrayBuffer, { headers: { "content-type": "audio/wav", "cache-control": "no-store" } });
         } catch {
           return Response.json({ error: "tts_failed" }, { status: 502 });
         }
