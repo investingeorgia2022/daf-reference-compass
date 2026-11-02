@@ -4766,7 +4766,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             commentaryLines.map((line) => (
               <div
                 key={`commentary-line-${line.key}`}
-                data-reading-line.key={line.section}
+                data-reading-line-section={line.key}
                 style={{
                   left: `${Math.max(0.4, line.leftPct)}%`,
                   top: `${line.topPct}%`,
