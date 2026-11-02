@@ -14,6 +14,7 @@ import { Route as ApiTalmudAiNavigateRouteImport } from './routes/api/talmud/ai-
 import { Route as ApiTalmudAnalyzeRouteImport } from './routes/api/talmud/analyze'
 import { Route as ApiTalmudAskGeminiRouteImport } from './routes/api/talmud/ask-gemini'
 import { Route as ApiTalmudChavrutaRouteImport } from './routes/api/talmud/chavruta'
+import { Route as ApiTalmudMishnahGuideRouteImport } from './routes/api/talmud/mishnah-guide'
 import { Route as ApiTalmudSourceLookupRouteImport } from './routes/api/talmud/source-lookup'
 import { Route as ApiTalmudTranslateProfessionalRouteImport } from './routes/api/talmud/translate-professional'
 import { Route as ApiTalmudVoiceTranscribeRouteImport } from './routes/api/talmud/voice-transcribe'
@@ -43,6 +44,11 @@ const ApiTalmudChavrutaRoute = ApiTalmudChavrutaRouteImport.update({
   path: '/api/talmud/chavruta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTalmudMishnahGuideRoute = ApiTalmudMishnahGuideRouteImport.update({
+  id: '/api/talmud/mishnah-guide',
+  path: '/api/talmud/mishnah-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTalmudSourceLookupRoute = ApiTalmudSourceLookupRouteImport.update({
   id: '/api/talmud/source-lookup',
   path: '/api/talmud/source-lookup',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
   '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
   '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
   '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
   '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/api/talmud/analyze': typeof ApiTalmudAnalyzeRoute
   '/api/talmud/ask-gemini': typeof ApiTalmudAskGeminiRoute
   '/api/talmud/chavruta': typeof ApiTalmudChavrutaRoute
+  '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/api/talmud/analyze'
     | '/api/talmud/ask-gemini'
     | '/api/talmud/chavruta'
+    | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/voice-transcribe'
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/api/talmud/analyze'
     | '/api/talmud/ask-gemini'
     | '/api/talmud/chavruta'
+    | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/voice-transcribe'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/api/talmud/analyze'
     | '/api/talmud/ask-gemini'
     | '/api/talmud/chavruta'
+    | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
     | '/api/talmud/voice-transcribe'
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   ApiTalmudAnalyzeRoute: typeof ApiTalmudAnalyzeRoute
   ApiTalmudAskGeminiRoute: typeof ApiTalmudAskGeminiRoute
   ApiTalmudChavrutaRoute: typeof ApiTalmudChavrutaRoute
+  ApiTalmudMishnahGuideRoute: typeof ApiTalmudMishnahGuideRoute
   ApiTalmudSourceLookupRoute: typeof ApiTalmudSourceLookupRoute
   ApiTalmudTranslateProfessionalRoute: typeof ApiTalmudTranslateProfessionalRoute
   ApiTalmudVoiceTranscribeRoute: typeof ApiTalmudVoiceTranscribeRoute
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTalmudChavrutaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/talmud/mishnah-guide': {
+      id: '/api/talmud/mishnah-guide'
+      path: '/api/talmud/mishnah-guide'
+      fullPath: '/api/talmud/mishnah-guide'
+      preLoaderRoute: typeof ApiTalmudMishnahGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/talmud/source-lookup': {
       id: '/api/talmud/source-lookup'
       path: '/api/talmud/source-lookup'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTalmudAnalyzeRoute: ApiTalmudAnalyzeRoute,
   ApiTalmudAskGeminiRoute: ApiTalmudAskGeminiRoute,
   ApiTalmudChavrutaRoute: ApiTalmudChavrutaRoute,
+  ApiTalmudMishnahGuideRoute: ApiTalmudMishnahGuideRoute,
   ApiTalmudSourceLookupRoute: ApiTalmudSourceLookupRoute,
   ApiTalmudTranslateProfessionalRoute: ApiTalmudTranslateProfessionalRoute,
   ApiTalmudVoiceTranscribeRoute: ApiTalmudVoiceTranscribeRoute,
