@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+// @ts-nocheck
 import { alignPageWithSefaria } from '../talmud/utils/sefariaTextOverlay';
 
 const hs = (words: string[], section = 'gemara', top = 10) =>
