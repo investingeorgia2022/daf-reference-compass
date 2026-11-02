@@ -319,7 +319,8 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
       }
       continue;
     }
-    cursor[piece.commentator] = found.start;
+    // Commentaries follow the text in order: an identical later quote binds to the next occurrence.
+    cursor[piece.commentator] = found.start + 1;
     const link: DhLink = {
       key,
       commentator: piece.commentator,
