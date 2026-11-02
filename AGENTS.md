@@ -28,3 +28,4 @@
 - Shared reading chrome uses global semantic study tokens; MotionConfig and page flips respect reduced-motion preferences.
 - Source archives exclude dependencies, build output, private configuration and nested export archives; complete project archives add public assets only.
 - Rashi/Tosafot dibbur-hamatchil openings are detected in dibburHamatchilMatcher by printed glyph height relative to the page's commentary body (never PDF font ids, which are per-file subsets) and end at printed "."/":"/וכו׳; quotes match by longest verbatim prefix, abbreviation-aware, markers skipped. Canvas ink tint and taps share its roles so colours and navigation never diverge.
+- A user-supplied Gemini key (device-local, sent as x-gemini-* headers by a fetch patch) routes /api/talmud/* AI through src/server/geminiRouter tiers with Flash fallback; without it the Lovable AI Gateway is used, so users can avoid project credits.

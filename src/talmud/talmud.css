@@ -799,3 +799,10 @@ button .mg-ka { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient:
 .crystal-orb .agw-icon { background: none; box-shadow: none; width: auto; height: auto; overflow: visible; color: inherit; }
 [data-crystal-bar] button[class*="w-9"][class*="h-9"] .agw-icon::before,
 .crystal-orb .agw-icon::before { display: none; }
+
+/* Fullscreen daf: zoom clip area reaches the phone's bottom edge (no empty strip covering the page) */
+#talmud-daf-folio-anchor[data-full-viewport-daf="true"] [data-daf-zoomed] > div,
+#talmud-daf-folio-anchor[data-full-viewport-daf="true"] [data-daf-zoomed] > div > div,
+#talmud-daf-folio-anchor[data-full-viewport-daf="true"] [data-daf-zoomed] > div > div > div {
+  min-height: 100dvh;
+}

@@ -1,4 +1,7 @@
 import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
+import { geminiGenerateJson, GeminiKeyError, readUserGemini, type AiTier, type UserGemini } from "./geminiRouter";
+
+export interface AiCtx { user: UserGemini | null; tier: AiTier }
 
 const BASE_SYSTEM =
   "You are an expert Talmud scholar fluent in Hebrew, Aramaic and Georgian. " +
@@ -18,7 +21,9 @@ function extractText(res: unknown): string {
 }
 
 /** Ask the model for a JSON object described by `shape`. Returns parsed object. */
-export async function askJson(task: string, shape: string, payload: unknown): Promise<Record<string, unknown>> {
+export async function askJson(task: string, shape: string, payload: unknown, ctx?: AiCtx): Promise<Record<string, unknown>> {
+  const prompt = `${task}\n\nReturn JSON only, with exactly this shape:\n${shape}\n\nInput:\n${JSON.stringify(payload)}`;
+  if (ctx?.user) return parseJson(await geminiGenerateJson(ctx.user, ctx.tier, BASE_SYSTEM, prompt));
   const res = await generateResponse({
     model: "openai/gpt-6-astra",
     instructions: BASE_SYSTEM,
@@ -30,7 +35,11 @@ export async function askJson(task: string, shape: string, payload: unknown): Pr
       },
     ],
   });
-  const raw = extractText(res).trim();
+  return parseJson(extractText(res));
+}
+
+function parseJson(text: string): Record<string, unknown> {
+  const raw = text.trim();
   try {
     return JSON.parse(raw) as Record<string, unknown>;
   } catch {
@@ -58,6 +67,7 @@ export async function readJsonBody(request: Request): Promise<TalmudBody> {
 export const str = (v: unknown, max = 4000) => (typeof v === "string" ? v.slice(0, max) : "");
 
 export function errorResponse(e: unknown): Response {
+  if (e instanceof GeminiKeyError) return Response.json({ error: "invalid_gemini_key" }, { status: 401 });
   if (e instanceof GatewayError) {
     const status = e.httpStatus === 429 || e.httpStatus === 402 ? e.httpStatus : 502;
     return Response.json({ error: "ai_unavailable", code: e.code }, { status });
@@ -67,11 +77,12 @@ export function errorResponse(e: unknown): Response {
 }
 
 /** Wraps a JSON AI handler with body parsing and error handling. */
-export function jsonAiHandler(fn: (body: TalmudBody) => Promise<unknown>) {
+export function jsonAiHandler(tier: AiTier, fn: (body: TalmudBody, ctx: AiCtx) => Promise<unknown>) {
   return async ({ request }: { request: Request }) => {
     const body = await readJsonBody(request);
+    const ctx: AiCtx = { user: readUserGemini(request), tier };
     try {
-      return Response.json(await fn(body));
+      return Response.json(await fn(body, ctx));
     } catch (e) {
       return errorResponse(e);
     }

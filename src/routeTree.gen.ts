@@ -17,6 +17,7 @@ import { Route as ApiTalmudChavrutaRouteImport } from './routes/api/talmud/chavr
 import { Route as ApiTalmudMishnahGuideRouteImport } from './routes/api/talmud/mishnah-guide'
 import { Route as ApiTalmudSourceLookupRouteImport } from './routes/api/talmud/source-lookup'
 import { Route as ApiTalmudTranslateProfessionalRouteImport } from './routes/api/talmud/translate-professional'
+import { Route as ApiTalmudTtsRouteImport } from './routes/api/talmud/tts'
 import { Route as ApiTalmudVoiceTranscribeRouteImport } from './routes/api/talmud/voice-transcribe'
 
 const IndexRoute = IndexRouteImport.update({
@@ -60,6 +61,11 @@ const ApiTalmudTranslateProfessionalRoute =
     path: '/api/talmud/translate-professional',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiTalmudTtsRoute = ApiTalmudTtsRouteImport.update({
+  id: '/api/talmud/tts',
+  path: '/api/talmud/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTalmudVoiceTranscribeRoute =
   ApiTalmudVoiceTranscribeRouteImport.update({
     id: '/api/talmud/voice-transcribe',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/tts': typeof ApiTalmudTtsRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesByTo {
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/tts': typeof ApiTalmudTtsRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRoutesById {
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/api/talmud/mishnah-guide': typeof ApiTalmudMishnahGuideRoute
   '/api/talmud/source-lookup': typeof ApiTalmudSourceLookupRoute
   '/api/talmud/translate-professional': typeof ApiTalmudTranslateProfessionalRoute
+  '/api/talmud/tts': typeof ApiTalmudTtsRoute
   '/api/talmud/voice-transcribe': typeof ApiTalmudVoiceTranscribeRoute
 }
 export interface FileRouteTypes {
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
+    | '/api/talmud/tts'
     | '/api/talmud/voice-transcribe'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
+    | '/api/talmud/tts'
     | '/api/talmud/voice-transcribe'
   id:
     | '__root__'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/api/talmud/mishnah-guide'
     | '/api/talmud/source-lookup'
     | '/api/talmud/translate-professional'
+    | '/api/talmud/tts'
     | '/api/talmud/voice-transcribe'
   fileRoutesById: FileRoutesById
 }
@@ -146,6 +158,7 @@ export interface RootRouteChildren {
   ApiTalmudMishnahGuideRoute: typeof ApiTalmudMishnahGuideRoute
   ApiTalmudSourceLookupRoute: typeof ApiTalmudSourceLookupRoute
   ApiTalmudTranslateProfessionalRoute: typeof ApiTalmudTranslateProfessionalRoute
+  ApiTalmudTtsRoute: typeof ApiTalmudTtsRoute
   ApiTalmudVoiceTranscribeRoute: typeof ApiTalmudVoiceTranscribeRoute
 }
 
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTalmudTranslateProfessionalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/talmud/tts': {
+      id: '/api/talmud/tts'
+      path: '/api/talmud/tts'
+      fullPath: '/api/talmud/tts'
+      preLoaderRoute: typeof ApiTalmudTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/talmud/voice-transcribe': {
       id: '/api/talmud/voice-transcribe'
       path: '/api/talmud/voice-transcribe'
@@ -226,6 +246,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTalmudMishnahGuideRoute: ApiTalmudMishnahGuideRoute,
   ApiTalmudSourceLookupRoute: ApiTalmudSourceLookupRoute,
   ApiTalmudTranslateProfessionalRoute: ApiTalmudTranslateProfessionalRoute,
+  ApiTalmudTtsRoute: ApiTalmudTtsRoute,
   ApiTalmudVoiceTranscribeRoute: ApiTalmudVoiceTranscribeRoute,
 }
 export const routeTree = rootRouteImport

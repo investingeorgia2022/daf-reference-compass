@@ -6,12 +6,11 @@ const SOURCE = `{"realmId":"talmud|tanakh|mishnah|rambam|shulchan-aruch","bookId
 export const Route = createFileRoute("/api/talmud/ask-gemini")({
   server: {
     handlers: {
-      POST: jsonAiHandler((b) =>
+      POST: jsonAiHandler("complex", (b, ctx) =>
         askJson(
           "Answer the user's Jewish-law / Talmud question in Georgian, with real cited sources (max 5).",
           `{"answerKa":"string","summaryHe":"string","keyPointsKa":["string"],"halachaTakeawayKa":"string","sources":[${SOURCE}]}`,
-          { question: str(b.question, 1000), scope: str(b.scope, 40) },
-        ),
+          { question: str(b.question, 1000), scope: str(b.scope, 40) }, ctx),
       ),
     },
   },
