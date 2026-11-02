@@ -4765,8 +4765,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           {!loadingPdf &&
             commentaryLines.map((line) => (
               <div
-                key={`commentary-line-${line.section}`}
-                data-reading-line-section={line.section}
+                key={`commentary-line-${line.key}`}
+                data-reading-line.key={line.section}
                 style={{
                   left: `${Math.max(0.4, line.leftPct)}%`,
                   top: `${line.topPct}%`,
@@ -4785,10 +4785,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               id="active-stopped-reading-line"
               data-reading-line-control="true"
               style={{
-                left: `${Math.max(0.4, activeStoppedLine.leftPct)}%`,
-                top: `${activeStoppedLine.topPct}%`,
-                width: `${Math.min(99.2, activeStoppedLine.widthPct)}%`,
-                height: `${activeStoppedLine.heightPct}%`,
+                left: `${Math.max(0.4, (mainLineBox || activeStoppedLine).leftPct)}%`,
+                top: `${(mainLineBox || activeStoppedLine).topPct}%`,
+                width: `${Math.min(99.2, (mainLineBox || activeStoppedLine).widthPct)}%`,
+                height: `${(mainLineBox || activeStoppedLine).heightPct}%`,
               }}
               className={`absolute z-25 pointer-events-none transition-all ${
                 isDraggingReadingLine ? 'duration-0' : 'duration-150 ease-out'
