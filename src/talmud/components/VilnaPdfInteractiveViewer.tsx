@@ -5219,13 +5219,14 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           {typeof document !== 'undefined' &&
             selectedUnionScreenRect &&
             selectedRange &&
+            showRangeHandles &&
             !isDraggingSelection &&
             !isSingleSmallMarkerSelected &&
             createPortal(
               <div
                 style={{
                   position: 'fixed',
-                  left: `${Math.max(12, Math.min(window.innerWidth - 180, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 90))}px`,
+                  left: `${Math.max(12, Math.min(window.innerWidth - 220, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 110))}px`,
                   top: `${selectedUnionScreenRect.bottom + 84 < window.innerHeight ? selectedUnionScreenRect.bottom + 40 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
@@ -5246,6 +5247,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    setShowRangeHandles(false);
                     commitSelectionRange(selectedRange.startIdx, selectedRange.endIdx, true);
                   }}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 text-sky-300 font-bold text-xs transition-colors cursor-pointer active:scale-95"
@@ -5253,6 +5255,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 >
                   <BookOpen className="w-3.5 h-3.5 shrink-0" />
                   <span>განმარტება</span>
+                </button>
+                <div className="w-[1px] h-4 bg-white/20" />
+                <button
+                  type="button"
+                  aria-label="მონიშვნის გაუქმება"
+                  title="მონიშვნის გაუქმება"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowRangeHandles(false);
+                    setSelectedRange(null);
+                    lastWordTapRef.current = null;
+                    if (typeof document !== 'undefined') delete document.body.dataset.talmudWordSelecting;
+                  }}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg text-stone-300 hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
+                >
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>,
               document.body
