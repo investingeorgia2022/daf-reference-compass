@@ -1269,7 +1269,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
         if (preferred) utter.voice = preferred;
         utter.rate = 0.94;
         // Deepen the tone so system voices sound male.
-        utter.pitch = 0.55;
+        utter.pitch = 0.88;
         utter.onstart = () => {
           setKacunaStopped(false);
           setKacunaSpeaking(true);

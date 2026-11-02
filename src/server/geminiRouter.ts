@@ -84,7 +84,7 @@ export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system:
 }
 
 /** Gemini TTS with a male voice; returns a WAV file. */
-export async function geminiSpeak(key: string, text: string, voice = 'Charon'): Promise<Uint8Array> {
+export async function geminiSpeak(key: string, text: string, voice = 'Iapetus'): Promise<Uint8Array> {
   const res = await fetch(
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
     {

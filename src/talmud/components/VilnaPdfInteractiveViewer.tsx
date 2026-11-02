@@ -195,6 +195,11 @@ const EXACT_VILNA_PDF_MAP: Record<string, string> = {
   'Niddah:2a': '/vilna-pdf/Niddah-2a.pdf',
 };
 
+/** True only when the real printed scan of this exact daf ships with the app. */
+export function hasAuthenticVilnaScan(tractateId: string, dafId: string): boolean {
+  return Boolean(EXACT_VILNA_PDF_MAP[`${tractateId}:${(dafId || '').toLowerCase()}`]);
+}
+
 const TRACTATE_DEFAULT_2A_PDF_MAP: Record<string, string> = {
   Berakhot: '/vilna-pdf/Berakhot-2a.pdf',
   Shabbat: '/vilna-pdf/Shabbat-2a.pdf',
@@ -2253,9 +2258,18 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return pdfLines.find((l) => l.rowId === stoppedRowId) || pdfLines[0] || null;
   }, [pdfLines, stoppedRowId]);
 
-  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line)
+  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line).
+  // A scan row can contain words from several columns, so each line is drawn only over the
+  // column segment of the word that was tapped (its "anchor").
+  type ReadingRows = {
+    rashi?: string;
+    tosafot?: string;
+    rashiAnchor?: string;
+    tosafotAnchor?: string;
+    mainAnchor?: string;
+  };
   const commentaryRowsKey = `talmud_commentary_rows_${dafData.tractateId}_${dafData.dafId}`;
-  const [commentaryRows, setCommentaryRows] = useState<{ rashi?: string; tosafot?: string }>({});
+  const [commentaryRows, setCommentaryRows] = useState<ReadingRows>({});
   useEffect(() => {
     try {
       setCommentaryRows(JSON.parse(localStorage.getItem(commentaryRowsKey) || '{}') || {});
@@ -2263,35 +2277,124 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       setCommentaryRows({});
     }
   }, [commentaryRowsKey]);
+  const saveReadingRows = useCallback(
+    (next: ReadingRows) => {
+      try {
+        localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    },
+    [commentaryRowsKey]
+  );
+
+  type LineBox = { leftPct: number; topPct: number; widthPct: number; heightPct: number };
+  const segmentBox = useCallback(
+    (rowId: string | undefined, anchorId: string | undefined): LineBox | null => {
+      if (!rowId || !anchorId) return null;
+      const row = hotspots
+        .filter((x) => x.rowId === rowId && !x.isSmallMarker)
+        .sort((a, b) => a.leftPct - b.leftPct);
+      if (!row.some((x) => x.id === anchorId)) return null;
+      let seg: VilnaPdfHotspot[] = [];
+      for (const x of row) {
+        const prev = seg[seg.length - 1];
+        if (prev && x.leftPct - (prev.leftPct + prev.widthPct) > 1.3) {
+          if (seg.some((s) => s.id === anchorId)) break;
+          seg = [];
+        }
+        seg.push(x);
+      }
+      if (!seg.some((s) => s.id === anchorId)) return null;
+      const left = Math.min(...seg.map((s) => s.leftPct));
+      const right = Math.max(...seg.map((s) => s.leftPct + s.widthPct));
+      const top = Math.min(...seg.map((s) => s.topPct));
+      const bottom = Math.max(...seg.map((s) => s.topPct + s.heightPct));
+      return {
+        leftPct: Math.max(0.4, left - 0.45),
+        topPct: top,
+        widthPct: Math.min(99.2, right - left + 0.9),
+        heightPct: Math.max(0.95, bottom - top),
+      };
+    },
+    [hotspots]
+  );
+
+  const mainLineBox: LineBox | null = activeStoppedLine
+    ? segmentBox(activeStoppedLine.rowId, commentaryRows.mainAnchor) || activeStoppedLine
+    : null;
+
   const commentaryLines = useMemo(
     () =>
       (['rashi', 'tosafot'] as const)
-        .map((sec) => pdfLines.find((l) => l.rowId === commentaryRows[sec] && l.section === sec))
-        .filter((l): l is PdfDafLine => !!l && l.rowId !== activeStoppedLine?.rowId),
-    [pdfLines, commentaryRows, activeStoppedLine]
+        .map((sec) => {
+          const line = pdfLines.find((l) => l.rowId === commentaryRows[sec]);
+          if (!line) return null;
+          const box = segmentBox(line.rowId, commentaryRows[`${sec}Anchor`]) || line;
+          return { key: sec, ...box };
+        })
+        .filter((l): l is LineBox & { key: 'rashi' | 'tosafot' } => {
+          if (!l || !mainLineBox) return !!l;
+          // Never draw a second band on top of the main line.
+          return Math.abs(l.topPct - mainLineBox.topPct) > 0.3 || Math.abs(l.leftPct - mainLineBox.leftPct) > 0.5;
+        }),
+    [pdfLines, commentaryRows, segmentBox, mainLineBox]
   );
+
   const markReadingLineAt = useCallback(
     (h: VilnaPdfHotspot | undefined) => {
-      if (!h || !h.rowId) return;
-      if (h.section === 'mishnah' || h.section === 'gemara') {
-        updateStoppedRow(h.rowId);
-      } else if (h.section === 'rashi' || h.section === 'tosafot') {
-        const sec = h.section;
-        setCommentaryRows((prev) => {
-          const next = { ...prev, [sec]: h.rowId };
-          try {
-            localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
-          } catch {}
-          return next;
-        });
-        // If the main line was sitting in this commentary, move it back to the Gemara
-        if (activeStoppedLine && activeStoppedLine.section === sec) {
-          const firstMain = pdfLines.find((l) => l.section === 'mishnah' || l.section === 'gemara');
-          if (firstMain) updateStoppedRow(firstMain.rowId);
+      if (!h || !h.rowId || h.section === 'margin' || h.section === 'header') return;
+      const newBox = segmentBox(h.rowId, h.id);
+      type Stream = 'main' | 'rashi' | 'tosafot';
+      let stream: Stream =
+        h.section === 'rashi' ? 'rashi' : h.section === 'tosafot' ? 'tosafot' : 'main';
+
+      // The same printed column continuing (e.g. a narrow commentary column widening below the
+      // Gemara) keeps its own line: the new tap replaces the nearest line just above it whose
+      // column overlaps and whose letters are the same size, instead of adding a second band.
+      if (newBox) {
+        const anchorOf = (s: Stream) =>
+          hotspots.find(
+            (x) => x.id === (s === 'main' ? commentaryRows.mainAnchor : commentaryRows[`${s}Anchor`])
+          );
+        const boxOf = (s: Stream) => {
+          const rowId = s === 'main' ? activeStoppedLine?.rowId : commentaryRows[s];
+          const a = anchorOf(s);
+          return a ? segmentBox(rowId, a.id) : null;
+        };
+        let best: { s: Stream; dist: number } | null = null;
+        for (const s of ['main', 'rashi', 'tosafot'] as Stream[]) {
+          const box = boxOf(s);
+          const a = anchorOf(s);
+          if (!box || !a) continue;
+          const overlap =
+            Math.min(box.leftPct + box.widthPct, newBox.leftPct + newBox.widthPct) -
+            Math.max(box.leftPct, newBox.leftPct);
+          const narrower = Math.min(box.widthPct, newBox.widthPct);
+          const dist = Math.abs(newBox.topPct - box.topPct);
+          const sizeRatio = (h.glyphH || h.heightPct) / Math.max(0.01, a.glyphH || a.heightPct);
+          if (
+            overlap >= narrower * 0.5 &&
+            dist <= newBox.heightPct * 3.2 &&
+            sizeRatio > 0.82 &&
+            sizeRatio < 1.22 &&
+            (!best || dist < best.dist)
+          ) {
+            best = { s, dist };
+          }
         }
+        if (best) stream = best.s;
+      }
+
+      if (stream === 'main') {
+        updateStoppedRow(h.rowId);
+        setCommentaryRows((prev) => saveReadingRows({ ...prev, mainAnchor: h.id }));
+      } else {
+        setCommentaryRows((prev) =>
+          saveReadingRows({ ...prev, [stream]: h.rowId, [`${stream}Anchor`]: h.id })
+        );
       }
     },
-    [updateStoppedRow, commentaryRowsKey, activeStoppedLine, pdfLines]
+    [updateStoppedRow, segmentBox, hotspots, commentaryRows, activeStoppedLine, saveReadingRows]
   );
 
   const stepStoppedLine = useCallback(
@@ -4592,6 +4695,30 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const isSingleSmallMarkerSelected =
     selectedHotspotsSlice.length === 1 && Boolean(selectedHotspotsSlice[0]?.isSmallMarker);
 
+  // Nearest daf-reference word within a finger's reach of the tap (same row only).
+  const resolveCitationTapIndex = (idx: number, x: number, y: number): number => {
+    const spot = hotspots[idx];
+    if (!spot || citationHotspotIdsSet.has(spot.id) || spot.isSmallMarker) return idx;
+    const slop = 14;
+    let best = idx;
+    let bestDist = Infinity;
+    for (let k = Math.max(0, idx - 4); k <= Math.min(hotspots.length - 1, idx + 4); k++) {
+      const cand = hotspots[k];
+      if (!cand || cand.rowId !== spot.rowId || !citationHotspotIdsSet.has(cand.id)) continue;
+      const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${cand.id}"]`);
+      if (!(el instanceof HTMLElement)) continue;
+      const r = el.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      const d = Math.hypot(dx, dy);
+      if (d <= slop && d < bestDist) {
+        bestDist = d;
+        best = k;
+      }
+    }
+    return best;
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
       {blinkingTarget?.originMarker && (
@@ -4643,8 +4770,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           {!loadingPdf &&
             commentaryLines.map((line) => (
               <div
-                key={`commentary-line-${line.section}`}
-                data-reading-line-section={line.section}
+                key={`commentary-line-${line.key}`}
+                data-reading-line-section={line.key}
                 style={{
                   left: `${Math.max(0.4, line.leftPct)}%`,
                   top: `${line.topPct}%`,
@@ -4663,10 +4790,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               id="active-stopped-reading-line"
               data-reading-line-control="true"
               style={{
-                left: `${Math.max(0.4, activeStoppedLine.leftPct)}%`,
-                top: `${activeStoppedLine.topPct}%`,
-                width: `${Math.min(99.2, activeStoppedLine.widthPct)}%`,
-                height: `${activeStoppedLine.heightPct}%`,
+                left: `${Math.max(0.4, (mainLineBox || activeStoppedLine).leftPct)}%`,
+                top: `${(mainLineBox || activeStoppedLine).topPct}%`,
+                width: `${Math.min(99.2, (mainLineBox || activeStoppedLine).widthPct)}%`,
+                height: `${(mainLineBox || activeStoppedLine).heightPct}%`,
               }}
               className={`absolute z-25 pointer-events-none transition-all ${
                 isDraggingReadingLine ? 'duration-0' : 'duration-150 ease-out'
@@ -5027,35 +5154,43 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               {showRangeHandles &&
                 !isSingleSmallMarkerSelected && (
                 <>
-                  {/* Right (Start in RTL) Copy/Paste Drag Handle with generous touch area */}
-                  <div
-                    onMouseDown={(e) => startHandleDrag(e, 'start-handle')}
-                    onTouchStart={(e) => startHandleDrag(e, 'start-handle')}
-                    title="გადასწიეთ მარჯვნივ/მარცხნივ რამდენიმე სიტყვის მოსანიშნად"
-                    style={{
-                      right: '-22px',
-                      bottom: '-30px',
-                      touchAction: 'none',
-                    }}
-                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
-                  >
-                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
-                  </div>
-
-                  {/* Left (End in RTL) Copy/Paste Drag Handle with generous touch area */}
-                  <div
-                    onMouseDown={(e) => startHandleDrag(e, 'end-handle')}
-                    onTouchStart={(e) => startHandleDrag(e, 'end-handle')}
-                    title="გადასწიეთ მარცხნივ/მარჯვნივ რამდენიმე სიტყვის მოსანიშნად"
-                    style={{
-                      left: '-22px',
-                      bottom: '-30px',
-                      touchAction: 'none',
-                    }}
-                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
-                  >
-                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
-                  </div>
+                  {(['start-handle', 'end-handle'] as const).map((handleType) => {
+                    const isStart = handleType === 'start-handle';
+                    return (
+                      <div
+                        key={handleType}
+                        onMouseDown={(e) => startHandleDrag(e, handleType)}
+                        onTouchStart={(e) => startHandleDrag(e, handleType)}
+                        title="გადასწიეთ რამდენიმე სიტყვის მოსანიშნად"
+                        style={{
+                          // Small water-drop handles hang just below the line so the letters stay visible.
+                          [isStart ? 'right' : 'left']: 0,
+                          top: '100%',
+                          width: '28px',
+                          height: '30px',
+                          transform: `translateX(${isStart ? '50%' : '-50%'}) scale(${readingHandleInvScale})`,
+                          transformOrigin: 'top center',
+                          touchAction: 'none',
+                        }}
+                        className="pointer-events-auto absolute z-50 flex items-start justify-center cursor-ew-resize"
+                      >
+                        <span
+                          aria-hidden
+                          style={{
+                            marginTop: '3px',
+                            width: '11px',
+                            height: '11px',
+                            borderRadius: '0 50% 50% 50%',
+                            transform: 'rotate(45deg)',
+                            background: 'color-mix(in oklab, var(--color-amber-500, #d97706) 38%, transparent)',
+                            border: '1px solid color-mix(in oklab, var(--color-amber-700, #b45309) 70%, transparent)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.55)',
+                            backdropFilter: 'blur(1px)',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>
@@ -5086,6 +5221,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   data-daf-word="true"
                   data-reference-highlight={isBlinkingWord ? 'true' : undefined}
                   data-small-marker={h.isSmallMarker ? 'true' : undefined}
+                  data-section={h.section}
+                  data-row-id={h.rowId}
                   data-marker-type={h.markerTargetType}
                   data-marker-key={h.markerKey}
                   aria-label={h.word}
@@ -5146,15 +5283,20 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    // Printed daf references are tiny; a finger landing just beside one still opens it.
+                    const tapIdx = showRangeHandles ? idx : resolveCitationTapIndex(idx, e.clientX, e.clientY);
+                    const tapSpot = hotspots[tapIdx] || h;
+                    const isNavTap = citationHotspotIdsSet.has(tapSpot.id) || tapSpot.isSmallMarker;
                     if (
-                      !h.isSmallMarker &&
+                      !isNavTap &&
+                      !showRangeHandles &&
                       !suppressNextClickRef.current &&
                       document.body.dataset.talmudPanning !== 'true'
                     ) {
                       markReadingLineAt(h);
                     }
-                    if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
-                    handleWordClick(e, idx);
+                    if (!isNavTap && !selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
+                    handleWordClick(e, tapIdx);
                   }}
                   style={{
                     left: `${h.leftPct}%`,
@@ -5182,13 +5324,14 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           {typeof document !== 'undefined' &&
             selectedUnionScreenRect &&
             selectedRange &&
+            showRangeHandles &&
             !isDraggingSelection &&
             !isSingleSmallMarkerSelected &&
             createPortal(
               <div
                 style={{
                   position: 'fixed',
-                  left: `${Math.max(12, Math.min(window.innerWidth - 180, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 90))}px`,
+                  left: `${Math.max(12, Math.min(window.innerWidth - 272, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 130))}px`,
                   top: `${selectedUnionScreenRect.bottom + 84 < window.innerHeight ? selectedUnionScreenRect.bottom + 40 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
@@ -5209,6 +5352,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    setShowRangeHandles(false);
                     commitSelectionRange(selectedRange.startIdx, selectedRange.endIdx, true);
                   }}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 text-sky-300 font-bold text-xs transition-colors cursor-pointer active:scale-95"
@@ -5216,6 +5360,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 >
                   <BookOpen className="w-3.5 h-3.5 shrink-0" />
                   <span>განმარტება</span>
+                </button>
+                <div className="w-[1px] h-4 bg-white/20" />
+                <button
+                  type="button"
+                  aria-label="მონიშვნის გაუქმება"
+                  title="მონიშვნის გაუქმება"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowRangeHandles(false);
+                    setSelectedRange(null);
+                    lastWordTapRef.current = null;
+                    if (typeof document !== 'undefined') delete document.body.dataset.talmudWordSelecting;
+                  }}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg text-stone-300 hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
+                >
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>,
               document.body
