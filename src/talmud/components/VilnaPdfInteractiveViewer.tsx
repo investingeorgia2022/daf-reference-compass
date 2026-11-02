@@ -5318,7 +5318,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     ) {
                       markReadingLineAt(h);
                     }
-                    if (!isNavTap && !selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
+                    if (!isNavTap && !showRangeHandles && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, tapIdx);
                   }}
                   style={{
