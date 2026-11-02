@@ -195,6 +195,11 @@ const EXACT_VILNA_PDF_MAP: Record<string, string> = {
   'Niddah:2a': '/vilna-pdf/Niddah-2a.pdf',
 };
 
+/** True only when the real printed scan of this exact daf ships with the app. */
+export function hasAuthenticVilnaScan(tractateId: string, dafId: string): boolean {
+  return Boolean(EXACT_VILNA_PDF_MAP[`${tractateId}:${(dafId || '').toLowerCase()}`]);
+}
+
 const TRACTATE_DEFAULT_2A_PDF_MAP: Record<string, string> = {
   Berakhot: '/vilna-pdf/Berakhot-2a.pdf',
   Shabbat: '/vilna-pdf/Shabbat-2a.pdf',
