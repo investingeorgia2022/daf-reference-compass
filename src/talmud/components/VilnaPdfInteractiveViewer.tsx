@@ -1964,6 +1964,13 @@ function extractHotspotsFromTextContent(
         h.sentence = m.sentence;
         h.textSource = 'sefaria';
       }
+      if (typeof window !== 'undefined') {
+        (window as any).__sefariaOverlayStats = {
+          daf: dafData.dafId,
+          aligned: matches.length,
+          words: hotspots.filter((h) => !h.isSmallMarker && h.section !== 'margin' && h.section !== 'header').length,
+        };
+      }
     } catch (e) {
       console.warn('Sefaria text overlay failed; keeping scan text', e);
     }
