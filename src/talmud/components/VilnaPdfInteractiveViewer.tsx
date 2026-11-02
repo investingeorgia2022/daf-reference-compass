@@ -5146,15 +5146,20 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     e.stopPropagation();
                     e.preventDefault();
                     if (h.isSmallMarker && Date.now() - lastMarkerTouchRef.current < 700) return;
+                    // Printed daf references are tiny; a finger landing just beside one still opens it.
+                    const tapIdx = showRangeHandles ? idx : resolveCitationTapIndex(idx, e.clientX, e.clientY);
+                    const tapSpot = hotspots[tapIdx] || h;
+                    const isNavTap = citationHotspotIdsSet.has(tapSpot.id) || tapSpot.isSmallMarker;
                     if (
-                      !h.isSmallMarker &&
+                      !isNavTap &&
+                      !showRangeHandles &&
                       !suppressNextClickRef.current &&
                       document.body.dataset.talmudPanning !== 'true'
                     ) {
                       markReadingLineAt(h);
                     }
-                    if (!selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
-                    handleWordClick(e, idx);
+                    if (!isNavTap && !selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
+                    handleWordClick(e, tapIdx);
                   }}
                   style={{
                     left: `${h.leftPct}%`,
