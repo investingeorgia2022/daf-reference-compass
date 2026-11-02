@@ -11,6 +11,7 @@ import {
   SelectedDafTarget,
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
+import { alignPageWithSefaria } from '../utils/sefariaTextOverlay';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
@@ -78,6 +79,8 @@ export interface VilnaPdfHotspot {
   inkHeightPct?: number;
   /** Printed glyph height of the PDF run (pt); separates bold dibbur-hamatchil type from body text. */
   glyphH?: number;
+  /** 'sefaria' when the letters were replaced by the aligned Sefaria Unicode word. */
+  textSource?: 'pdf' | 'sefaria';
   /** A "." or ":" is printed right after this word. */
   stopAfter?: '.' | ':';
 }
@@ -1944,6 +1947,26 @@ function extractHotspotsFromTextContent(
         m.baselinePct >= h.topPct + h.heightPct * 0.3
     );
     if (mark) h.stopAfter = mark.mark;
+  }
+
+  // Invisible exact-text layer: keep scan positions, take letters and sentences from Sefaria.
+  if (!isSiddurPdf) {
+    try {
+      const matches = alignPageWithSefaria(hotspots, {
+        mainText: [...effectiveMishnah, ...effectiveGemara],
+        rashi: effectiveRashi,
+        tosafot: effectiveTosafot,
+      });
+      for (const m of matches) {
+        const h = hotspots[m.hotspotIndex];
+        h.cleanWord = m.cleanWord;
+        if (!/[.:]["'״׳]?$/.test(h.word.trim())) h.word = m.word || h.word;
+        h.sentence = m.sentence;
+        h.textSource = 'sefaria';
+      }
+    } catch (e) {
+      console.warn('Sefaria text overlay failed; keeping scan text', e);
+    }
   }
 
   return getIndependentMarkerBoxes(hotspots);
