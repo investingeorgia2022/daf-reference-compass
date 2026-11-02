@@ -12,6 +12,7 @@ import {
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 import { alignPageWithSefaria } from '../utils/sefariaTextOverlay';
+import { needsOcrTextLayer, recognizeScanWords, ocrWordsToTextItems } from '../utils/scanOcrTextLayer';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
@@ -2006,6 +2007,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
+  const [ocrRunning, setOcrRunning] = useState<boolean>(false);
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
   const [biblicalCitation, setBiblicalCitation] = useState(null);
@@ -3141,8 +3143,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           ctx.restore();
         }
 
-        if (textContent && Array.isArray(textContent.items)) {
-          const rawItems = textContent.items as Array<Record<string, unknown>>;
+        const applyTextItems = (rawItems: Array<Record<string, unknown>>) => {
           lastPdfTextLayerRef.current = {
             dafKey,
             items: rawItems,
@@ -3161,8 +3162,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           );
           setHotspots(parsed);
 
-          // Tint ONLY the dark ink glyph letters of linked citations and small markers on the 2D canvas in Royal Blue (#1D4ED8),
-          // leaving the paper/parchment background 100% untouched so there are NO boxes or background overlays
+          // Tint ONLY the dark ink glyph letters of linked citations and dibbur-hamatchil words.
           try {
             const citSet = computeCitationIdsForHotspots(
               parsed,
@@ -3182,6 +3182,28 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
           } catch {
             // ignore
+          }
+        };
+
+        if (textContent && Array.isArray(textContent.items)) {
+          const rawItems = textContent.items as Array<Record<string, unknown>>;
+          applyTextItems(rawItems);
+
+          // Image-only scans: recognize word boxes on the scan, then rebuild the word layer.
+          if (!isSiddurPdf && !isChumashPdf && needsOcrTextLayer(rawItems)) {
+            setOcrRunning(true);
+            recognizeScanWords(`${dafKey}|${activePdfUrl}`, offscreenCanvas)
+              .then((words) => {
+                if (isCancelled || words.length < 50) return;
+                ctx.drawImage(offscreenCanvas, 0, 0);
+                applyTextItems(ocrWordsToTextItems(words, baseViewport, renderScale));
+              })
+              .catch(() => {
+                // keep the scan readable even if recognition fails
+              })
+              .finally(() => {
+                if (!isCancelled) setOcrRunning(false);
+              });
           }
         }
       } catch (err) {
@@ -3203,6 +3225,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
     return () => {
       isCancelled = true;
+      setOcrRunning(false);
       if (renderTask) {
         try {
           renderTask.cancel();
@@ -4797,6 +4820,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             <div className="absolute inset-x-0 top-6 z-30 flex justify-center">
               <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
                 ამ დაფის სკანი ვერ ჩაიტვირთა — სცადეთ თავიდან
+              </span>
+            </div>
+          )}
+          {!loadingPdf && ocrRunning && (
+            <div className="absolute inset-x-0 top-6 z-30 flex justify-center pointer-events-none">
+              <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
+                დაფის სიტყვები იკითხება...
               </span>
             </div>
           )}
