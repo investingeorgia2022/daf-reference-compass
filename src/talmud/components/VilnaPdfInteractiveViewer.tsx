@@ -2253,9 +2253,18 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return pdfLines.find((l) => l.rowId === stoppedRowId) || pdfLines[0] || null;
   }, [pdfLines, stoppedRowId]);
 
-  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line)
+  // Independent reading lines for Rashi and Tosafot (the Gemara keeps the main stopped line).
+  // A scan row can contain words from several columns, so each line is drawn only over the
+  // column segment of the word that was tapped (its "anchor").
+  type ReadingRows = {
+    rashi?: string;
+    tosafot?: string;
+    rashiAnchor?: string;
+    tosafotAnchor?: string;
+    mainAnchor?: string;
+  };
   const commentaryRowsKey = `talmud_commentary_rows_${dafData.tractateId}_${dafData.dafId}`;
-  const [commentaryRows, setCommentaryRows] = useState<{ rashi?: string; tosafot?: string }>({});
+  const [commentaryRows, setCommentaryRows] = useState<ReadingRows>({});
   useEffect(() => {
     try {
       setCommentaryRows(JSON.parse(localStorage.getItem(commentaryRowsKey) || '{}') || {});
@@ -2263,35 +2272,124 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       setCommentaryRows({});
     }
   }, [commentaryRowsKey]);
+  const saveReadingRows = useCallback(
+    (next: ReadingRows) => {
+      try {
+        localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    },
+    [commentaryRowsKey]
+  );
+
+  type LineBox = { leftPct: number; topPct: number; widthPct: number; heightPct: number };
+  const segmentBox = useCallback(
+    (rowId: string | undefined, anchorId: string | undefined): LineBox | null => {
+      if (!rowId || !anchorId) return null;
+      const row = hotspots
+        .filter((x) => x.rowId === rowId && !x.isSmallMarker)
+        .sort((a, b) => a.leftPct - b.leftPct);
+      if (!row.some((x) => x.id === anchorId)) return null;
+      let seg: VilnaPdfHotspot[] = [];
+      for (const x of row) {
+        const prev = seg[seg.length - 1];
+        if (prev && x.leftPct - (prev.leftPct + prev.widthPct) > 1.3) {
+          if (seg.some((s) => s.id === anchorId)) break;
+          seg = [];
+        }
+        seg.push(x);
+      }
+      if (!seg.some((s) => s.id === anchorId)) return null;
+      const left = Math.min(...seg.map((s) => s.leftPct));
+      const right = Math.max(...seg.map((s) => s.leftPct + s.widthPct));
+      const top = Math.min(...seg.map((s) => s.topPct));
+      const bottom = Math.max(...seg.map((s) => s.topPct + s.heightPct));
+      return {
+        leftPct: Math.max(0.4, left - 0.45),
+        topPct: top,
+        widthPct: Math.min(99.2, right - left + 0.9),
+        heightPct: Math.max(0.95, bottom - top),
+      };
+    },
+    [hotspots]
+  );
+
+  const mainLineBox: LineBox | null = activeStoppedLine
+    ? segmentBox(activeStoppedLine.rowId, commentaryRows.mainAnchor) || activeStoppedLine
+    : null;
+
   const commentaryLines = useMemo(
     () =>
       (['rashi', 'tosafot'] as const)
-        .map((sec) => pdfLines.find((l) => l.rowId === commentaryRows[sec] && l.section === sec))
-        .filter((l): l is PdfDafLine => !!l && l.rowId !== activeStoppedLine?.rowId),
-    [pdfLines, commentaryRows, activeStoppedLine]
+        .map((sec) => {
+          const line = pdfLines.find((l) => l.rowId === commentaryRows[sec]);
+          if (!line) return null;
+          const box = segmentBox(line.rowId, commentaryRows[`${sec}Anchor`]) || line;
+          return { key: sec, ...box };
+        })
+        .filter((l): l is LineBox & { key: 'rashi' | 'tosafot' } => {
+          if (!l || !mainLineBox) return !!l;
+          // Never draw a second band on top of the main line.
+          return Math.abs(l.topPct - mainLineBox.topPct) > 0.3 || Math.abs(l.leftPct - mainLineBox.leftPct) > 0.5;
+        }),
+    [pdfLines, commentaryRows, segmentBox, mainLineBox]
   );
+
   const markReadingLineAt = useCallback(
     (h: VilnaPdfHotspot | undefined) => {
-      if (!h || !h.rowId) return;
-      if (h.section === 'mishnah' || h.section === 'gemara') {
-        updateStoppedRow(h.rowId);
-      } else if (h.section === 'rashi' || h.section === 'tosafot') {
-        const sec = h.section;
-        setCommentaryRows((prev) => {
-          const next = { ...prev, [sec]: h.rowId };
-          try {
-            localStorage.setItem(commentaryRowsKey, JSON.stringify(next));
-          } catch {}
-          return next;
-        });
-        // If the main line was sitting in this commentary, move it back to the Gemara
-        if (activeStoppedLine && activeStoppedLine.section === sec) {
-          const firstMain = pdfLines.find((l) => l.section === 'mishnah' || l.section === 'gemara');
-          if (firstMain) updateStoppedRow(firstMain.rowId);
+      if (!h || !h.rowId || h.section === 'margin' || h.section === 'header') return;
+      const newBox = segmentBox(h.rowId, h.id);
+      type Stream = 'main' | 'rashi' | 'tosafot';
+      let stream: Stream =
+        h.section === 'rashi' ? 'rashi' : h.section === 'tosafot' ? 'tosafot' : 'main';
+
+      // The same printed column continuing (e.g. a narrow commentary column widening below the
+      // Gemara) keeps its own line: the new tap replaces the nearest line just above it whose
+      // column overlaps and whose letters are the same size, instead of adding a second band.
+      if (newBox) {
+        const anchorOf = (s: Stream) =>
+          hotspots.find(
+            (x) => x.id === (s === 'main' ? commentaryRows.mainAnchor : commentaryRows[`${s}Anchor`])
+          );
+        const boxOf = (s: Stream) => {
+          const rowId = s === 'main' ? activeStoppedLine?.rowId : commentaryRows[s];
+          const a = anchorOf(s);
+          return a ? segmentBox(rowId, a.id) : null;
+        };
+        let best: { s: Stream; dist: number } | null = null;
+        for (const s of ['main', 'rashi', 'tosafot'] as Stream[]) {
+          const box = boxOf(s);
+          const a = anchorOf(s);
+          if (!box || !a) continue;
+          const overlap =
+            Math.min(box.leftPct + box.widthPct, newBox.leftPct + newBox.widthPct) -
+            Math.max(box.leftPct, newBox.leftPct);
+          const narrower = Math.min(box.widthPct, newBox.widthPct);
+          const dist = Math.abs(newBox.topPct - box.topPct);
+          const sizeRatio = (h.glyphH || h.heightPct) / Math.max(0.01, a.glyphH || a.heightPct);
+          if (
+            overlap >= narrower * 0.5 &&
+            dist <= newBox.heightPct * 3.2 &&
+            sizeRatio > 0.82 &&
+            sizeRatio < 1.22 &&
+            (!best || dist < best.dist)
+          ) {
+            best = { s, dist };
+          }
         }
+        if (best) stream = best.s;
+      }
+
+      if (stream === 'main') {
+        updateStoppedRow(h.rowId);
+        setCommentaryRows((prev) => saveReadingRows({ ...prev, mainAnchor: h.id }));
+      } else {
+        setCommentaryRows((prev) =>
+          saveReadingRows({ ...prev, [stream]: h.rowId, [`${stream}Anchor`]: h.id })
+        );
       }
     },
-    [updateStoppedRow, commentaryRowsKey, activeStoppedLine, pdfLines]
+    [updateStoppedRow, segmentBox, hotspots, commentaryRows, activeStoppedLine, saveReadingRows]
   );
 
   const stepStoppedLine = useCallback(
