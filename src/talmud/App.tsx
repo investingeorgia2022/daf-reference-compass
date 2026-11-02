@@ -3728,18 +3728,6 @@ export function App() {
             >
               {/* TOP STRETCH HANDLE + SINGLE-LINE DOCK BAR WITH FLAT MODERN BUTTONS */}
               <div className="px-2.5 sm:px-3.5 pt-1.5 pb-2 flex flex-col gap-1">
-                {/* Drag / Stretch Pill */}
-                <div
-                  onClick={() => setIsGlobalBottomSheetOpen((v) => !v)}
-                  className="w-full flex justify-center py-0.5 cursor-pointer group"
-                  title={
-                    isGlobalBottomSheetOpen
-                      ? 'პანელის ჩაკეცვა'
-                      : 'პანელის ზემოთ გაწელვა / ამოწევა'
-                  }
-                >
-                  <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600 group-hover:bg-amber-500 transition-colors" />
-                </div>
 
                 {/* SINGLE HORIZONTAL ROW: STATIC LEFT/RIGHT PAGE-TURN BUTTONS + SLIDING ICON-ONLY TRACK IN CENTER */}
                 <div data-crystal-bar="true" className="flex items-center justify-between gap-2">
