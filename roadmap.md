@@ -36,3 +36,9 @@ The audit covered the main architecture and selected live flows, not every exter
 - [x] Keep the zoomed daf centred sideways and vertically on the target after jumps.
 - [x] Gilyon HaShas jump falls back to its notes when no section heading matches.
 - [x] Match ים/ין plural endings in Rashi/Tosafot openings.
+- [x] Daf references open on tap even when the finger lands just beside the tiny printed reference.
+- [x] Long-press selection: small translucent drop handles below the line, and a cancel (✕) button.
+- [x] Reading lines stay one per column when a column widens (no double band).
+- [x] Double-tap explanation no longer also shows the copy/explain menu.
+- [x] Source window shows the cited daf's own text when its printed scan isn't bundled (no Berakhot substitute).
+- [x] Greeting and spoken voice: ordinary natural male voice, not overly deep.

@@ -5331,7 +5331,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               <div
                 style={{
                   position: 'fixed',
-                  left: `${Math.max(12, Math.min(window.innerWidth - 220, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 110))}px`,
+                  left: `${Math.max(12, Math.min(window.innerWidth - 272, selectedUnionScreenRect.left + selectedUnionScreenRect.width / 2 - 130))}px`,
                   top: `${selectedUnionScreenRect.bottom + 84 < window.innerHeight ? selectedUnionScreenRect.bottom + 40 : Math.max(8, selectedUnionScreenRect.top - 46)}px`,
                   zIndex: 9999,
                 }}
