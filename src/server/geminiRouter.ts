@@ -40,13 +40,19 @@ export function modelChain(user: Pick<UserGemini, 'mode' | 'fixedModel' | 'compl
       : tier === 'complex' && user.complexModel
         ? user.complexModel
         : TIER_MODEL[tier];
-  return Array.from(new Set([first, FALLBACK_MODEL]));
+  return Array.from(new Set([first, FALLBACK_MODEL, 'gemini-flash-lite-latest']));
 }
 
 export class GeminiKeyError extends Error {}
+/** Every model was rate-limited or overloaded (Gemini 429/503). */
+export class GeminiBusyError extends Error {
+  constructor(public status: 429 | 503) { super(`gemini_busy_${status}`); }
+}
 
-export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system: string, prompt: string): Promise<string> {
+export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system: string, prompt: string, alreadyRetried = false): Promise<string> {
   let lastErr: unknown = null;
+  let retried503 = alreadyRetried;
+  let busy: 429 | 503 | null = null;
   for (const model of modelChain(user, tier)) {
     try {
       const res = await fetch(
@@ -67,7 +73,16 @@ export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system:
         lastErr = new Error(`gemini ${res.status}`);
         continue;
       }
+      if (res.status === 503 && !retried503) {
+        // Overloaded: wait briefly and retry this model once.
+        retried503 = true;
+        await new Promise((r) => setTimeout(r, 1200));
+        const again = await geminiGenerateJson(user, tier, system, prompt, true).catch((e) => e);
+        if (typeof again === 'string') return again;
+        throw again;
+      }
       if (!res.ok) {
+        if (res.status === 429 || res.status === 503) busy = res.status;
         lastErr = new Error(`gemini ${res.status}`);
         continue;
       }
@@ -76,10 +91,11 @@ export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system:
       if (text) return text;
       lastErr = new Error('empty');
     } catch (e) {
-      if (e instanceof GeminiKeyError) throw e;
+      if (e instanceof GeminiKeyError || e instanceof GeminiBusyError) throw e;
       lastErr = e;
     }
   }
+  if (busy) throw new GeminiBusyError(busy);
   throw lastErr ?? new Error('gemini_failed');
 }
 
