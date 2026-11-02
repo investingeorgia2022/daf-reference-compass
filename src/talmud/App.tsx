@@ -101,6 +101,7 @@ import { VoiceAndAiNavModal } from './components/VoiceAndAiNavModal';
 import { SettingsModal, LANGUAGE_OPTIONS } from './components/SettingsModal';
 import { ExportProjectModal } from './components/ExportProjectModal';
 import { CascadingTalmudMishnahSelectorModal } from './components/CascadingTalmudMishnahSelectorModal';
+import { MishnahMapModal, MishnahGuideModal, useMishnahChapter } from './components/MishnahGuide';
 import { OfflineLibraryPanel } from './components/OfflineLibraryPanel';
 import { SACRED_REALMS, SacredRealmId } from './data/tanakhAndHalakhaData';
 import { ClassicSacredDafView } from './components/ClassicSacredDafView';
@@ -2751,6 +2752,7 @@ export function App() {
     >
       {/* FIXED DYNAMIC TOP HEADER — DAY (SOFT SKY BLUE / LIGHT WOOD) & NIGHT (CELESTIAL NAVY) */}
       <header
+        data-crystal-bar="true"
         className={`fixed top-0 left-0 right-0 z-[95] w-full max-w-[100vw] box-border px-2 sm:px-4 lg:px-6 ${
           isScrolledCompact ? 'py-1 sm:py-1.5' : 'py-1.5 sm:py-2'
         } ${
@@ -2781,7 +2783,7 @@ export function App() {
         </div>
 
         {/* Center-Right Workspace Tab Concept Switcher + Quick Controls (Smooth scroll, never overlaps brand) */}
-        <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-nowrap whitespace-nowrap scroll-smooth px-1 py-0.5">
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-nowrap whitespace-nowrap scroll-smooth crystal-pocket py-1">
           {/* Tab Concept Switcher with Light Wood styling */}
           <div
             className={`inline-flex items-center p-0.5 rounded-xl border shrink-0 shadow-xs ${
@@ -3156,6 +3158,19 @@ export function App() {
             </AnimatedGlobeIconWrapper>
           </button>
         </div>
+
+        {/* Fixed day/night switch — always pinned to the top-right corner */}
+        <button
+          type="button"
+          onClick={cycleNextTheme}
+          className="w-9 h-9 flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
+          title={isDark ? 'დღის რეჟიმი' : 'ღამის რეჟიმი'}
+          aria-label={isDark ? 'დღის რეჟიმზე გადასვლა' : 'ღამის რეჟიმზე გადასვლა'}
+        >
+          <AnimatedGlobeIconWrapper duration={6}>
+            {isDark ? <Sun className="w-4 h-4 stroke-[2.25]" /> : <Moon className="w-4 h-4 stroke-[2.25]" />}
+          </AnimatedGlobeIconWrapper>
+        </button>
       </header>
 
       {/* VIEWPORT-CLAMPED RECENTLY VIEWED DAFIM DROPDOWN (SOFT SLOW FADE-IN / FADE-OUT) */}
