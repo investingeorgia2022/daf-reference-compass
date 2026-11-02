@@ -1982,6 +1982,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const multiWordAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
+  const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
   const [biblicalCitation, setBiblicalCitation] = useState(null);
@@ -2960,23 +2961,35 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         let arrayBuffer: ArrayBuffer;
         let isUsingFallbackClone = false;
+        const isTalmudApiScan = activePdfUrl.startsWith('/api/talmud/vilna-pdf');
         try {
           arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
-        } catch {
-          isUsingFallbackClone = true;
-          const fallbackCloneUrl = isChumashPdf
-            ? resolveFallbackBundledChumashPdfUrl(dafData.tractateId, dafData.dafId)
-            : isSiddurPdf
-              ? resolveFallbackBundledSiddurPdfUrl(dafData.tractateId, dafData.dafId)
-              : dafData.dafId.toLowerCase().endsWith('b')
-                ? '/vilna-pdf/Berakhot-2b.pdf'
-                : '/vilna-pdf/Berakhot-3a.pdf';
-          try {
-            arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
-          } catch {
-            arrayBuffer = await fetchValidPdfBuffer('/vilna-pdf/Berakhot-2a.pdf');
+        } catch (firstErr) {
+          if (isTalmudApiScan) {
+            // Never show another daf's scan: its layout would not match this daf's text.
+            try {
+              arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
+            } catch {
+              if (!isCancelled) setPdfLoadFailed(true);
+              throw firstErr;
+            }
+          } else {
+            isUsingFallbackClone = true;
+            const fallbackCloneUrl = isChumashPdf
+              ? resolveFallbackBundledChumashPdfUrl(dafData.tractateId, dafData.dafId)
+              : isSiddurPdf
+                ? resolveFallbackBundledSiddurPdfUrl(dafData.tractateId, dafData.dafId)
+                : dafData.dafId.toLowerCase().endsWith('b')
+                  ? '/vilna-pdf/Berakhot-2b.pdf'
+                  : '/vilna-pdf/Berakhot-3a.pdf';
+            try {
+              arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
+            } catch {
+              arrayBuffer = await fetchValidPdfBuffer('/vilna-pdf/Berakhot-2a.pdf');
+            }
           }
         }
+        if (!isCancelled) setPdfLoadFailed(false);
         if (isCancelled) return;
 
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -4757,6 +4770,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               </span>
             </div>
           )}
+          {!loadingPdf && pdfLoadFailed && (
+            <div className="absolute inset-x-0 top-6 z-30 flex justify-center">
+              <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
+                ამ დაფის სკანი ვერ ჩაიტვირთა — სცადეთ თავიდან
+              </span>
+            </div>
+          )}
 
           {/* High-Resolution Original Vilna PDF Typography Canvas */}
           <canvas
@@ -5298,7 +5318,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     ) {
                       markReadingLineAt(h);
                     }
-                    if (!isNavTap && !selectedRange && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
+                    if (!isNavTap && !showRangeHandles && jumpToDibbur(h, e.clientX, (e.currentTarget as HTMLElement).getBoundingClientRect())) return;
                     handleWordClick(e, tapIdx);
                   }}
                   style={{
