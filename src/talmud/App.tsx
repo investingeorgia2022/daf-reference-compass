@@ -6,6 +6,7 @@ import {
   BookOpen,
   Sun,
   Moon,
+  ScrollText,
   Sparkles,
   Compass,
   Calendar,
@@ -101,6 +102,7 @@ import { VoiceAndAiNavModal } from './components/VoiceAndAiNavModal';
 import { SettingsModal, LANGUAGE_OPTIONS } from './components/SettingsModal';
 import { ExportProjectModal } from './components/ExportProjectModal';
 import { CascadingTalmudMishnahSelectorModal } from './components/CascadingTalmudMishnahSelectorModal';
+import { MishnahMapModal, MishnahGuideModal, useMishnahChapter } from './components/MishnahGuide';
 import { OfflineLibraryPanel } from './components/OfflineLibraryPanel';
 import { SACRED_REALMS, SacredRealmId } from './data/tanakhAndHalakhaData';
 import { ClassicSacredDafView } from './components/ClassicSacredDafView';
@@ -1381,6 +1383,24 @@ export function App() {
     () => TRACTATES.find((tr) => tr.id === selectedTractateId) || TRACTATES[0],
     [selectedTractateId]
   );
+
+  const [isMishnahMapOpen, setIsMishnahMapOpen] = useState(false);
+  const [isMishnahGuideOpen, setIsMishnahGuideOpen] = useState(false);
+  const dafMishnahHe = useMemo(
+    () => (dafData.mishnah || []).map((m) => m.hebrew || m.hebrewText || '').filter(Boolean),
+    [dafData.mishnah]
+  );
+  const mishnahChapter = useMishnahChapter(
+    currentTractate.id,
+    selectedDafId,
+    dafMishnahHe,
+    isMishnahMapOpen || isMishnahGuideOpen
+  );
+  const mishnahPct = useMemo(() => {
+    const len = (arr) => (arr || []).reduce((n, x) => n + (x.hebrew || x.hebrewText || '').length, 0);
+    const m = len(dafData.mishnah), g = len(dafData.gemara);
+    return m + g > 0 ? Math.round((m / (m + g)) * 100) : 0;
+  }, [dafData.mishnah, dafData.gemara]);
 
   // Sync selectedSederId to the active Daf's Seder so filter windows always display the active Daf by default
   useEffect(() => {
@@ -2751,6 +2771,7 @@ export function App() {
     >
       {/* FIXED DYNAMIC TOP HEADER — DAY (SOFT SKY BLUE / LIGHT WOOD) & NIGHT (CELESTIAL NAVY) */}
       <header
+        data-crystal-bar="true"
         className={`fixed top-0 left-0 right-0 z-[95] w-full max-w-[100vw] box-border px-2 sm:px-4 lg:px-6 ${
           isScrolledCompact ? 'py-1 sm:py-1.5' : 'py-1.5 sm:py-2'
         } ${
@@ -2781,7 +2802,7 @@ export function App() {
         </div>
 
         {/* Center-Right Workspace Tab Concept Switcher + Quick Controls (Smooth scroll, never overlaps brand) */}
-        <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-nowrap whitespace-nowrap scroll-smooth px-1 py-0.5">
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-nowrap whitespace-nowrap scroll-smooth crystal-pocket py-1">
           {/* Tab Concept Switcher with Light Wood styling */}
           <div
             className={`inline-flex items-center p-0.5 rounded-xl border shrink-0 shadow-xs ${
@@ -3156,6 +3177,19 @@ export function App() {
             </AnimatedGlobeIconWrapper>
           </button>
         </div>
+
+        {/* Fixed day/night switch — always pinned to the top-right corner */}
+        <button
+          type="button"
+          onClick={cycleNextTheme}
+          className="w-9 h-9 flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
+          title={isDark ? 'დღის რეჟიმი' : 'ღამის რეჟიმი'}
+          aria-label={isDark ? 'დღის რეჟიმზე გადასვლა' : 'ღამის რეჟიმზე გადასვლა'}
+        >
+          <AnimatedGlobeIconWrapper duration={6}>
+            {isDark ? <Sun className="w-4 h-4 stroke-[2.25]" /> : <Moon className="w-4 h-4 stroke-[2.25]" />}
+          </AnimatedGlobeIconWrapper>
+        </button>
       </header>
 
       {/* VIEWPORT-CLAMPED RECENTLY VIEWED DAFIM DROPDOWN (SOFT SLOW FADE-IN / FADE-OUT) */}
@@ -3708,7 +3742,7 @@ export function App() {
                 </div>
 
                 {/* SINGLE HORIZONTAL ROW: STATIC LEFT/RIGHT PAGE-TURN BUTTONS + SLIDING ICON-ONLY TRACK IN CENTER */}
-                <div className="flex items-center justify-between gap-2">
+                <div data-crystal-bar="true" className="flex items-center justify-between gap-2">
                   {/* LEFT STATIC PAGE-TURNING BUTTON (წინა დაფი — მხოლოდ აიკონი, სტატიკური) */}
                   <button
                     type="button"
@@ -3743,79 +3777,20 @@ export function App() {
                         e.currentTarget.scrollLeft += e.deltaY;
                       }
                     }}
-                    className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1.5 px-1 py-0.5 touch-pan-x scroll-smooth"
+                    className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1.5 crystal-pocket py-1 touch-pan-x scroll-smooth"
                   >
-                    {/* Return to Top Button (თავში დაბრუნება) */}
                     <button
                       type="button"
                       data-raw-btn="true"
-                      data-flat-btn="true"
-                      onClick={() => {
-                        handleRevealBothBars();
-                        window.dispatchEvent(new CustomEvent('talmud-reset-zoom'));
-                        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                        document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                        document.documentElement.scrollTop = 0;
-                        document.body.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                        document.body.scrollTop = 0;
-                        if (document.scrollingElement) {
-                          document.scrollingElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                          document.scrollingElement.scrollTop = 0;
-                        }
-                        const dafFolio = document.getElementById('talmud-daf-folio-anchor');
-                        if (dafFolio) {
-                          dafFolio.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                          dafFolio.scrollTop = 0;
-                        }
-                        document
-                          .querySelectorAll('[data-daf-scroll-pane="true"], .overflow-y-auto')
-                          .forEach((el) => {
-                            try {
-                              (el as HTMLElement).scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                              (el as HTMLElement).scrollTop = 0;
-                            } catch {
-                              // ignore
-                            }
-                          });
-                        window.dispatchEvent(new CustomEvent('torah-reveal-top-panel'));
-                        window.dispatchEvent(new CustomEvent('torah-scroll-to-top'));
-                      }}
-                      className="w-9 h-9 rounded-xl bg-white/90 dark:bg-stone-800/85 hover:bg-sky-500/15 text-stone-800 dark:text-stone-200 border border-stone-300/70 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all shrink-0 shadow-xs active:scale-95"
-                      title="თავში დაბრუნება (Return to Top)"
-                      aria-label="თავში დაბრუნება"
+                      onClick={() => setIsMishnahMapOpen(true)}
+                      className="mishnah-pill"
+                      title="მიმდინარე ტრაქტატის მიშნები"
+                      aria-label="მიშნა"
                     >
-                      <AnimatedGlobeIconWrapper duration={5}>
-                        <ArrowUp className="w-4 h-4 stroke-[2.25] text-sky-700 dark:text-sky-400 shrink-0" />
-                      </AnimatedGlobeIconWrapper>
+                      <ScrollText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <span>მიშნა</span>
+                      <span className="he" dir="rtl">משנה</span>
                     </button>
-
-                    {/* 1. Stretch / Expand Panel Upward Button (Golden Drawer Trigger) */}
-                    <button
-                      type="button"
-                      data-raw-btn="true"
-                      data-flat-btn="true"
-                      onClick={() => setIsGlobalBottomSheetOpen((v) => !v)}
-                      className={`w-9 h-9 rounded-xl border flex items-center justify-center cursor-pointer transition-all shrink-0 active:scale-95 ${
-                        isGlobalBottomSheetOpen
-                          ? 'bg-amber-500 text-stone-950 border-amber-400 font-bold shadow-sm'
-                          : 'bg-white/90 dark:bg-stone-800/85 hover:bg-amber-500/15 text-stone-800 dark:text-stone-200 border-stone-300/70 dark:border-white/10'
-                      }`}
-                      title={
-                        isGlobalBottomSheetOpen
-                          ? 'პანელის ჩაკეცვა'
-                          : 'პანელის ზემოთ ამოწევა / სარჩევის გახსნა'
-                      }
-                      aria-label="პანელის გაშლა"
-                    >
-                      <AnimatedGlobeIconWrapper duration={5}>
-                        <ChevronUp
-                          className={`w-4 h-4 stroke-[2.5] transition-transform duration-300 ${
-                            isGlobalBottomSheetOpen ? 'rotate-180' : 'rotate-0'
-                          }`}
-                        />
-                      </AnimatedGlobeIconWrapper>
-                    </button>
-
                     {/* 2. Current Tractate & Daf Indicator Pill (Quick Selector Opener) */}
                     <button
                       type="button"
@@ -4759,6 +4734,24 @@ export function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <MishnahMapModal
+        open={isMishnahMapOpen}
+        onClose={() => setIsMishnahMapOpen(false)}
+        onOpenGuide={() => { setIsMishnahMapOpen(false); setIsMishnahGuideOpen(true); }}
+        data={mishnahChapter}
+        tractateNameKa={currentTractate.nameKa}
+        dafId={selectedDafId}
+        mishnahPct={mishnahPct}
+      />
+      <MishnahGuideModal
+        open={isMishnahGuideOpen}
+        onClose={() => setIsMishnahGuideOpen(false)}
+        data={mishnahChapter}
+        tractateNameKa={currentTractate.nameKa}
+        tractateNameHe={currentTractate.nameHe}
+        dafId={selectedDafId}
+      />
 
       {/* 4-COLUMN CASCADING MISHNAH & TALMUD SELECTOR MODAL (EXACT SPEC MATCH) */}
       <CascadingTalmudMishnahSelectorModal
