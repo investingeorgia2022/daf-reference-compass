@@ -3225,6 +3225,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
     return () => {
       isCancelled = true;
+      setOcrRunning(false);
       if (renderTask) {
         try {
           renderTask.cancel();
