@@ -3707,8 +3707,31 @@ export function App() {
                 }
               }
             }}
-            className="fixed bottom-0 left-0 right-0 z-[290] pointer-events-none flex justify-center px-0 w-full transition-opacity"
+            className="fixed bottom-0 left-0 right-0 z-[290] pointer-events-none flex flex-col items-center px-0 w-full transition-opacity"
           >
+            {/* Curtain pull tab — rises above the panel edge */}
+            <button
+              type="button"
+              data-raw-btn="true"
+              data-flat-btn="true"
+              onClick={() => setIsGlobalBottomSheetOpen((v) => !v)}
+              aria-label={isGlobalBottomSheetOpen ? 'პანელის ჩაკეცვა' : 'პანელის ამოწევა'}
+              title={isGlobalBottomSheetOpen ? 'პანელის ჩაკეცვა' : 'პანელის ამოწევა'}
+              style={{ pointerEvents: 'auto', marginBottom: -1 }}
+              className={`curtain-tab group relative z-10 w-24 h-5 rounded-t-[16px] border border-b-0 flex items-center justify-center cursor-pointer transition-colors ${
+                theme === 'celestial-slate'
+                  ? 'bg-[#E2EDF8] border-[#94B8DC]'
+                  : isDark
+                    ? 'bg-[#1C130D] border-[#4A3322]'
+                    : 'bg-[#F9F4EB] border-[#D8C7B0]'
+              }`}
+            >
+              <span className="flex items-center gap-[3px]">
+                <span className="w-1 h-1 rounded-full bg-amber-600/70 dark:bg-amber-400/80" />
+                <span className="w-6 h-[3px] rounded-full bg-amber-600/70 dark:bg-amber-400/80 group-hover:w-8 transition-all" />
+                <span className="w-1 h-1 rounded-full bg-amber-600/70 dark:bg-amber-400/80" />
+              </span>
+            </button>
             {/* SINGLE UNIFIED PANEL THAT STRETCHES ACROSS THE FULL SCREEN WIDTH */}
             <motion.div
               layout
@@ -3728,18 +3751,6 @@ export function App() {
             >
               {/* TOP STRETCH HANDLE + SINGLE-LINE DOCK BAR WITH FLAT MODERN BUTTONS */}
               <div className="px-2.5 sm:px-3.5 pt-1.5 pb-2 flex flex-col gap-1">
-                {/* Drag / Stretch Pill */}
-                <div
-                  onClick={() => setIsGlobalBottomSheetOpen((v) => !v)}
-                  className="w-full flex justify-center py-0.5 cursor-pointer group"
-                  title={
-                    isGlobalBottomSheetOpen
-                      ? 'პანელის ჩაკეცვა'
-                      : 'პანელის ზემოთ გაწელვა / ამოწევა'
-                  }
-                >
-                  <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600 group-hover:bg-amber-500 transition-colors" />
-                </div>
 
                 {/* SINGLE HORIZONTAL ROW: STATIC LEFT/RIGHT PAGE-TURN BUTTONS + SLIDING ICON-ONLY TRACK IN CENTER */}
                 <div data-crystal-bar="true" className="flex items-center justify-between gap-2">

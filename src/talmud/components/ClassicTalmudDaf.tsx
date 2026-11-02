@@ -3494,12 +3494,10 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
         }}
         className={
           isDafFullViewport
-            ? `fixed inset-0 z-[280] w-screen h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col items-center justify-start p-0 m-0 pb-24 sm:pb-28 ${
+            ? `fixed inset-0 z-[280] w-screen h-[100dvh] overflow-y-auto overflow-x-hidden flex flex-col items-center justify-start p-0 m-0 ${
                 theme === 'celestial-slate'
                   ? 'bg-[#EEF5FC] text-[#1E293B]'
-                  : isDark
-                    ? 'bg-[#160F0A] text-[#FAF5EB]'
-                    : 'bg-[#FAF4E4] text-[#2C1A10]'
+                  : 'bg-[#FBF8F1] text-[#2C1A10]'
               }`
             : 'w-full max-w-full flex flex-col items-center justify-center mx-auto'
         }
@@ -3511,40 +3509,6 @@ export const ClassicTalmudDaf: React.FC<ClassicTalmudDafProps> = React.memo(({
               : 'relative w-full max-w-5xl mx-auto flex flex-col items-center justify-center transition-all'
           }
         >
-          {/* Gentle, Beautiful Square Close Button ('✕') in Top-Right Corner Flush to Borders */}
-          {isDafFullViewport && (
-            <button
-              type="button"
-              data-raw-btn="true"
-              data-flat-btn="true"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDafFullViewport(false);
-              }}
-              style={{
-                background:
-                  theme === 'celestial-slate'
-                    ? 'rgba(238, 245, 252, 0.96)'
-                    : isDark
-                      ? 'rgba(28, 19, 13, 0.94)'
-                      : 'rgba(255, 255, 255, 0.96)',
-                boxShadow: isDark
-                  ? '0 2px 8px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.15)'
-                  : '0 2px 8px rgba(30,58,95,0.15), inset 0 1px 1px rgba(255,255,255,0.95)',
-              }}
-              className={`fixed top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-[300] w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-md flex items-center justify-center cursor-pointer transition-all duration-150 backdrop-blur-md border active:scale-95 ${
-                theme === 'celestial-slate'
-                  ? 'border-sky-300 text-sky-900 hover:text-sky-950 hover:border-sky-400 hover:bg-sky-50'
-                  : isDark
-                    ? 'border-amber-500/40 text-amber-200 hover:text-white hover:border-amber-300 hover:bg-stone-900/95'
-                    : 'border-amber-700/35 text-[#4A2E1B] hover:text-amber-950 hover:border-amber-800 hover:bg-amber-50/95'
-              }`}
-              title="სრული ეკრანის ჩაკეცვა"
-              aria-label="სრული ეკრანის ჩაკეცვა"
-            >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.4]" />
-            </button>
-          )}
           <Talmud3DViewer
             pageKey={`${dafData.tractateId}-${dafData.dafId}`}
           direction={pageTurnDirection}

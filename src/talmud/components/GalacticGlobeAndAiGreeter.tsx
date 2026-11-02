@@ -3242,7 +3242,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
             style={{
               pointerEvents: 'none',
             }}
-            className={`fixed bottom-[70px] sm:bottom-[74px] left-3 right-3 sm:left-5 sm:right-5 z-[250] flex flex-col items-start gap-2 ${
+            className={`fixed bottom-[104px] sm:bottom-[110px] left-3 right-3 sm:left-5 sm:right-5 z-[295] flex flex-col items-start gap-2 ${
               isAnyBottomSheetExpanded ? 'invisible pointer-events-none' : ''
             }`}
           >
