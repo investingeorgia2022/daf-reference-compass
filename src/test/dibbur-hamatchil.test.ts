@@ -91,3 +91,15 @@ describe('plural endings', () => {
   it('matches Rashi טובלים with Gemara טובלין', () => { expect(wm('טובלים', 'טובלין')).toBe(true); });
   it('does not merge unrelated words', () => { expect(wm('טובלים', 'טובלת')).toBe(false); });
 });
+
+describe('repeated identical quotations', () => {
+  it('two identical Rashi openings bind to the first and second occurrences in order', () => {
+    const g1 = gem(['אמר', 'מר', 'קורין'], 10);
+    const g2 = gem(['אמר', 'מר', 'בערבין'], 20);
+    const r1 = row('rashi', [['אמר', RASHI_BOLD], ['מר', RASHI_BOLD, '.'], body('פירוש')], 40);
+    const r2 = row('rashi', [['אמר', RASHI_BOLD], ['מר', RASHI_BOLD, '.'], body('היינו')], 60);
+    const { roles } = buildDibburHamatchilLinks([...prose(), ...g1, ...g2, ...r1, ...r2]);
+    expect(roles.get(g1[0].id)).toEqual({ rashi: 'rashi:0' });
+    expect(roles.get(g2[0].id)).toEqual({ rashi: 'rashi:1' });
+  });
+});
