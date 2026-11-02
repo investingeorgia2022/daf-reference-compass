@@ -4760,6 +4760,24 @@ export function App() {
         )}
       </AnimatePresence>
 
+      <MishnahMapModal
+        open={isMishnahMapOpen}
+        onClose={() => setIsMishnahMapOpen(false)}
+        onOpenGuide={() => { setIsMishnahMapOpen(false); setIsMishnahGuideOpen(true); }}
+        data={mishnahChapter}
+        tractateNameKa={currentTractate.nameKa}
+        dafId={selectedDafId}
+        mishnahPct={mishnahPct}
+      />
+      <MishnahGuideModal
+        open={isMishnahGuideOpen}
+        onClose={() => setIsMishnahGuideOpen(false)}
+        data={mishnahChapter}
+        tractateNameKa={currentTractate.nameKa}
+        tractateNameHe={currentTractate.nameHe}
+        dafId={selectedDafId}
+      />
+
       {/* 4-COLUMN CASCADING MISHNAH & TALMUD SELECTOR MODAL (EXACT SPEC MATCH) */}
       <CascadingTalmudMishnahSelectorModal
         isOpen={isCascadingSelectorOpen}
