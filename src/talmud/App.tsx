@@ -6,6 +6,7 @@ import {
   BookOpen,
   Sun,
   Moon,
+  ScrollText,
   Sparkles,
   Compass,
   Calendar,
@@ -1382,6 +1383,24 @@ export function App() {
     () => TRACTATES.find((tr) => tr.id === selectedTractateId) || TRACTATES[0],
     [selectedTractateId]
   );
+
+  const [isMishnahMapOpen, setIsMishnahMapOpen] = useState(false);
+  const [isMishnahGuideOpen, setIsMishnahGuideOpen] = useState(false);
+  const dafMishnahHe = useMemo(
+    () => (dafData.mishnah || []).map((m) => m.hebrew || m.hebrewText || '').filter(Boolean),
+    [dafData.mishnah]
+  );
+  const mishnahChapter = useMishnahChapter(
+    currentTractate.id,
+    selectedDafId,
+    dafMishnahHe,
+    isMishnahMapOpen || isMishnahGuideOpen
+  );
+  const mishnahPct = useMemo(() => {
+    const len = (arr) => (arr || []).reduce((n, x) => n + (x.hebrew || x.hebrewText || '').length, 0);
+    const m = len(dafData.mishnah), g = len(dafData.gemara);
+    return m + g > 0 ? Math.round((m / (m + g)) * 100) : 0;
+  }, [dafData.mishnah, dafData.gemara]);
 
   // Sync selectedSederId to the active Daf's Seder so filter windows always display the active Daf by default
   useEffect(() => {
