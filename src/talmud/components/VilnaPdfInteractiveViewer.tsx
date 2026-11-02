@@ -5118,6 +5118,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                   data-daf-word="true"
                   data-reference-highlight={isBlinkingWord ? 'true' : undefined}
                   data-small-marker={h.isSmallMarker ? 'true' : undefined}
+                  data-section={h.section}
+                  data-row-id={h.rowId}
                   data-marker-type={h.markerTargetType}
                   data-marker-key={h.markerKey}
                   aria-label={h.word}
