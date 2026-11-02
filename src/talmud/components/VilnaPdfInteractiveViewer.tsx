@@ -11,8 +11,6 @@ import {
   SelectedDafTarget,
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
-import { alignPageWithSefaria } from '../utils/sefariaTextOverlay';
-import { needsOcrTextLayer, recognizeScanWords, ocrWordsToTextItems } from '../utils/scanOcrTextLayer';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
@@ -1950,26 +1948,6 @@ function extractHotspotsFromTextContent(
     if (mark) h.stopAfter = mark.mark;
   }
 
-  // Invisible exact-text layer: keep scan positions, take letters and sentences from Sefaria.
-  if (!isSiddurPdf) {
-    try {
-      const matches = alignPageWithSefaria(hotspots, {
-        mainText: [...effectiveMishnah, ...effectiveGemara],
-        rashi: effectiveRashi,
-        tosafot: effectiveTosafot,
-      });
-      for (const m of matches) {
-        const h = hotspots[m.hotspotIndex];
-        h.cleanWord = m.cleanWord;
-        if (!/[.:]["'״׳]?$/.test(h.word.trim())) h.word = m.word || h.word;
-        h.sentence = m.sentence;
-        h.textSource = 'sefaria';
-      }
-    } catch (e) {
-      console.warn('Sefaria text overlay failed; keeping scan text', e);
-    }
-  }
-
   return getIndependentMarkerBoxes(hotspots);
 }
 
@@ -2007,7 +1985,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
-  const [ocrRunning, setOcrRunning] = useState<boolean>(false);
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
   const [biblicalCitation, setBiblicalCitation] = useState(null);
@@ -3189,22 +3166,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           const rawItems = textContent.items as Array<Record<string, unknown>>;
           applyTextItems(rawItems);
 
-          // Image-only scans: recognize word boxes on the scan, then rebuild the word layer.
-          if (!isSiddurPdf && !isChumashPdf && needsOcrTextLayer(rawItems)) {
-            setOcrRunning(true);
-            recognizeScanWords(`${dafKey}|${activePdfUrl}`, offscreenCanvas)
-              .then((words) => {
-                if (isCancelled || words.length < 50) return;
-                ctx.drawImage(offscreenCanvas, 0, 0);
-                applyTextItems(ocrWordsToTextItems(words, baseViewport, renderScale));
-              })
-              .catch(() => {
-                // keep the scan readable even if recognition fails
-              })
-              .finally(() => {
-                if (!isCancelled) setOcrRunning(false);
-              });
-          }
         }
       } catch (err) {
         const errMsg = String((err as Error)?.message || err || '').toLowerCase();
@@ -3225,7 +3186,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
     return () => {
       isCancelled = true;
-      setOcrRunning(false);
       if (renderTask) {
         try {
           renderTask.cancel();
@@ -4820,13 +4780,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             <div className="absolute inset-x-0 top-6 z-30 flex justify-center">
               <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
                 ამ დაფის სკანი ვერ ჩაიტვირთა — სცადეთ თავიდან
-              </span>
-            </div>
-          )}
-          {!loadingPdf && ocrRunning && (
-            <div className="absolute inset-x-0 top-6 z-30 flex justify-center pointer-events-none">
-              <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
-                დაფის სიტყვები იკითხება...
               </span>
             </div>
           )}
