@@ -15,8 +15,10 @@ export const Route = createFileRoute("/api/talmud/tts")({
         try {
           const wav = await geminiSpeak(user.key, text);
           return new Response(wav.buffer as ArrayBuffer, { headers: { "content-type": "audio/wav", "cache-control": "no-store" } });
-        } catch {
-          return Response.json({ error: "tts_failed" }, { status: 502 });
+        } catch (e) {
+          // Expected when the user's key lacks TTS access or quota; the app falls back to the device voice.
+          console.warn("[tts] Gemini speech unavailable:", e instanceof Error ? e.message : e);
+          return Response.json({ error: "tts_unavailable" }, { status: 424 });
         }
       },
     },
