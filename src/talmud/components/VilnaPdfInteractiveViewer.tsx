@@ -5051,35 +5051,43 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               {showRangeHandles &&
                 !isSingleSmallMarkerSelected && (
                 <>
-                  {/* Right (Start in RTL) Copy/Paste Drag Handle with generous touch area */}
-                  <div
-                    onMouseDown={(e) => startHandleDrag(e, 'start-handle')}
-                    onTouchStart={(e) => startHandleDrag(e, 'start-handle')}
-                    title="გადასწიეთ მარჯვნივ/მარცხნივ რამდენიმე სიტყვის მოსანიშნად"
-                    style={{
-                      right: '-22px',
-                      bottom: '-30px',
-                      touchAction: 'none',
-                    }}
-                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
-                  >
-                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
-                  </div>
-
-                  {/* Left (End in RTL) Copy/Paste Drag Handle with generous touch area */}
-                  <div
-                    onMouseDown={(e) => startHandleDrag(e, 'end-handle')}
-                    onTouchStart={(e) => startHandleDrag(e, 'end-handle')}
-                    title="გადასწიეთ მარცხნივ/მარჯვნივ რამდენიმე სიტყვის მოსანიშნად"
-                    style={{
-                      left: '-22px',
-                      bottom: '-30px',
-                      touchAction: 'none',
-                    }}
-                    className="pointer-events-auto absolute w-11 h-11 z-50 flex items-start justify-center cursor-ew-resize"
-                  >
-                    <span className="mt-1 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-md" />
-                  </div>
+                  {(['start-handle', 'end-handle'] as const).map((handleType) => {
+                    const isStart = handleType === 'start-handle';
+                    return (
+                      <div
+                        key={handleType}
+                        onMouseDown={(e) => startHandleDrag(e, handleType)}
+                        onTouchStart={(e) => startHandleDrag(e, handleType)}
+                        title="გადასწიეთ რამდენიმე სიტყვის მოსანიშნად"
+                        style={{
+                          // Small water-drop handles hang just below the line so the letters stay visible.
+                          [isStart ? 'right' : 'left']: 0,
+                          top: '100%',
+                          width: '28px',
+                          height: '30px',
+                          transform: `translateX(${isStart ? '50%' : '-50%'}) scale(${readingHandleInvScale})`,
+                          transformOrigin: 'top center',
+                          touchAction: 'none',
+                        }}
+                        className="pointer-events-auto absolute z-50 flex items-start justify-center cursor-ew-resize"
+                      >
+                        <span
+                          aria-hidden
+                          style={{
+                            marginTop: '3px',
+                            width: '11px',
+                            height: '11px',
+                            borderRadius: '0 50% 50% 50%',
+                            transform: 'rotate(45deg)',
+                            background: 'color-mix(in oklab, var(--color-amber-500, #d97706) 38%, transparent)',
+                            border: '1px solid color-mix(in oklab, var(--color-amber-700, #b45309) 70%, transparent)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.55)',
+                            backdropFilter: 'blur(1px)',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>
