@@ -3141,8 +3141,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           ctx.restore();
         }
 
-        if (textContent && Array.isArray(textContent.items)) {
-          const rawItems = textContent.items as Array<Record<string, unknown>>;
+        const applyTextItems = (rawItems: Array<Record<string, unknown>>) => {
           lastPdfTextLayerRef.current = {
             dafKey,
             items: rawItems,
@@ -3161,8 +3160,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           );
           setHotspots(parsed);
 
-          // Tint ONLY the dark ink glyph letters of linked citations and small markers on the 2D canvas in Royal Blue (#1D4ED8),
-          // leaving the paper/parchment background 100% untouched so there are NO boxes or background overlays
+          // Tint ONLY the dark ink glyph letters of linked citations and dibbur-hamatchil words.
           try {
             const citSet = computeCitationIdsForHotspots(
               parsed,
@@ -3182,6 +3180,28 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
           } catch {
             // ignore
+          }
+        };
+
+        if (textContent && Array.isArray(textContent.items)) {
+          const rawItems = textContent.items as Array<Record<string, unknown>>;
+          applyTextItems(rawItems);
+
+          // Image-only scans: recognize word boxes on the scan, then rebuild the word layer.
+          if (!isSiddurPdf && !isChumashPdf && needsOcrTextLayer(rawItems)) {
+            setOcrRunning(true);
+            recognizeScanWords(`${dafKey}|${activePdfUrl}`, offscreenCanvas)
+              .then((words) => {
+                if (isCancelled || words.length < 50) return;
+                ctx.drawImage(offscreenCanvas, 0, 0);
+                applyTextItems(ocrWordsToTextItems(words, baseViewport, renderScale));
+              })
+              .catch(() => {
+                // keep the scan readable even if recognition fails
+              })
+              .finally(() => {
+                if (!isCancelled) setOcrRunning(false);
+              });
           }
         }
       } catch (err) {
