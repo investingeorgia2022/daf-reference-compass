@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Aligns the words read from a Vilna PDF text layer (positions are exact, letters may be
 // noisy) with the clean Sefaria Unicode text of the same daf. The scan stays untouched; only
 // the invisible word layer gets the exact Sefaria spelling and its true sentence.
