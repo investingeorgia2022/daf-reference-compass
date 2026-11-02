@@ -85,8 +85,10 @@ export async function geminiGenerateJson(user: UserGemini, tier: AiTier, system:
 
 /** Gemini TTS with a male voice; returns a WAV file. */
 export async function geminiSpeak(key: string, text: string, voice = 'Iapetus'): Promise<Uint8Array> {
+  let lastErr = 'tts_failed';
+  for (const model of TTS_MODELS) {
   const res = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -99,13 +101,17 @@ export async function geminiSpeak(key: string, text: string, voice = 'Iapetus'):
       }),
     },
   );
-  if (!res.ok) throw new Error(`tts ${res.status}`);
+  if (!res.ok) { lastErr = `tts ${res.status}`; continue; }
   const j = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> };
   const b64 = j.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!b64) throw new Error('tts_empty');
+  if (!b64) { lastErr = 'tts_empty'; continue; }
   const pcm = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   return pcmToWav(pcm, 24000);
+  }
+  throw new Error(lastErr);
 }
+
+const TTS_MODELS = ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'];
 
 function pcmToWav(pcm: Uint8Array, rate: number): Uint8Array {
   const out = new Uint8Array(44 + pcm.length);
