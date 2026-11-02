@@ -1243,12 +1243,10 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
     }
 
     const spokenPhrase = text || greetingInfo.spokenTextKa;
-    const primarySrc = preset
-      ? `/tts-cache/${preset}.wav`
-      : `/api/tts/speak?text=${encodeURIComponent(spokenPhrase)}`;
-    const fallbackApiSrc = `/api/tts/speak?preset=${encodeURIComponent(preset || '')}&text=${encodeURIComponent(
-      spokenPhrase
-    )}`;
+    // Preset greetings are pre-recorded (male). Free text uses the user's Gemini male voice when a key is saved.
+    const hasUserKey = Object.keys(geminiHeaders()).length > 0;
+    const primarySrc = preset ? `/tts-cache/${preset}.wav` : '';
+    const fallbackApiSrc = '';
 
     let fallbackHandled = false;
     const playWithBrowserSpeechFallback = (phrase: string) => {
@@ -1262,12 +1260,15 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(phrase);
         const voices = window.speechSynthesis.getVoices();
+        const maleRe = /male|man|giorgi|david|daniel|google.*(ka|he)|asaf|avri|dmitri|pavel/i;
+        const byLang = (pfx: string[]) => voices.filter((v) => pfx.some((p) => v.lang.toLowerCase().startsWith(p)));
+        const pool = [...byLang(['ka']), ...byLang(['he', 'iw']), ...byLang(['ru'])];
         const preferred =
-          voices.find((v) => v.lang.toLowerCase().startsWith('ka')) ||
-          voices.find((v) => v.lang.toLowerCase().startsWith('he') || v.lang.toLowerCase().startsWith('iw')) ||
-          voices.find((v) => v.lang.toLowerCase().startsWith('ru'));
+          pool.find((v) => maleRe.test(v.name) && !/female|woman/i.test(v.name)) || pool[0];
         if (preferred) utter.voice = preferred;
-        utter.rate = 0.96;
+        utter.rate = 0.94;
+        // Deepen the tone so system voices sound male.
+        utter.pitch = 0.55;
         utter.onstart = () => {
           setKacunaStopped(false);
           setKacunaSpeaking(true);
@@ -1279,6 +1280,29 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
         setKacunaSpeaking(false);
       }
     };
+
+    if (!primarySrc) {
+      if (!hasUserKey) {
+        playWithBrowserSpeechFallback(spokenPhrase);
+        return;
+      }
+      fetch('/api/talmud/tts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: spokenPhrase }),
+      })
+        .then((r) => (r.ok ? r.blob() : Promise.reject(new Error('tts'))))
+        .then((blob) => {
+          const a = new Audio(URL.createObjectURL(blob));
+          kacunaAudioRef.current = a;
+          a.onplay = () => { setKacunaStopped(false); setKacunaSpeaking(true); };
+          a.onended = () => setKacunaSpeaking(false);
+          a.onerror = () => playWithBrowserSpeechFallback(spokenPhrase);
+          return a.play();
+        })
+        .catch(() => playWithBrowserSpeechFallback(spokenPhrase));
+      return;
+    }
 
     const audio = new Audio(primarySrc);
     audio.preload = 'auto';

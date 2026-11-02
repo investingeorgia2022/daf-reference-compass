@@ -26,6 +26,7 @@ import { AppSettings, AppTheme, RecentlyViewedDaf, UILang } from '../types/talmu
 import { TRACTATES } from '../data/tractates';
 import { SearchableSelect, SelectOption } from './SearchableSelect';
 import { writePreference } from '../utils/appPreferences';
+import { GeminiSettingsSection } from './GeminiSettingsSection';
 import sourceArchive from '@/assets/talmud-source.zip.asset.json';
 import projectArchive from '@/assets/talmud-project.zip.asset.json';
 
@@ -700,6 +701,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
           )}
+
+          <GeminiSettingsSection isDark={isDark} />
 
           {/* 3b. Project & Android APK Export & Direct Download Card */}
           <div
