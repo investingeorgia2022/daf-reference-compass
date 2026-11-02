@@ -12,6 +12,7 @@ import {
 } from '../types/talmud';
 import { normalizeHebrewWord } from '../data/lexicon';
 import { alignPageWithSefaria } from '../utils/sefariaTextOverlay';
+import { needsOcrTextLayer, recognizeScanWords, ocrWordsToTextItems } from '../utils/scanOcrTextLayer';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { scrollToTarget } from '../utils/scrollToTarget';
@@ -2006,6 +2007,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
+  const [ocrRunning, setOcrRunning] = useState<boolean>(false);
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
   const [biblicalCitation, setBiblicalCitation] = useState(null);
@@ -4817,6 +4819,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             <div className="absolute inset-x-0 top-6 z-30 flex justify-center">
               <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
                 ამ დაფის სკანი ვერ ჩაიტვირთა — სცადეთ თავიდან
+              </span>
+            </div>
+          )}
+          {!loadingPdf && ocrRunning && (
+            <div className="absolute inset-x-0 top-6 z-30 flex justify-center pointer-events-none">
+              <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
+                დაფის სიტყვები იკითხება...
               </span>
             </div>
           )}
