@@ -1,0 +1,791 @@
+{
+ "markers": [
+  {
+   "type": "ein_mishpat",
+   "text": "מד א מיי' פי״ב מהל' גירושין הלכה טו טוש״ע אה״ע סי' קנז סעיף ג:",
+   "box": [
+    79,
+    31,
+    114,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "מה ב מיי' פי״ג מהלכות בכורות הלכה טו סמג עשין רי טוש״ע יו״ד סי' שיד סעיף ה:",
+   "box": [
+    116,
+    31,
+    152,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "מו ג [טוש״ע שם סעיף ו]:",
+   "box": [
+    154,
+    41,
+    163,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "מז ד מיי' פי״ב מהלכות גירושין הלכה ט טוש״ע אה״ע סי' קנב סעיף א:",
+   "box": [
+    165,
+    31,
+    200,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "מח ה מיי' פי״ג מהלכות שכירות הלכה ג סמג עשין פט (טור חו״מ סי' שד):",
+   "box": [
+    202,
+    31,
+    237,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "מט ו מיי' פי״ב מהלכות בכורות הלכה י טוש״ע יו״ד סי' שיג סעיף א:",
+   "box": [
+    239,
+    31,
+    263,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "נ ז מיי' שם הלכה יא טוש״ע שם סעיף יא:",
+   "box": [
+    265,
+    31,
+    277,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "נא ח מיי' שם הלכה יט טוש״ע שם סעיף א:",
+   "box": [
+    279,
+    31,
+    290,
+    128
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "נב ט מיי' פי״ב מהלכות מעשרות הלכה ו:",
+   "box": [
+    292,
+    31,
+    304,
+    128
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "א) שבת קמה: ע״ש, ב) ל״ל אמי, ג) צ״ל אשי, ד) שבת קמה:, ה) כתובות כב., ו) ב״מ פג: כתובות כז:, ז) [קדושין סג: וע״ש], ח) [פי' כגילוי עינים פסק], ט) צ״ל הכא ל״ק, י) [ביש גירסת רש״ל], כ) ברכות כז:, ל) נ״א ל״ל יאסוף כו' ל״ק וכ״ה בכריתות, מ) כ״ה יומא, נ) [ליש כג: יבמות כג: קעו.], ס) דמאי פ״ד מ״ו",
+   "box": [
+    80,
+    871,
+    245,
+    968
+   ]
+  },
+  {
+   "type": "gilyon",
+   "text": "גמ' עד מפי עד כשר. עי' סנהדרין דף ל ע״ב ברש״י ד״ה בעדות כשר ובתוס' שם:",
+   "box": [
+    365,
+    871,
+    396,
+    968
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "א",
+   "box": [
+    150,
+    597,
+    159,
+    608
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ב",
+   "box": [
+    165,
+    578,
+    174,
+    589
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ג",
+   "box": [
+    165,
+    480,
+    174,
+    491
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ד",
+   "box": [
+    181,
+    494,
+    190,
+    505
+   ]
+  },
+  {
+   "type": "gilyon",
+   "text": "✦",
+   "box": [
+    181,
+    439,
+    189,
+    448
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "א",
+   "box": [
+    181,
+    360,
+    189,
+    367
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ב",
+   "box": [
+    228,
+    469,
+    236,
+    476
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ג",
+   "box": [
+    290,
+    608,
+    298,
+    615
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ה",
+   "box": [
+    364,
+    546,
+    373,
+    557
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ד",
+   "box": [
+    395,
+    480,
+    403,
+    487
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ו",
+   "box": [
+    461,
+    463,
+    470,
+    474
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ה",
+   "box": [
+    492,
+    646,
+    500,
+    653
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ז",
+   "box": [
+    510,
+    471,
+    519,
+    482
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ח",
+   "box": [
+    592,
+    622,
+    601,
+    633
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ט",
+   "box": [
+    592,
+    565,
+    601,
+    576
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "י",
+   "box": [
+    669,
+    468,
+    678,
+    479
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ו",
+   "box": [
+    706,
+    646,
+    714,
+    653
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "כ",
+   "box": [
+    706,
+    513,
+    715,
+    524
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ל",
+   "box": [
+    737,
+    424,
+    746,
+    435
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "מ",
+   "box": [
+    772,
+    467,
+    781,
+    478
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "נ",
+   "box": [
+    788,
+    518,
+    797,
+    529
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ז",
+   "box": [
+    788,
+    355,
+    796,
+    362
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ח",
+   "box": [
+    820,
+    646,
+    828,
+    653
+   ]
+  },
+  {
+   "type": "ein_mishpat",
+   "text": "ט",
+   "box": [
+    918,
+    444,
+    926,
+    451
+   ]
+  },
+  {
+   "type": "masoret_hashas",
+   "text": "ס",
+   "box": [
+    918,
+    429,
+    927,
+    440
+   ]
+  }
+ ],
+ "commentary_openings": [
+  {
+   "commentary": "rashi",
+   "dh_text": "לאחזוקינהו",
+   "dh_box": [
+    79,
+    785,
+    89,
+    853
+   ],
+   "gemara_target_phrase": "לאחזוקינהו",
+   "gemara_target_box": [
+    133,
+    377,
+    147,
+    472
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "לעדות בכור",
+   "dh_box": [
+    102,
+    676,
+    113,
+    745
+   ],
+   "gemara_target_phrase": "לעדות בכור",
+   "gemara_target_box": [
+    149,
+    355,
+    178,
+    646
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "האשה",
+   "dh_box": [
+    102,
+    667,
+    125,
+    853
+   ],
+   "gemara_target_phrase": "האשה",
+   "gemara_target_box": [
+    180,
+    405,
+    193,
+    450
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "יימר שרי",
+   "dh_box": [
+    140,
+    667,
+    150,
+    716
+   ],
+   "gemara_target_phrase": "יימר שרי",
+   "gemara_target_box": [
+    211,
+    355,
+    241,
+    646
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "גמרא",
+   "dh_box": [
+    163,
+    811,
+    173,
+    845
+   ],
+   "gemara_target_phrase": "אילמא לא היו מוחזקין בו",
+   "gemara_target_box": [
+    245,
+    355,
+    258,
+    567
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "הלכתא",
+   "dh_box": [
+    249,
+    668,
+    259,
+    711
+   ],
+   "gemara_target_phrase": "והלכתא",
+   "gemara_target_box": [
+    228,
+    483,
+    241,
+    549
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "במקום עדים",
+   "dh_box": [
+    548,
+    790,
+    558,
+    853
+   ],
+   "gemara_target_phrase": "במקום עדים",
+   "gemara_target_box": [
+    491,
+    488,
+    504,
+    591
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "נמריה",
+   "dh_box": [
+    609,
+    787,
+    619,
+    825
+   ],
+   "gemara_target_phrase": "נמריה",
+   "gemara_target_box": [
+    591,
+    581,
+    604,
+    622
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "גלגלי",
+   "dh_box": [
+    621,
+    798,
+    631,
+    853
+   ],
+   "gemara_target_phrase": "כיילי ערובה",
+   "gemara_target_box": [
+    591,
+    463,
+    604,
+    562
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "חילקנו",
+   "dh_box": [
+    646,
+    816,
+    656,
+    853
+   ],
+   "gemara_target_phrase": "חילקנו",
+   "gemara_target_box": [
+    639,
+    463,
+    652,
+    514
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "ולא משית",
+   "dh_box": [
+    683,
+    791,
+    693,
+    853
+   ],
+   "gemara_target_phrase": "בעלי תריסין",
+   "gemara_target_box": [
+    704,
+    465,
+    717,
+    564
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "שיפא",
+   "dh_box": [
+    696,
+    707,
+    706,
+    736
+   ],
+   "gemara_target_phrase": "שיפתיה",
+   "gemara_target_box": [
+    607,
+    486,
+    620,
+    548
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "אלמלי אני חי",
+   "dh_box": [
+    708,
+    777,
+    718,
+    853
+   ],
+   "gemara_target_phrase": "אלמלי אני חי",
+   "gemara_target_box": [
+    753,
+    384,
+    766,
+    489
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "עמוד ודורש",
+   "dh_box": [
+    745,
+    696,
+    755,
+    760
+   ],
+   "gemara_target_phrase": "עומד ודורש",
+   "gemara_target_box": [
+    770,
+    377,
+    783,
+    464
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "מתני' הראיתי בכור זה",
+   "dh_box": [
+    757,
+    687,
+    768,
+    816
+   ],
+   "gemara_target_phrase": "הראיתי בכור זה",
+   "gemara_target_box": [
+    803,
+    486,
+    816,
+    608
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "גמ' נאמן הכהן",
+   "dh_box": [
+    782,
+    669,
+    792,
+    776
+   ],
+   "gemara_target_phrase": "נאמן הכהן",
+   "gemara_target_box": [
+    819,
+    558,
+    832,
+    643
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "דעבידא לאיגלויי",
+   "dh_box": [
+    806,
+    731,
+    816,
+    825
+   ],
+   "gemara_target_phrase": "דעבידא לאיגלויי",
+   "gemara_target_box": [
+    851,
+    518,
+    864,
+    646
+   ]
+  },
+  {
+   "commentary": "rashi",
+   "dh_text": "קח לי ממי",
+   "dh_box": [
+    928,
+    668,
+    938,
+    731
+   ],
+   "gemara_target_phrase": "קח לי ממי",
+   "gemara_target_box": [
+    932,
+    474,
+    945,
+    550
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "אימר דא״ר מאיר לחששא כו'",
+   "dh_box": [
+    79,
+    276,
+    91,
+    488
+   ],
+   "gemara_target_phrase": "אימר דא״ר מאיר לחששא",
+   "gemara_target_box": [
+    133,
+    476,
+    147,
+    646
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "ואמר רבא מה לו לשקר",
+   "dh_box": [
+    245,
+    169,
+    258,
+    329
+   ],
+   "gemara_target_phrase": "ואמר רבא מה לו לשקר",
+   "gemara_target_box": [
+    459,
+    355,
+    472,
+    460
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "בא לפני רבן גמליאל אמר ליה לאו",
+   "dh_box": [
+    326,
+    140,
+    351,
+    329
+   ],
+   "gemara_target_phrase": "אתא לקמיה דרבן גמליאל",
+   "gemara_target_box": [
+    655,
+    355,
+    684,
+    646
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "עמד השואל ושאל",
+   "dh_box": [
+    432,
+    166,
+    444,
+    297
+   ],
+   "gemara_target_phrase": "עמד השואל ושאל",
+   "gemara_target_box": [
+    720,
+    485,
+    733,
+    601
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "עמוד על רגליך ויעידו בך",
+   "dh_box": [
+    472,
+    140,
+    496,
+    329
+   ],
+   "gemara_target_phrase": "עמוד על רגליך ויעידו בך",
+   "gemara_target_box": [
+    736,
+    355,
+    765,
+    646
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "היאך החי יכול להכחיש החי",
+   "dh_box": [
+    553,
+    140,
+    578,
+    329
+   ],
+   "gemara_target_phrase": "היאך המת יכול להכחיש את החי",
+   "gemara_target_box": [
+    753,
+    355,
+    782,
+    646
+   ]
+  },
+  {
+   "commentary": "tosafot",
+   "dh_text": "רבי חוצפית המתורגמן",
+   "dh_box": [
+    621,
+    140,
+    646,
+    329
+   ],
+   "gemara_target_phrase": "לחוצפית המתורגמן",
+   "gemara_target_box": [
+    786,
+    446,
+    799,
+    586
+   ]
+  }
+ ]
+}
