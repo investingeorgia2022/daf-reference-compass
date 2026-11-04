@@ -7,8 +7,8 @@ describe('cited daf source window', () => {
     expect(hasAuthenticVilnaScan('Megillah', '20b')).toBe(false);
   });
 
-  it('recognises a bundled scan such as Berakhot 2a', () => {
-    expect(hasAuthenticVilnaScan('Berakhot', '2a')).toBe(true);
+  it('has no bundled scans after the daf reset', () => {
+    expect(hasAuthenticVilnaScan('Berakhot', '2a')).toBe(false);
   });
 
   it('highlights the passage matching the cited phrase', () => {
