@@ -17,8 +17,8 @@ describe('flat-height dibbur hamatchil', () => {
     ];
     const { links, roles } = buildDibburHamatchilLinks(hs);
     expect(links).toHaveLength(1);
-    expect(links[0].dhIds).toEqual(['r1', 'r2']);
-    expect(links[0].mainIds).toEqual(['m1', 'm2']);
+    expect(links[0]!.dhIds).toEqual(['r1', 'r2']);
+    expect(links[0]!.mainIds).toEqual(['m1', 'm2']);
     expect(roles.has('r3')).toBe(false);
     expect(roles.has('m3')).toBe(false);
   });
