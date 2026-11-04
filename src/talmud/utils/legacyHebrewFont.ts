@@ -26,10 +26,39 @@ export function isLegacyHebrewRun(str: string): boolean {
   return hits > 0 && hits >= Math.ceil(str.replace(/[\s\d.,:;'"()[\]\-]/g, '').length * 0.6);
 }
 
+const MAC_ONLY = new Set(Array.from(MAC_ROMAN_E0_FA).filter((c) => c.charCodeAt(0) > 0xff || c === '\u00b7'));
+const HEB = /^[\u05d0-\u05ea]+$/;
+const NON_FINAL_END = /[כמנפצ]$/;
+/** Word endings that never stand alone (שהכה|ים, כדת|יא). */
+const ORPHAN_ENDING = /^(ים|ין|יא|יה)$/;
+
+/**
+ * Mac-Hebrew scans lose the letter נ (MacRoman 0xF0 has no Unicode twin), which PDF.js reports
+ * as a plain space: לפניה arrives as "לפ יה", כנסים as "כ סים". A Hebrew word never ends in a
+ * non-final כ/מ/נ/פ/צ and a lone letter is not a word, so such gaps are restored as נ.
+ */
+export function healLostNun(text: string): string {
+  const parts = text.split(' ');
+  const out: string[] = [];
+  for (const part of parts) {
+    const prev = out[out.length - 1];
+    const join =
+      prev !== undefined &&
+      HEB.test(prev) &&
+      HEB.test(part) &&
+      (NON_FINAL_END.test(prev) || prev.length === 1 || part.length === 1 || ORPHAN_ENDING.test(part));
+    if (join) out[out.length - 1] = `${prev}נ${part}`;
+    else out.push(part);
+  }
+  return out.join(' ');
+}
+
 export function decodeLegacyHebrew(str: string): string {
   if (!isLegacyHebrewRun(str)) return str;
   const mapped = Array.from(str, (ch) => MAP.get(ch) ?? MIRROR[ch] ?? ch);
-  return mapped.reverse().join('');
+  const text = mapped.reverse().join('');
+  const isMac = Array.from(str).some((ch) => MAC_ONLY.has(ch));
+  return isMac ? healLostNun(text) : text;
 }
 
 /** Returns text items with legacy-font runs decoded; geometry is untouched. */
