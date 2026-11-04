@@ -7,7 +7,7 @@ it('probe', async () => {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   for (const [f, t, d] of [['/tmp/dh/b.pdf','Bekhorot','36a'],['/tmp/dh/a.pdf','Berakhot','2a']]) {
     const tc = JSON.parse(fs.readFileSync(f.replace('.pdf','.json'),'utf8'));
-    const vp = new (pdfjs as any).PageViewport({ viewBox: tc.vb, scale: 1, rotation: 0 });
+    const vp = { width: tc.vb[2]-tc.vb[0], height: tc.vb[3]-tc.vb[1], convertToViewportPoint: (x:number,y:number)=>[x-tc.vb[0], tc.vb[3]-y] } as any;
     const hs = extractHotspotsFromTextContent(decodeLegacyHebrewItems(tc.items as any), vp, false, [], [], [], [], { tractateId: t, dafId: d } as any);
     const { links } = buildDibburHamatchilLinks(hs);
     const byId = new Map(hs.map((h) => [h.id, h]));
