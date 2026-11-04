@@ -3821,12 +3821,6 @@ export function App() {
                           ? `${currentTractate.nameKa.split(' (')[0]} ${selectedDafId}`
                           : SACRED_REALMS.find((r) => r.id === activeRealm)?.titleKa || 'თალმუდი'}
                       </span>
-                      <span
-                        dir="rtl"
-                        className="hidden md:inline font-serif text-[11px] font-black text-amber-800 dark:text-amber-300"
-                      >
-                        {activeRealm === 'talmud' ? `${currentTractate.nameHe} ${selectedDafId}` : ''}
-                      </span>
                     </button>
 
                     {/* 3. Expand Daf to Full Mobile / Desktop Screen (დაფის გაშლა მთლიან ეკრანზე) */}

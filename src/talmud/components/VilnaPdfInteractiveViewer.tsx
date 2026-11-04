@@ -351,7 +351,9 @@ function classifyVilnaCoordinateZone(
 
   // Lower full-width Tosafot / Rashi below Gemara (topPct >= 65.5% and Rashi script pdfH < 12.6):
   if (topPct >= 65.5 && pdfH < 12.6) {
-    return 'tosafot';
+    // Below the Gemara each commentary keeps its own side of the page.
+    if (leftPct >= 47.1) return rashiSideIsRight ? 'rashi' : 'tosafot';
+    return rashiSideIsRight ? 'tosafot' : 'rashi';
   }
 
   if (leftPct > 61.8) {
