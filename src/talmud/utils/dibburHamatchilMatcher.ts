@@ -161,7 +161,7 @@ function isLargeTosafotWord(h: DhHotspotLike, bodyH: number): boolean {
   return r > 1.38 && r < 1.7 && !HEADINGS.has(plainWord(h.word));
 }
 
-interface Piece<T> { commentator: DhCommentator; words: T[] }
+interface Piece<T> { commentator: DhCommentator; words: T[]; fromStructure?: boolean }
 
 /**
  * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
@@ -203,6 +203,12 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
     };
   }
   segs.sort((a, b) => a.top - b.top || b.right - a.right);
+
+  // Scans whose text layer stores one flat height for bold and body script (HebrewBooks):
+  // height cannot reveal openings, so use the printed structure instead.
+  const styledRashi = comm0.filter((h) => h.section === 'rashi' && dibburStyle(h, bodyH) === 'rashi').length;
+  const rashiBody = comm0.filter((h) => h.section === 'rashi').length;
+  if (styledRashi === 0 && rashiBody >= 40) return extractByPunctuation(hotspots, comm, segs, bodyH);
 
   const pieces: Piece<T>[] = [];
   const pending = new Map<number, Piece<T>>();
@@ -248,6 +254,44 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       }
     }
   });
+  return pieces;
+}
+
+/**
+ * Structure-based openings: every Rashi/Tosafot entry starts after the previous one ends with ":"
+ * and its opening runs up to the first "." (or וכו׳). Used only when glyph heights are flat.
+ */
+function extractByPunctuation<T extends DhHotspotLike>(
+  hotspots: T[],
+  comm: T[],
+  segs: Array<{ words: T[]; top: number }>,
+  bodyH: number
+): Piece<T>[] {
+  const pieces: Piece<T>[] = [];
+  const isLarge = (h: T) => !!h.glyphH && h.glyphH / bodyH > 1.15;
+  for (const col of ['rashi', 'tosafot'] as DhCommentator[]) {
+    const stream: T[] = [];
+    for (const s of segs) {
+      const w0 = s.words.find((w) => !isLargeTosafotWord(w, bodyH)) || s.words[0];
+      const sec = w0.section === 'rashi' || w0.section === 'tosafot' ? w0.section : 'tosafot';
+      if (sec === col) stream.push(...s.words);
+    }
+    let atStart = false;
+    let cur: T[] | null = null;
+    for (const w of stream) {
+      const raw = String(w.word || '');
+      const ends = (c: string) => w.stopAfter === c || raw.trim().endsWith(c);
+      if (!cur && (atStart || isLarge(w)) && plainWord(raw) && !HEADINGS.has(plainWord(raw))) cur = [];
+      if (cur) {
+        cur.push(w);
+        if (ends('.') || ETC.has(plainWord(raw))) {
+          pieces.push({ commentator: col, words: cur, fromStructure: true } as Piece<T>);
+          cur = null;
+        } else if (ends(':') || cur.length > 8) cur = null;
+      }
+      atStart = ends(':');
+    }
+  }
   return pieces;
 }
 
