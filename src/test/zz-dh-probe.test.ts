@@ -6,9 +6,8 @@ import { buildDibburHamatchilLinks } from '../talmud/utils/dibburHamatchilMatche
 it('probe', async () => {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   for (const [f, t, d] of [['/tmp/dh/b.pdf','Bekhorot','36a'],['/tmp/dh/a.pdf','Berakhot','2a']]) {
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(f)) }).promise;
-    const page = await doc.getPage(1); const vp = page.getViewport({ scale: 1 });
-    const tc = await page.getTextContent();
+    const tc = JSON.parse(fs.readFileSync(f.replace('.pdf','.json'),'utf8'));
+    const vp = new (pdfjs as any).PageViewport({ viewBox: tc.vb, scale: 1, rotation: 0 });
     const hs = extractHotspotsFromTextContent(decodeLegacyHebrewItems(tc.items as any), vp, false, [], [], [], [], { tractateId: t, dafId: d } as any);
     const { links } = buildDibburHamatchilLinks(hs);
     const byId = new Map(hs.map((h) => [h.id, h]));
