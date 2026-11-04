@@ -2,11 +2,9 @@
 // Links Rashi / Tosafot "dibbur hamatchil" openings on a Vilna PDF scan to the
 // Gemara/Mishnah words they quote. Pure logic: works on hotspot-like boxes.
 //
-// How an opening is recognised (Vilna typesetting, every tractate):
-// - Rashi: the opening is printed in BOLD Rashi script — slightly taller than the body script.
-// - Tosafot: the opening is printed in square letters (never Rashi script): the first word is
-//   large, the rest is bold square type, clearly taller than the body script.
-// - The opening ends with "." / ":" or with וכו'. Small reference markers (א, 1, 2 …) are skipped.
+// How an opening is recognised (Vilna typesetting, every tractate): see extractDibburim —
+// punctuation bounds the opening, its own typeface names the commentator. Small reference
+// markers (א, 1, 2 …) are skipped.
 
 export type DhCommentator = 'rashi' | 'tosafot';
 
@@ -143,19 +141,6 @@ function modeHeight(words: DhHotspotLike[]): number {
   return best / 10;
 }
 
-/** Which commentator's opening type is this word printed in (null = body text)? */
-export function dibburStyle(h: DhHotspotLike, bodyH: number): DhCommentator | null {
-  if (!h.glyphH || !bodyH || h.isSmallMarker) return null;
-  const r = h.glyphH / bodyH;
-  if (r > 1.006 && r < 1.045) return 'rashi'; // bold Rashi script
-  if ((r >= 1.045 && r < 1.15) || (r > 1.38 && r < 1.7)) return 'tosafot'; // bold / large square letters
-  if (r >= 1.15 && r <= 1.38) {
-    // Enlarged chapter-opening word: belongs to whichever column it is printed in.
-    return h.section === 'rashi' || h.section === 'tosafot' ? (h.section as DhCommentator) : null;
-  }
-  return null;
-}
-
 /** Large square opening word of Tosafot (wherever the zone rules placed it). */
 function isLargeTosafotWord(h: DhHotspotLike, bodyH: number): boolean {
   if ((h.section !== 'gemara' && h.section !== 'mishnah') || h.isSmallMarker || !h.glyphH || !bodyH) return false;
@@ -200,11 +185,12 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
   const comm = hotspots.filter(
     (h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker && plainWord(h.word)
   );
-  const bodyFont = modeFont(comm);
   const bodyH = modeHeight(comm);
-  const isOpeningType = (h: T) => !bodyFont || !h.font || h.font !== bodyFont;
-  const raw: Piece<T>[] = [];
+  const raw: Array<Piece<T> & { bodyFont?: string }> = [];
   for (const sec of ['rashi', 'tosafot'] as const) {
+    // Each column has its own body script; the opening typeface is anything else.
+    const bodyFont = modeFont(comm.filter((h) => h.section === sec));
+    const isOpeningType = (h: T) => !bodyFont || !h.font || h.font !== bodyFont;
     const words = readingOrder(
       hotspots.filter(
         (h) =>
@@ -232,7 +218,7 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
               if (colon) open = true;
               continue;
             }
-            cur = { commentator: sec, words: [] };
+            cur = { commentator: sec, words: [], bodyFont };
             raw.push(cur);
           }
           cur.words.push(w);
@@ -245,7 +231,7 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
 
   // Bind each opening typeface to one commentator by majority of its entries.
   const votes = new Map<string, Record<DhCommentator, number>>();
-  const fontOf = (pc: Piece<T>) => pc.words.find((w) => w.font && w.font !== bodyFont)?.font;
+  const fontOf = (pc: (typeof raw)[number]) => pc.words.find((w) => w.font && w.font !== pc.bodyFont)?.font;
   for (const pc of raw) {
     const f = fontOf(pc);
     if (!f) continue;
