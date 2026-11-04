@@ -33,7 +33,6 @@ import {
 } from '../utils/siddurPdfCanonicalFixer';
 import { tintCitationHotspotsBlueOnCanvas, tintHotspotsInkOnCanvas, RASHI_INK, TOSAFOT_INK } from '../utils/pdfCitationTint';
 import { buildDibburHamatchilLinks, splitSideAt } from '../utils/dibburHamatchilMatcher';
-import { buildScanLayer } from '../utils/scanCoordinateLayer';
 import {
   CrystalDiamondJumpButton,
   WindowsWindowControls,
@@ -3138,8 +3137,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             latest.effectiveTosafot,
             latest.dafData
           );
-          const scanLayer = buildScanLayer(dafKey, latest.effectiveGemara?.[0]);
-          if (scanLayer) parsed = [...parsed.filter((h) => h.isSmallMarker), ...scanLayer.hotspots];
           setHotspots(parsed);
 
           // Tint ONLY the dark ink glyph letters of linked citations and dibbur-hamatchil words.
@@ -3152,7 +3149,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             );
             tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
             const dhColors = new Map();
-            const { roles } = scanLayer || buildDibburHamatchilLinks(parsed);
+            const { roles } = buildDibburHamatchilLinks(parsed);
             for (const [id, role] of roles) {
               if (citSet.has(id)) continue;
               if (role.splitWord) dhColors.set(id, { first: RASHI_INK, second: TOSAFOT_INK });
@@ -3221,8 +3218,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       latest.effectiveTosafot,
       latest.dafData
     );
-    const scanLayer = buildScanLayer(dafKey, latest.effectiveGemara?.[0]);
-    setHotspots(scanLayer ? [...parsed.filter((h) => h.isSmallMarker), ...scanLayer.hotspots] : parsed);
+    setHotspots(parsed);
   }, [dynamicDafContentSig, dafKey]);
 
   // Helper to resolve the exact target hotspots on the Daf for any small index marker ((א), (א, א, 1..9, [א])
@@ -3670,9 +3666,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   // Rashi (green) / Tosafot (bordeaux) dibbur-hamatchil ↔ main-text links.
   const dibburLinks = useMemo(() => {
-    const { links, roles } = buildScanLayer(dafKey, null) || buildDibburHamatchilLinks(hotspots);
+    const { links, roles } = buildDibburHamatchilLinks(hotspots);
     return { byKey: new Map(links.map((l) => [l.key, l])), roles };
-  }, [hotspots, dafKey]);
+  }, [hotspots]);
 
   const jumpToDibbur = useCallback(
     (h: VilnaPdfHotspot, clientX: number, rect: DOMRect | null): boolean => {
