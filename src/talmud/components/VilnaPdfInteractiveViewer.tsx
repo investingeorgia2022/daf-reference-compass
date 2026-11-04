@@ -33,6 +33,7 @@ import {
 } from '../utils/siddurPdfCanonicalFixer';
 import { tintCitationHotspotsBlueOnCanvas, tintHotspotsInkOnCanvas, RASHI_INK, TOSAFOT_INK } from '../utils/pdfCitationTint';
 import { buildDibburHamatchilLinks, splitSideAt } from '../utils/dibburHamatchilMatcher';
+import { decodeLegacyHebrewItems } from '../utils/legacyHebrewFont';
 import {
   CrystalDiamondJumpButton,
   WindowsWindowControls,
@@ -3163,7 +3164,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         };
 
         if (textContent && Array.isArray(textContent.items)) {
-          const rawItems = textContent.items as Array<Record<string, unknown>>;
+          const rawItems = decodeLegacyHebrewItems(textContent.items as Array<Record<string, unknown>>);
           applyTextItems(rawItems);
 
         }
