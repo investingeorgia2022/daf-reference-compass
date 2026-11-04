@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildDibburHamatchilLinks } from '../talmud/utils/dibburHamatchilMatcher';
 
 const w = (id: string, word: string, section: string, row: number, left: number, glyphH: number, stopAfter?: '.' | ':') => ({
-  id, word, section, rowId: `${section}-${row}`, leftPct: left, topPct: 10 + row * 2, widthPct: 3, heightPct: 1.5, glyphH, stopAfter,
+  id, word, section, rowId: `${section}-${row}`, leftPct: left, topPct: 10 + row * 2, widthPct: 3, heightPct: 1.5, glyphH, ...(stopAfter ? { stopAfter } : {}),
 });
 
 describe('opening colour follows its column, measured per page', () => {
