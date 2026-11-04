@@ -23,7 +23,14 @@ function extractText(res: unknown): string {
 /** Ask the model for a JSON object described by `shape`. Returns parsed object. */
 export async function askJson(task: string, shape: string, payload: unknown, ctx?: AiCtx): Promise<Record<string, unknown>> {
   const prompt = `${task}\n\nReturn JSON only, with exactly this shape:\n${shape}\n\nInput:\n${JSON.stringify(payload)}`;
-  if (ctx?.user) return parseJson(await geminiGenerateJson(ctx.user, ctx.tier, BASE_SYSTEM, prompt));
+  if (ctx?.user) {
+    // Gemini occasionally returns broken JSON (e.g. {"translation":}); retry once before giving up.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const out = parseJson(await geminiGenerateJson(ctx.user, ctx.tier, BASE_SYSTEM, prompt));
+      if (Object.keys(out).length > 0) return out;
+    }
+    return {};
+  }
   const res = await generateResponse({
     model: "openai/gpt-6-astra",
     instructions: BASE_SYSTEM,
@@ -44,7 +51,14 @@ function parseJson(text: string): Record<string, unknown> {
     return JSON.parse(raw) as Record<string, unknown>;
   } catch {
     const m = raw.match(/\{[\s\S]*\}/);
-    return m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
+    if (m) {
+      try {
+        return JSON.parse(m[0]) as Record<string, unknown>;
+      } catch {
+        // fall through: malformed model output must never crash the route
+      }
+    }
+    return {};
   }
 }
 
