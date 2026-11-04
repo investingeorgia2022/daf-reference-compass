@@ -176,83 +176,13 @@ interface VilnaPdfInteractiveViewerProps {
   ) => void;
 }
 
-// Verified authentic Vilna PDF files physically present in /public/vilna-pdf/
-const EXACT_VILNA_PDF_MAP: Record<string, string> = {
-  'Berakhot:2a': '/vilna-pdf/Berakhot-2a.pdf',
-  'Berakhot:2b': '/vilna-pdf/Berakhot-2b.pdf',
-  'Berakhot:3a': '/vilna-pdf/Berakhot-3a.pdf',
-  'Berakhot:3b': '/vilna-pdf/Berakhot-3b.pdf',
-  'Berakhot:4a': '/vilna-pdf/Berakhot-4a.pdf',
-  'Berakhot:9a': '/vilna-pdf/Berakhot-9a.pdf',
-  'Shabbat:2a': '/vilna-pdf/Shabbat-2a.pdf',
-  'Shabbat:21b': '/vilna-pdf/Shabbat-21b.pdf',
-  'Pesachim:2a': '/vilna-pdf/Pesachim-2a.pdf',
-  'Yoma:2a': '/vilna-pdf/Yoma-2a.pdf',
-  'Sukkah:2a': '/vilna-pdf/Sukkah-2a.pdf',
-  'Rosh_Hashanah:16a': '/vilna-pdf/Rosh_Hashanah-16a.pdf',
-  'Taanit:2a': '/vilna-pdf/Taanit-2a.pdf',
-  'Taanit:5a': '/vilna-pdf/Taanit-5a.pdf',
-  'Megillah:2a': '/vilna-pdf/Megillah-2a.pdf',
-  'Bava_Kamma:2a': '/vilna-pdf/Bava_Kamma-2a.pdf',
-  'Sanhedrin:2a': '/vilna-pdf/Sanhedrin-2a.pdf',
-  'Niddah:2a': '/vilna-pdf/Niddah-2a.pdf',
-};
+// Bundled Vilna PDFs (public/vilna-pdf/). Empty: every daf currently loads from the online scan source.
+const EXACT_VILNA_PDF_MAP: Record<string, string> = {};
 
 /** True only when the real printed scan of this exact daf ships with the app. */
 export function hasAuthenticVilnaScan(tractateId: string, dafId: string): boolean {
   return Boolean(EXACT_VILNA_PDF_MAP[`${tractateId}:${(dafId || '').toLowerCase()}`]);
 }
-
-const TRACTATE_DEFAULT_2A_PDF_MAP: Record<string, string> = {
-  Berakhot: '/vilna-pdf/Berakhot-2a.pdf',
-  Shabbat: '/vilna-pdf/Shabbat-2a.pdf',
-  Eruvin: '/vilna-pdf/Shabbat-2a.pdf',
-  Pesachim: '/vilna-pdf/Pesachim-2a.pdf',
-  Shekalim: '/vilna-pdf/Pesachim-2a.pdf',
-  Yoma: '/vilna-pdf/Yoma-2a.pdf',
-  Sukkah: '/vilna-pdf/Sukkah-2a.pdf',
-  Beitzah: '/vilna-pdf/Sukkah-2a.pdf',
-  Rosh_Hashanah: '/vilna-pdf/Rosh_Hashanah-16a.pdf',
-  Taanit: '/vilna-pdf/Taanit-2a.pdf',
-  Megillah: '/vilna-pdf/Megillah-2a.pdf',
-  Moed_Katan: '/vilna-pdf/Megillah-2a.pdf',
-  Chagigah: '/vilna-pdf/Megillah-2a.pdf',
-  Yevamot: '/vilna-pdf/Yoma-2a.pdf',
-  Ketubot: '/vilna-pdf/Yoma-2a.pdf',
-  Nedarim: '/vilna-pdf/Sukkah-2a.pdf',
-  Nazir: '/vilna-pdf/Pesachim-2a.pdf',
-  Sotah: '/vilna-pdf/Megillah-2a.pdf',
-  Gittin: '/vilna-pdf/Bava_Kamma-2a.pdf',
-  Kiddushin: '/vilna-pdf/Bava_Kamma-2a.pdf',
-  Bava_Kamma: '/vilna-pdf/Bava_Kamma-2a.pdf',
-  Bava_Metzia: '/vilna-pdf/Bava_Kamma-2a.pdf',
-  Bava_Batra: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Sanhedrin: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Makkot: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Shevuot: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Avodah_Zarah: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Horayot: '/vilna-pdf/Sanhedrin-2a.pdf',
-  Zevachim: '/vilna-pdf/Pesachim-2a.pdf',
-  Menachot: '/vilna-pdf/Pesachim-2a.pdf',
-  Chullin: '/vilna-pdf/Niddah-2a.pdf',
-  Bekhorot: '/vilna-pdf/Niddah-2a.pdf',
-  Arakhin: '/vilna-pdf/Niddah-2a.pdf',
-  Temurah: '/vilna-pdf/Bava_Kamma-2a.pdf',
-  Keritot: '/vilna-pdf/Niddah-2a.pdf',
-  Meilah: '/vilna-pdf/Niddah-2a.pdf',
-  Tamid: '/vilna-pdf/Taanit-2a.pdf',
-  Niddah: '/vilna-pdf/Niddah-2a.pdf',
-};
-
-const AMUD_BET_PDF_CLONES = [
-  '/vilna-pdf/Berakhot-2b.pdf',
-  '/vilna-pdf/Berakhot-3b.pdf',
-];
-
-const INTERIOR_AMUD_ALEF_PDF_CLONES = [
-  '/vilna-pdf/Berakhot-2a.pdf',
-  '/vilna-pdf/Berakhot-3a.pdf',
-];
 
 const BUNDLED_KAVANAT_HALEV_PAGES = [
   1, 2, 3, 4, 5, 20, 29, 30, 31, 32, 35, 40, 45, 50, 60, 71, 72, 75, 78, 100,
@@ -2982,14 +2912,12 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               ? resolveFallbackBundledChumashPdfUrl(dafData.tractateId, dafData.dafId)
               : isSiddurPdf
                 ? resolveFallbackBundledSiddurPdfUrl(dafData.tractateId, dafData.dafId)
-                : dafData.dafId.toLowerCase().endsWith('b')
-                  ? '/vilna-pdf/Berakhot-2b.pdf'
-                  : '/vilna-pdf/Berakhot-3a.pdf';
-            try {
-              arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
-            } catch {
-              arrayBuffer = await fetchValidPdfBuffer('/vilna-pdf/Berakhot-2a.pdf');
+                : null;
+            if (!fallbackCloneUrl) {
+              if (!isCancelled) setPdfLoadFailed(true);
+              throw firstErr;
             }
+            arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
           }
         }
         if (!isCancelled) setPdfLoadFailed(false);
