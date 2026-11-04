@@ -67,7 +67,7 @@ describe('dibbur hamatchil matching', () => {
 
   it('two openings on one line are separated by the printed period', () => {
     const g = gem(['קורין', 'את', 'שמע', 'משעה', 'שהכהנים', 'נכנסים']);
-    const r = row('rashi', [['קורין', RASHI_BOLD], ['את', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
+    const r = row('rashi', [['קורין', RASHI_BOLD], ['את', RASHI_BOLD], ['שמע', RASHI_BOLD, '.'], ['פירוש', BODY, ':'], ['משעה', RASHI_BOLD], ['שהכהנים', RASHI_BOLD, '.']], 30);
     const { links } = buildDibburHamatchilLinks([...prose(), ...g, ...r]);
     expect(links.map((l) => l.dhIds.length)).toEqual([3, 2]);
   });
@@ -96,10 +96,26 @@ describe('repeated identical quotations', () => {
   it('two identical Rashi openings bind to the first and second occurrences in order', () => {
     const g1 = gem(['אמר', 'מר', 'קורין'], 10);
     const g2 = gem(['אמר', 'מר', 'בערבין'], 20);
-    const r1 = row('rashi', [['אמר', RASHI_BOLD], ['מר', RASHI_BOLD, '.'], body('פירוש')], 40);
+    const r1 = row('rashi', [['אמר', RASHI_BOLD], ['מר', RASHI_BOLD, '.'], ['פירוש', BODY, ':']], 40);
     const r2 = row('rashi', [['אמר', RASHI_BOLD], ['מר', RASHI_BOLD, '.'], body('היינו')], 60);
     const { roles } = buildDibburHamatchilLinks([...prose(), ...g1, ...g2, ...r1, ...r2]);
     expect(roles.get(g1[0].id)).toEqual({ rashi: 'rashi:0' });
     expect(roles.get(g2[0].id)).toEqual({ rashi: 'rashi:1' });
+  });
+});
+
+describe('structural opening rule (scan letter sizes ignored)', () => {
+  it('a Rashi-column opening is green even when OCR reports a Tosafot-like height', () => {
+    const g = gem(['קשיא', 'דרבי', 'מאיר']);
+    const r = row('rashi', [['קשיא', 18.6], ['דרבי', 18.6], ['מאיר', 18.6, '.'], ['לעיל', 18.6]], 30);
+    const { roles } = buildDibburHamatchilLinks([...g, ...r]);
+    expect(roles.get(g[0].id)).toEqual({ rashi: 'rashi:0' });
+    expect(roles.get(r[3].id)).toBeUndefined();
+  });
+  it('an opening without a period stops after 5 words; the rest stays uncoloured', () => {
+    const r = row('rashi', ['א1','ב1','ג1','ד1','ה1','ו1','ז1'].map((w) => ['מילה' + w.length + w, BODY] as [string, number]), 30);
+    const { roles } = buildDibburHamatchilLinks(r);
+    expect(roles.get(r[4].id)).toBeDefined();
+    expect(roles.get(r[5].id)).toBeUndefined();
   });
 });
