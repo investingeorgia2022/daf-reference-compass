@@ -171,8 +171,38 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
   const comm0 = hotspots.filter(
     (h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker && plainWord(h.word)
   );
-  const bodyH = modeHeight(comm0);
-  if (!bodyH) return [];
+  const pageBodyH = modeHeight(comm0);
+  if (!pageBodyH) return [];
+  // Letter size is measured on THIS page, separately for each column: scans are printed at
+  // different scales, so the bold opening is only compared with its own column's body text.
+  const colBody: Record<string, number> = {
+    rashi: modeHeight(comm0.filter((h) => h.section === 'rashi')) || pageBodyH,
+    tosafot: modeHeight(comm0.filter((h) => h.section === 'tosafot')) || pageBodyH,
+  };
+  // Flat pages (every letter reported at the same height): bold cannot be measured, so the
+  // opening is read from punctuation — after the previous entry's ":" up to the first "."/וכו׳.
+  const flatOpenings = new Set<string>();
+  for (const sec of ['rashi', 'tosafot'] as const) {
+    const words = comm0.filter((h) => h.section === sec);
+    const styled = words.filter((h) => columnStyle(h) === sec).length;
+    if (words.length < 40 || styled > 0) continue;
+    let open = true;
+    let n = 0;
+    for (const w of readingOrder(words)) {
+      if (open && n < 8) { flatOpenings.add(w.id); n++; }
+      if (w.stopAfter === ':') { open = true; n = 0; }
+      else if (w.stopAfter === '.' || ETC.has(plainWord(w.word)) || n >= 8) open = false;
+    }
+  }
+  function columnStyle(h: DhHotspotLike): DhCommentator | null {
+    if (h.section !== 'rashi' && h.section !== 'tosafot') return dibburStyle(h, pageBodyH);
+    const s = dibburStyle(h, colBody[h.section]);
+    // The column decides the commentator; the size only decides opening vs. body.
+    return s ? (h.section as DhCommentator) : null;
+  }
+  const styleOf = (h: DhHotspotLike): DhCommentator | null =>
+    flatOpenings.has(h.id) ? (h.section as DhCommentator) : columnStyle(h);
+  const bodyH = pageBodyH;
   // Large Tosafot opening words printed beside the Gemara are sometimes grouped with Gemara lines.
   const comm = [...comm0, ...hotspots.filter((h) => isLargeTosafotWord(h, bodyH))];
 
