@@ -29,6 +29,8 @@ export function isLegacyHebrewRun(str: string): boolean {
 const MAC_ONLY = new Set(Array.from(MAC_ROMAN_E0_FA).filter((c) => c.charCodeAt(0) > 0xff || c === '\u00b7'));
 const HEB = /^[\u05d0-\u05ea]+$/;
 const NON_FINAL_END = /[כמנפצ]$/;
+/** Word endings that never stand alone (שהכה|ים, כדת|יא). */
+const ORPHAN_ENDING = /^(ים|ין|יא|יה)$/;
 
 /**
  * Mac-Hebrew scans lose the letter נ (MacRoman 0xF0 has no Unicode twin), which PDF.js reports
@@ -44,7 +46,7 @@ export function healLostNun(text: string): string {
       prev !== undefined &&
       HEB.test(prev) &&
       HEB.test(part) &&
-      (NON_FINAL_END.test(prev) || prev.length === 1 || part.length === 1);
+      (NON_FINAL_END.test(prev) || prev.length === 1 || part.length === 1 || ORPHAN_ENDING.test(part));
     if (join) out[out.length - 1] = `${prev}נ${part}`;
     else out.push(part);
   }
