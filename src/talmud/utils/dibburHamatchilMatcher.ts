@@ -167,117 +167,34 @@ interface Piece<T> { commentator: DhCommentator; words: T[] }
  * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
  * opening-type words; a run cut at the end of a line continues on the next line of the same column.
  */
+export const MAX_DH_WORDS = 5;
+
+const endsWith = (w: string, ch: string) => String(w || '').trim().endsWith(ch);
+
 export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T>[] {
-  const comm0 = hotspots.filter(
-    (h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker && plainWord(h.word)
-  );
-  const pageBodyH = modeHeight(comm0);
-  if (!pageBodyH) return [];
-  // Letter size is measured on THIS page, separately for each column: scans are printed at
-  // different scales, so the bold opening is only compared with its own column's body text.
-  const colBody: Record<string, number> = {
-    rashi: modeHeight(comm0.filter((h) => h.section === 'rashi')) || pageBodyH,
-    tosafot: modeHeight(comm0.filter((h) => h.section === 'tosafot')) || pageBodyH,
-  };
-  // Flat pages (every letter reported at the same height): bold cannot be measured, so the
-  // opening is read from punctuation — after the previous entry's ":" up to the first "."/וכו׳.
-  const flatOpenings = new Set<string>();
-  for (const sec of ['rashi', 'tosafot'] as const) {
-    const words = comm0.filter((h) => h.section === sec);
-    const styled = words.filter((h) => columnStyle(h) === sec).length;
-    if (words.length < 40 || styled > 0) continue;
-    let open = true;
-    let n = 0;
-    for (const w of readingOrder(words)) {
-      if (open && n < 8) { flatOpenings.add(w.id); n++; }
-      if (w.stopAfter === ':') { open = true; n = 0; }
-      else if (w.stopAfter === '.' || ETC.has(plainWord(w.word)) || n >= 8) open = false;
-    }
-  }
-  function columnStyle(h: DhHotspotLike): DhCommentator | null {
-    if (h.section !== 'rashi' && h.section !== 'tosafot') return dibburStyle(h, pageBodyH);
-    const s = dibburStyle(h, colBody[h.section]);
-    // The column decides the commentator; the size only decides opening vs. body.
-    return s ? (h.section as DhCommentator) : null;
-  }
-  const styleOf = (h: DhHotspotLike): DhCommentator | null =>
-    flatOpenings.has(h.id) ? (h.section as DhCommentator) : columnStyle(h);
-  const bodyH = pageBodyH;
-  // Large Tosafot opening words printed beside the Gemara are sometimes grouped with Gemara lines.
-  const comm = [...comm0, ...hotspots.filter((h) => isLargeTosafotWord(h, bodyH))];
-
-  // Split every printed row into column segments at wide horizontal gaps.
-  const rows = new Map<string, T[]>();
-  for (const h of comm) rows.set(h.rowId, [...(rows.get(h.rowId) || []), h]);
-  const segs: Array<{ words: T[]; top: number; h: number; left: number; right: number }> = [];
-  for (const words of rows.values()) {
-    words.sort((a, b) => b.leftPct + b.widthPct - (a.leftPct + a.widthPct));
-    let cur: T[] = [];
-    for (const w of words) {
-      const prev = cur[cur.length - 1];
-      if (prev && prev.leftPct - (w.leftPct + w.widthPct) > 1.6) {
-        segs.push(mk(cur));
-        cur = [];
-      }
-      cur.push(w);
-    }
-    if (cur.length) segs.push(mk(cur));
-  }
-  function mk(words: T[]) {
-    return {
-      words,
-      top: Math.min(...words.map((w) => w.topPct)),
-      h: Math.max(...words.map((w) => w.heightPct)),
-      left: Math.min(...words.map((w) => w.leftPct)),
-      right: Math.max(...words.map((w) => w.leftPct + w.widthPct)),
-    };
-  }
-  segs.sort((a, b) => a.top - b.top || b.right - a.right);
-
+  // Structural rule (scan-independent): the column decides the commentator, punctuation decides
+  // the opening. Each entry starts at the column start or right after the previous entry's ":";
+  // its opening ends at the first "." / וכו׳ or after MAX_DH_WORDS words. Letter sizes are not
+  // used: scan OCR reports arbitrary heights that would mis-assign columns and whole paragraphs.
   const pieces: Piece<T>[] = [];
-  const pending = new Map<number, Piece<T>>();
-  segs.forEach((seg, si) => {
+  for (const sec of ['rashi', 'tosafot'] as const) {
+    const words = readingOrder(
+      hotspots.filter((h) => h.section === sec && !h.isSmallMarker && plainWord(h.word))
+    );
+    let open = true;
     let cur: Piece<T> | null = null;
-    const carried = pending.get(si);
-    seg.words.forEach((w, wi) => {
-      const style = dibburStyle(w, bodyH);
-      if (wi === 0 && carried && style === carried.commentator) cur = carried;
-      if (style && cur && cur.commentator === style) cur.words.push(w);
-      else if (style) {
-        cur = { commentator: style, words: [w] };
-        pieces.push(cur);
-      } else cur = null;
-      if (cur && (w.stopAfter || ETC.has(plainWord(w.word)))) cur = null;
-    });
-    if (cur) {
-      // Opening still open: an enlarged first word forms its own segment, so first look for the
-      // segment printed right after it on the same baseline.
-      const bottom = seg.top + seg.h;
-      const sameLine = segs.findIndex(
-        (n, j) =>
-          j !== si &&
-          dibburStyle(n.words[0], bodyH) === cur!.commentator &&
-          n.right <= seg.left + 0.6 &&
-          seg.left - n.right < 1.2 &&
-          Math.abs(n.top + n.h - bottom) < Math.max(0.6, n.h * 0.6)
-      );
-      if (sameLine >= 0 && !pending.has(sameLine)) {
-        pending.set(sameLine, cur);
-        return;
+    for (const w of words) {
+      const p = plainWord(w.word);
+      const colon = w.stopAfter === ':' || endsWith(w.word, ':');
+      const dot = w.stopAfter === '.' || endsWith(w.word, '.');
+      if (open && !HEADINGS.has(p)) {
+        if (!cur) { cur = { commentator: sec, words: [] }; pieces.push(cur); }
+        cur.words.push(w);
+        if (dot || ETC.has(p) || cur.words.length >= MAX_DH_WORDS) { open = false; cur = null; }
       }
-      // Otherwise continue on the next line of this column.
-      for (let j = si + 1; j < segs.length; j++) {
-        const n = segs[j];
-        if (n.top <= seg.top + seg.h * 0.4) continue;
-        if (n.top > seg.top + seg.h * 3.2) break;
-        const overlap = Math.min(n.right, seg.right) - Math.max(n.left, seg.left);
-        if (overlap > 0.4 * Math.min(n.right - n.left, seg.right - seg.left)) {
-          pending.set(j, cur);
-          break;
-        }
-      }
+      if (colon) { open = true; cur = null; }
     }
-  });
+  }
   return pieces;
 }
 
@@ -330,7 +247,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     });
     if (words.length === 0) continue;
     let found: { start: number; end: number } | null = null;
-    const minK = words.length === 1 ? 1 : 2;
+    const minK = 2;
     // Longest verbatim prefix first; then (for split abbreviations like קמ"ל) skip up to two leading tokens.
     outer: for (let skip = 0; skip <= Math.max(0, Math.min(2, words.length - 2)); skip++) {
       for (let k = words.length - skip; k >= (skip ? 2 : minK); k--) {
