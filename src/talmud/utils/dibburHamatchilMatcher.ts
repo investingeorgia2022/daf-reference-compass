@@ -161,7 +161,7 @@ function isLargeTosafotWord(h: DhHotspotLike, bodyH: number): boolean {
   return r > 1.38 && r < 1.7 && !HEADINGS.has(plainWord(h.word));
 }
 
-interface Piece<T> { commentator: DhCommentator; words: T[] }
+interface Piece<T> { commentator: DhCommentator; words: T[]; fromStructure?: boolean }
 
 /**
  * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
