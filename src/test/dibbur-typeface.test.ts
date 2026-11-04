@@ -32,8 +32,8 @@ describe('typeface-driven dibbur hamatchil', () => {
   it('the typeface, not the column, names the commentator', () => {
     const g = gem(['קורין', 'את', 'שמע', 'בערבין']);
     // Two Tosafot entries in square type; one was misplaced into the Rashi column by the zone rules.
-    const t = row('tosafot', [['קורין', 'TOS_DH', '.'], ['גוף', 'BODY', ':'], ['שמע', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY']], 60);
-    const stray = row('rashi', [['בערבין', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY']], 70);
+    const t = row('tosafot', [['קורין', 'TOS_DH', '.'], ['גוף', 'BODY', ':'], ['שמע', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 60);
+    const stray = row('rashi', [['בערבין', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 70);
     const { roles } = buildDibburHamatchilLinks([...g, ...t, ...stray]);
     expect(roles.get(g[3].id)?.tosafot).toBeTruthy();
     expect(roles.get(g[3].id)?.rashi).toBeUndefined();
@@ -41,8 +41,8 @@ describe('typeface-driven dibbur hamatchil', () => {
 
   it('a word quoted by both Rashi and Tosafot is split green / bordeaux', () => {
     const g = gem(['מאימתי', 'קורין']);
-    const r = row('rashi', [['מאימתי', 'RASHI_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY']], 60);
-    const t = row('tosafot', [['מאימתי', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY']], 60);
+    const r = row('rashi', [['מאימתי', 'RASHI_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 60);
+    const t = row('tosafot', [['מאימתי', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 60);
     const { roles } = buildDibburHamatchilLinks([...g, ...r, ...t]);
     expect(roles.get(g[0].id)).toMatchObject({ splitWord: true });
   });
