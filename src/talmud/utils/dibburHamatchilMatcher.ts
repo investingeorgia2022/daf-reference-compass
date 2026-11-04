@@ -208,7 +208,7 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
   // height cannot reveal openings, so use the printed structure instead.
   const styledRashi = comm0.filter((h) => h.section === 'rashi' && dibburStyle(h, bodyH) === 'rashi').length;
   const rashiBody = comm0.filter((h) => h.section === 'rashi').length;
-  if (styledRashi === 0 && (rashiBody >= 40 || comm0.every((h) => h.glyphH === bodyH))) return extractByPunctuation(hotspots, comm, segs, bodyH);
+  if (styledRashi === 0 && rashiBody >= 40) return extractByPunctuation(hotspots, comm, segs, bodyH);
 
   const pieces: Piece<T>[] = [];
   const pending = new Map<number, Piece<T>>();
