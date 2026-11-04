@@ -420,8 +420,10 @@ function classifyVilnaCoordinateZone(
   }
 
   // Lower full-width Tosafot / Rashi below Gemara (topPct >= 65.5% and Rashi script pdfH < 12.6):
-  if (topPct >= 65.5 && pdfH < 12.6) {
-    return 'tosafot';
+  if (topPct >= 65.5 && pdfH < 12.6 && leftPct >= 33.2 && leftPct <= 61.8) {
+    // Below the Gemara both columns continue; split at the page middle instead of forcing Tosafot.
+    if (leftPct >= 47.1) return rashiSideIsRight ? 'rashi' : 'tosafot';
+    return rashiSideIsRight ? 'tosafot' : 'rashi';
   }
 
   if (leftPct > 61.8) {
@@ -3151,8 +3153,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
             const dhColors = new Map();
             const { roles } = buildDibburHamatchilLinks(parsed);
+            const sectionById = new Map(parsed.map((h) => [h.id, h.section]));
             for (const [id, role] of roles) {
               if (citSet.has(id)) continue;
+              const sec = sectionById.get(id);
+              // Commentary columns keep their own colour: Rashi green, Tosafot bordeaux.
+              if (sec === 'rashi') { dhColors.set(id, { first: RASHI_INK }); continue; }
+              if (sec === 'tosafot') { dhColors.set(id, { first: TOSAFOT_INK }); continue; }
               if (role.splitWord) dhColors.set(id, { first: RASHI_INK, second: TOSAFOT_INK });
               else if (role.rashi) dhColors.set(id, { first: RASHI_INK });
               else if (role.tosafot) dhColors.set(id, { first: TOSAFOT_INK });
