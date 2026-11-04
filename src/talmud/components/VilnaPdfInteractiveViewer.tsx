@@ -79,6 +79,8 @@ export interface VilnaPdfHotspot {
   inkHeightPct?: number;
   /** Printed glyph height of the PDF run (pt); separates bold dibbur-hamatchil type from body text. */
   glyphH?: number;
+  /** PDF font resource of the printed run (opening typeface vs body script). */
+  font?: string;
   /** 'sefaria' when the letters were replaced by the aligned Sefaria Unicode word. */
   textSource?: 'pdf' | 'sefaria';
   /** A "." or ":" is printed right after this word. */
@@ -949,6 +951,8 @@ function extractHotspotsFromTextContent(
     vpWidth: number;
     vpHeight: number;
     pdfH: number;
+    /** PDF font resource of the run: separates opening typefaces from the body script. */
+    font?: string;
     leftPct: number;
     topPct: number;
     section: 'header' | 'mishnah' | 'gemara' | 'rashi' | 'tosafot' | 'margin';
@@ -1080,6 +1084,7 @@ function extractHotspotsFromTextContent(
       vpWidth,
       vpHeight,
       pdfH,
+      font: typeof rawItem.fontName === 'string' ? rawItem.fontName : undefined,
       leftPct,
       topPct,
       section,
@@ -1701,6 +1706,7 @@ function extractHotspotsFromTextContent(
           marginCommType: run.marginCommType,
           marginEntryKey: run.marginEntryKey,
           glyphH: run.pdfH,
+          font: run.font,
           ...(markerCheck.isSmallMarker
             ? {
                 inkLeftPct: leftPct,
@@ -1787,6 +1793,7 @@ function extractHotspotsFromTextContent(
               marginCommType: run.marginCommType,
               marginEntryKey: run.marginEntryKey,
               glyphH: run.pdfH,
+          font: run.font,
               ...(markerCheck.isSmallMarker
                 ? {
                     inkLeftPct: rawLeftPct,
