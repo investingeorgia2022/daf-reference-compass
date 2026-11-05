@@ -78,12 +78,21 @@ function stripPrefixes(w: string): string[] {
   return out;
 }
 
+/** A word cut short with a geresh: ר' (רבי), דר' (דרבי), כלומ' (כלומר). */
+function isTruncated(raw: string): boolean {
+  const s = String(raw || '').replace(NIKUD, '').replace(/[.:,;]+$/, '').trim();
+  return /['\u05F3\u2019]$/.test(s) && !ABBREV_MARK.test(s.slice(0, -1));
+}
+
 /** Do two single words match, ignoring nikud, final letters and up to two prefix letters? */
 export function wordsMatch(a: string, b: string): boolean {
   const pa = plainWord(a);
   const pb = plainWord(b);
   if (!pa || !pb) return false;
   if (pa === pb) return true;
+  // ר' = רבי, דר' = דרבי: a geresh-shortened word matches the full word it begins.
+  if (isTruncated(a) && !isTruncated(b) && pb.length > pa.length && pb.startsWith(pa)) return true;
+  if (isTruncated(b) && !isTruncated(a) && pa.length > pb.length && pa.startsWith(pb)) return true;
   // Hebrew plural -ים and Aramaic plural -ין are the same word (טובלים / טובלין).
   const plur = (w: string) => (w.length >= 4 && /י[מנ]$/.test(w) ? w.slice(0, -1) : w);
   if (plur(pa) === plur(pb) && plur(pa) !== pa) return true;
