@@ -1917,6 +1917,7 @@ function extractHotspotsFromTextContent(
   }
 
   // Attach printed "." / ":" (separate PDF runs) to the commentary word they follow (RTL: on its left).
+  const usedStopMarks = new Set<(typeof stopMarks)[number]>();
   for (const h of hotspots) {
     if (h.section !== 'rashi' && h.section !== 'tosafot') continue;
     if (/[.:]["'״׳]?$/.test(h.word.trim())) {
