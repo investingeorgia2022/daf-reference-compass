@@ -24,6 +24,8 @@ export interface DhHotspotLike {
   stopAfter?: '.' | ':';
   /** PDF font resource of the printed run. */
   font?: string;
+  /** A separate geresh / gershayim printed right after the word (ר' / ק"ש). */
+  quoteAfter?: '"' | "'";
 }
 
 export interface DhLink {
