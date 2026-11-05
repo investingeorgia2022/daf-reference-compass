@@ -29,6 +29,7 @@ export function isLegacyHebrewRun(str: string): boolean {
 const MAC_ONLY = new Set(Array.from(MAC_ROMAN_E0_FA).filter((c) => c.charCodeAt(0) > 0xff || c === '\u00b7'));
 const HEB = /^[\u05d0-\u05ea]+$/;
 const NON_FINAL_END = /[כמנפצ]$/;
+const FINAL_END = /[ךםןףץ]$/;
 /** Word endings that never stand alone (שהכה|ים, כדת|יא). */
 const ORPHAN_ENDING = /^(ים|ין|יא|יה)$/;
 
@@ -51,23 +52,32 @@ export interface NunHealOptions {
 export function healLostNun(text: string, opts: NunHealOptions = {}): string {
   const parts = text.split(' ');
   const out: string[] = [];
-  let prevIdx = -1;
+  let firstUntouched = true;
   parts.forEach((part, i) => {
     const prev = out[out.length - 1];
-    const prevIsQuotedLetter = opts.quoteAtStart && prevIdx === 0 && prev?.length === 1;
+    const next = parts[i + 1];
+    const prevIsQuotedLetter = opts.quoteAtStart && out.length === 1 && firstUntouched && prev?.length === 1;
     const partIsQuotedLetter = opts.quoteAtEnd && i === parts.length - 1 && part.length === 1;
-    const join =
+    const canGlue =
       prev !== undefined &&
       !prevIsQuotedLetter &&
       !partIsQuotedLetter &&
       HEB.test(prev) &&
       HEB.test(part) &&
-      (NON_FINAL_END.test(prev) || prev.length === 1 || part.length === 1 || ORPHAN_ENDING.test(part));
-    if (join) out[out.length - 1] = `${prev}נ${part}`;
-    else {
-      out.push(part);
-      prevIdx = i;
+      // A final letter (ם ן ך ף ץ) always ends a word: the gap after it is a real space.
+      !FINAL_END.test(prev);
+    let join = false;
+    if (canGlue) {
+      if (NON_FINAL_END.test(prev)) join = true;
+      // A lone letter opens the following fragment (ד יאל → דניאל) unless it ends the run (א י → אני).
+      else if (part.length === 1) join = !(next && HEB.test(next));
+      else if (prev.length === 1) join = true;
+      else if (ORPHAN_ENDING.test(part)) join = true;
     }
+    if (join) {
+      out[out.length - 1] = `${prev}נ${part}`;
+      if (out.length === 1) firstUntouched = false;
+    } else out.push(part);
   });
   return out.join(' ');
 }

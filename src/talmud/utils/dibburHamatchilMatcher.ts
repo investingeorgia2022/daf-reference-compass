@@ -123,9 +123,10 @@ export function abbreviationSpan(abbr: string, words: string[], pos: number): nu
   const norm = normalizeHebrewWord(abbr);
   if (!isAbbreviation(norm)) return 0;
   const full = plain(norm);
+  // Pieces begin the words themselves; prefixes are written inside the abbreviation (וק"ש).
   const variants = (w: string) => {
     const p = plainWord(w);
-    return p ? stripPrefixes(p) : [];
+    return p ? [p] : [];
   };
   const fits = (letters: string, start: number, n: number): boolean => {
     const split = (idx: number, j: number): boolean => {
