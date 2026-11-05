@@ -288,8 +288,10 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
   const raw: Array<Piece<T> & { bodyFont?: string }> = [];
   for (const sec of ['rashi', 'tosafot'] as const) {
     // Each column has its own body script; the opening typeface is anything else.
-    const bodyFont = modeFont(comm.filter((h) => h.section === sec));
-    const isOpeningType = (h: T) => !bodyFont || !h.font || h.font !== bodyFont;
+    // Punctuation alone bounds an opening; PDF font IDs change per line and never decide it.
+    const bodyFont: string | undefined = undefined;
+    const isOpeningType = (_h: T) => true;
+    void modeFont;
     const words = readingOrder(
       hotspots.filter(
         (h) =>
