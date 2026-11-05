@@ -964,6 +964,7 @@ function extractHotspotsFromTextContent(
   const vpH = Math.max(1, viewport.height);
   const initialRuns: RawPdfRun[] = [];
   const stopMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '.' | ':' }> = [];
+  const quoteMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '"' | "'" }> = [];
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
@@ -999,6 +1000,18 @@ function extractHotspotsFromTextContent(
     // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
     const isQuoteOnly = /^["'״׳`]+$/.test(str);
     const transform = rawItem.transform as number[] | undefined;
+    // Separate quote runs (ר' / ק"ש in Mac-Hebrew scans): remember them so the word they follow
+    // keeps its abbreviation mark for dibbur-hamatchil matching.
+    if (isQuoteOnly && transform && transform.length >= 6) {
+      const [qx1, qy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
+      const [qx2] = viewport.convertToViewportPoint((Number(transform[4]) || 0) + Math.max(1, Number(rawItem.width) || 2), Number(transform[5]) || 0);
+      quoteMarks.push({
+        leftPct: (Math.min(qx1, qx2) / vpW) * 100,
+        rightPct: (Math.max(qx1, qx2) / vpW) * 100,
+        baselinePct: (qy / vpH) * 100,
+        mark: /["״]/.test(str) || str.length > 1 ? '"' : "'",
+      });
+    }
     // Standalone "." / ":" runs end a dibbur hamatchil; remember where they sit before dropping them.
     if (str && /^[.:'"״׳\s]+$/.test(str) && /[.:]/.test(str) && transform && transform.length >= 6) {
       const [sx1, sy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
@@ -1886,6 +1899,23 @@ function extractHotspotsFromTextContent(
         m.baselinePct >= h.topPct + h.heightPct * 0.3
     );
     if (mark) h.stopAfter = mark.mark;
+  }
+
+  // Attach separate quote runs to the word they follow (RTL: on its left): ר' / ק"ש stay abbreviations.
+  if (quoteMarks.length > 0) {
+    for (const h of hotspots) {
+      if (h.section === 'margin' || h.section === 'header' || h.isSmallMarker) continue;
+      if (/["'״׳]/.test(h.word)) continue;
+      const bottom = h.topPct + h.heightPct;
+      const q = quoteMarks.find(
+        (m) =>
+          m.rightPct >= h.leftPct - 1.0 &&
+          m.rightPct <= h.leftPct + 0.6 &&
+          m.baselinePct <= bottom + h.heightPct * 0.35 &&
+          m.baselinePct >= h.topPct + h.heightPct * 0.2
+      );
+      if (q) h.quoteAfter = q.mark;
+    }
   }
 
   return getIndependentMarkerBoxes(hotspots);
