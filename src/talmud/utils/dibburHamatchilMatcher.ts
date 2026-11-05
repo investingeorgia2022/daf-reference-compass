@@ -109,22 +109,82 @@ export function wordsMatch(a: string, b: string): boolean {
 export function matchTokenAt(token: string, main: string[], pos: number): number {
   if (pos >= main.length) return 0;
   if (wordsMatch(token, main[pos])) return 1;
-  const norm = normalizeHebrewWord(token);
-  if (isAbbreviation(norm)) {
-    const letters = plain(norm).split('');
-    // Allow an attached prefix on the abbreviation (e.g. ואע"פ)
-    for (const start of [0, 1]) {
-      const ls = letters.slice(start);
-      if (ls.length < 2 || pos + ls.length > main.length) continue;
-      let ok = true;
-      for (let k = 0; k < ls.length; k++) {
-        const cands = stripPrefixes(plainWord(main[pos + k]));
-        if (!cands.some((c) => c[0] === ls[k])) { ok = false; break; }
+  return abbreviationSpan(token, main, pos);
+}
+
+/**
+ * How many full words at words[pos…] an abbreviation stands for (0 = none). The abbreviation's
+ * letters are split into consecutive pieces, each beginning one of the words: אע"פ = אף על פי,
+ * ק"ש = קריאת שמע, אדר"מ = אדר' מאיר (piece "אדר" begins the shortened אדר').
+ */
+export function abbreviationSpan(abbr: string, words: string[], pos: number): number {
+  const norm = normalizeHebrewWord(abbr);
+  if (!isAbbreviation(norm)) return 0;
+  const full = plain(norm);
+  const variants = (w: string) => {
+    const p = plainWord(w);
+    return p ? stripPrefixes(p) : [];
+  };
+  const fits = (letters: string, start: number, n: number): boolean => {
+    const split = (idx: number, j: number): boolean => {
+      if (j === n) return idx === letters.length;
+      const remainingWords = n - j - 1;
+      for (let len = 1; idx + len + remainingWords <= letters.length; len++) {
+        const piece = letters.slice(idx, idx + len);
+        if (variants(words[start + j]).some((v) => v.startsWith(piece)) && split(idx + len, j + 1)) return true;
       }
-      if (ok) return ls.length;
+      return false;
+    };
+    return split(0, 0);
+  };
+  // An attached prefix (ואע"פ) may stand outside the expanded words.
+  const options = PREFIXES.includes(full[0]) && full.length > 2 ? [full, full.slice(1)] : [full];
+  for (const letters of options) {
+    for (let n = 2; n <= letters.length && pos + n <= words.length; n++) {
+      if (fits(letters, pos, n)) return n;
     }
   }
   return 0;
+}
+
+/**
+ * Aligns a quotation with the main text starting at main[pos]. Abbreviations may appear on either
+ * side (Rashi אדר' מאיר ↔ Gemara אדר"מ). Returns the index after the last main word, or -1.
+ */
+function alignAt(tokens: string[], main: string[], pos: number): number {
+  let i = 0;
+  let p = pos;
+  while (i < tokens.length) {
+    if (p >= main.length) return -1;
+    if (wordsMatch(tokens[i], main[p])) { i++; p++; continue; }
+    const mainUsed = abbreviationSpan(tokens[i], main, p);
+    if (mainUsed) { i++; p += mainUsed; continue; }
+    const tokUsed = abbreviationSpan(main[p], tokens, i);
+    if (tokUsed) { i += tokUsed; p++; continue; }
+    return -1;
+  }
+  return p;
+}
+
+interface Token<T> { text: string; hs: T[] }
+
+/**
+ * Joins words the scan printed apart around a separate quote mark: ק + " + ש → ק"ש, ר + ' → ר'.
+ * Hotspots must be in reading order.
+ */
+function toTokens<T extends DhHotspotLike>(hs: T[]): Token<T>[] {
+  const out: Token<T>[] = [];
+  for (let i = 0; i < hs.length; i++) {
+    const h = hs[i];
+    const next = hs[i + 1];
+    if (h.quoteAfter === '"' && next && next.rowId === h.rowId && plainWord(next.word).length <= 2) {
+      out.push({ text: `${normalizeHebrewWord(h.word)}"${normalizeHebrewWord(next.word)}`, hs: [h, next] });
+      i++;
+      continue;
+    }
+    out.push({ text: h.quoteAfter ? `${normalizeHebrewWord(h.word)}'` : h.word, hs: [h] });
+  }
+  return out;
 }
 
 /** Orders hotspots of one section in reading order (rows top→bottom, words right→left). */
