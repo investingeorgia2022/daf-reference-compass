@@ -13,6 +13,7 @@ import {
 import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
+import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
 import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
