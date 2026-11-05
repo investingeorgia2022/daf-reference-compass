@@ -30,6 +30,7 @@ const MAC_ONLY = new Set(Array.from(MAC_ROMAN_E0_FA).filter((c) => c.charCodeAt(
 const HEB = /^[\u05d0-\u05ea]+$/;
 const NON_FINAL_END = /[כמנפצ]$/;
 const FINAL_END = /[ךםןףץ]$/;
+const CLOSING_LETTER = /^[יוהךםןףץ]$/;
 /** Word endings that never stand alone (שהכה|ים, כדת|יא). */
 const ORPHAN_ENDING = /^(ים|ין|יא|יה)$/;
 
@@ -69,8 +70,9 @@ export function healLostNun(text: string, opts: NunHealOptions = {}): string {
     let join = false;
     if (canGlue) {
       if (NON_FINAL_END.test(prev)) join = true;
-      // A lone letter opens the following fragment (ד יאל → דניאל) unless it ends the run (א י → אני).
-      else if (part.length === 1) join = !(next && HEB.test(next));
+      // A lone letter: word endings נ+י/ו/ה or a final letter close the previous fragment (שא י → שאני);
+      // any other letter opens the following one (ד יאל → דניאל) unless it ends the run.
+      else if (part.length === 1) join = CLOSING_LETTER.test(part) || !(next && HEB.test(next));
       else if (prev.length === 1) join = true;
       else if (ORPHAN_ENDING.test(part)) join = true;
     }
