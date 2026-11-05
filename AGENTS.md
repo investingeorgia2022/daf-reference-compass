@@ -32,3 +32,4 @@
 - Row bucketing never moves runs between Rashi, Tosafot and main text; at the page top the columns touch, and absorbing them mixes texts and breaks matching.
 - Mac-Hebrew lost-נ repair (legacyHebrewFont) is per font: control-code נ fonts keep spaces as gaps; space-healing never glues after a final letter or beside a quote mark.
 - Gemara↔commentary linking is word-level: Rashi links first, then Tosafot; each commentator claims main words independently (never reusing its own claims, so repeated phrases bind to the next free occurrence), Tosafot וכו׳ starting at a Rashi start extends to Rashi's span, and OCR-confused letters match via toOCRSkeleton.
+- Full-width commentary lines below the Gemara are assigned whole to one commentator (the column that keeps printing after the other ends) by vilnaLowerCommentary, never split by page side; side splits mixed Rashi and Tosafot.
