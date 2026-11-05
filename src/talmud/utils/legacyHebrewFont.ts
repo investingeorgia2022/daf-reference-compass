@@ -32,40 +32,87 @@ const NON_FINAL_END = /[כמנפצ]$/;
 /** Word endings that never stand alone (שהכה|ים, כדת|יא). */
 const ORPHAN_ENDING = /^(ים|ין|יא|יה)$/;
 
+/** Some Mac-Hebrew fonts report the lost נ as a control character instead of a space. */
+const CONTROL_NUN = /[\u0001-\u001f]/g;
+
+export interface NunHealOptions {
+  /** A quote mark (ק"ש, ר') touches the first word of the run. */
+  quoteAtStart?: boolean;
+  /** A quote mark touches the last word of the run. */
+  quoteAtEnd?: boolean;
+}
+
 /**
  * Mac-Hebrew scans lose the letter נ (MacRoman 0xF0 has no Unicode twin), which PDF.js reports
  * as a plain space: לפניה arrives as "לפ יה", כנסים as "כ סים". A Hebrew word never ends in a
- * non-final כ/מ/נ/פ/צ and a lone letter is not a word, so such gaps are restored as נ.
+ * non-final כ/מ/נ/פ/צ and a lone letter is not a word, so such gaps are restored as נ —
+ * except a lone letter next to a quote mark, which is part of an abbreviation (ק"ש אימת, לאו ר').
  */
-export function healLostNun(text: string): string {
+export function healLostNun(text: string, opts: NunHealOptions = {}): string {
   const parts = text.split(' ');
   const out: string[] = [];
-  for (const part of parts) {
+  let prevIdx = -1;
+  parts.forEach((part, i) => {
     const prev = out[out.length - 1];
+    const prevIsQuotedLetter = opts.quoteAtStart && prevIdx === 0 && prev?.length === 1;
+    const partIsQuotedLetter = opts.quoteAtEnd && i === parts.length - 1 && part.length === 1;
     const join =
       prev !== undefined &&
+      !prevIsQuotedLetter &&
+      !partIsQuotedLetter &&
       HEB.test(prev) &&
       HEB.test(part) &&
       (NON_FINAL_END.test(prev) || prev.length === 1 || part.length === 1 || ORPHAN_ENDING.test(part));
     if (join) out[out.length - 1] = `${prev}נ${part}`;
-    else out.push(part);
-  }
+    else {
+      out.push(part);
+      prevIdx = i;
+    }
+  });
   return out.join(' ');
 }
 
-export function decodeLegacyHebrew(str: string): string {
+export function decodeLegacyHebrew(
+  str: string,
+  opts: NunHealOptions & { controlNunFont?: boolean } = {}
+): string {
   if (!isLegacyHebrewRun(str)) return str;
-  const mapped = Array.from(str, (ch) => MAP.get(ch) ?? MIRROR[ch] ?? ch);
-  const text = mapped.reverse().join('');
   const isMac = Array.from(str).some((ch) => MAC_ONLY.has(ch));
-  return isMac ? healLostNun(text) : text;
+  const hasControlNun = isMac && (opts.controlNunFont || /[\u0001-\u001f]/.test(str));
+  const mapped = Array.from(str, (ch) => MAP.get(ch) ?? MIRROR[ch] ?? ch);
+  let text = mapped.reverse().join('');
+  if (!isMac) return text;
+  // This font prints נ as a control code, so its spaces are real word gaps.
+  if (hasControlNun) return text.replace(CONTROL_NUN, 'נ');
+  return healLostNun(text, opts);
 }
+
+const isQuoteItem = (it: unknown) => /^\s*["'\u05F3\u05F4`]+\s*$/.test(String((it as { str?: unknown })?.str ?? ''));
+const itemX = (it: unknown) => Number((it as { transform?: number[] })?.transform?.[4]) || 0;
+const itemY = (it: unknown) => Number((it as { transform?: number[] })?.transform?.[5]) || 0;
 
 /** Returns text items with legacy-font runs decoded; geometry is untouched. */
 export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[]): T[] {
-  return items.map((it) => {
+  // Fonts that print נ as a control code anywhere on the page do so everywhere.
+  const controlNunFonts = new Set<string>();
+  for (const it of items) {
     const s = typeof it?.str === 'string' ? it.str : '';
-    const d = decodeLegacyHebrew(s);
+    const font = (it as { fontName?: string }).fontName;
+    if (font && /[\u0001-\u001f]/.test(s) && isLegacyHebrewRun(s)) controlNunFonts.add(font);
+  }
+  return items.map((it, i) => {
+    const s = typeof it?.str === 'string' ? it.str : '';
+    if (!isLegacyHebrewRun(s)) return it;
+    // A quote item printed right beside this run: visually left = touches the reading end.
+    let quoteAtStart = false;
+    let quoteAtEnd = false;
+    for (const n of [items[i - 1], items[i + 1]]) {
+      if (!n || !isQuoteItem(n) || Math.abs(itemY(n) - itemY(it)) > 3) continue;
+      if (itemX(n) < itemX(it)) quoteAtEnd = true;
+      else quoteAtStart = true;
+    }
+    const font = (it as { fontName?: string }).fontName;
+    const d = decodeLegacyHebrew(s, { quoteAtStart, quoteAtEnd, controlNunFont: !!font && controlNunFonts.has(font) });
     return d === s ? it : { ...it, str: d };
   });
 }
