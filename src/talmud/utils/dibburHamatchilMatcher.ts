@@ -334,14 +334,8 @@ function findInMain(tokens: string[], main: string[], from: number): { start: nu
   if (tokens.length === 0) return null;
   const search = (startAt: number) => {
     for (let s = startAt; s < main.length; s++) {
-      let p = s;
-      let ok = true;
-      for (const t of tokens) {
-        const used = matchTokenAt(t, main, p);
-        if (!used) { ok = false; break; }
-        p += used;
-      }
-      if (ok) return { start: s, end: p - 1 };
+      const p = alignAt(tokens, main, s);
+      if (p > s) return { start: s, end: p - 1 };
     }
     return null;
   };
@@ -365,8 +359,8 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
   );
   // Small inline citations such as (דף ג.) are not part of the quoted text.
   const mainH = modeHeight(mainAll);
-  const main = readingOrder(mainAll.filter((h) => !mainH || !h.glyphH || h.glyphH >= mainH * 0.8));
-  const mainWords = main.map((h) => h.word);
+  const main = toTokens(readingOrder(mainAll.filter((h) => !mainH || !h.glyphH || h.glyphH >= mainH * 0.8)));
+  const mainWords = main.map((t) => t.text);
   const links: DhLink[] = [];
   const roles = new Map<string, DhHotspotRole>();
   const cursor: Record<DhCommentator, number> = { rashi: 0, tosafot: 0 };
@@ -378,16 +372,15 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
       return p && !ETC.has(p) && !HEADINGS.has(p);
     });
     if (words.length === 0) continue;
+    const toks = toTokens(words);
     let found: { start: number; end: number } | null = null;
+    // The quotation always begins with the opening's first word — never from its middle or end.
     // One-word openings quote one word; longer ones need at least two matching words.
-    const minK = words.length === 1 ? 1 : 2;
-    // Longest verbatim prefix first; then (for split abbreviations like קמ"ל) skip up to two leading tokens.
-    outer: for (let skip = 0; skip <= Math.max(0, Math.min(2, words.length - 2)); skip++) {
-      for (let k = words.length - skip; k >= (skip ? 2 : minK); k--) {
-        if (k === 1 && plainWord(words[skip].word).length < 2) break;
-        found = findInMain(words.slice(skip, skip + k).map((h) => h.word), mainWords, cursor[piece.commentator]);
-        if (found) break outer;
-      }
+    const minK = toks.length === 1 ? 1 : 2;
+    for (let k = toks.length; k >= minK; k--) {
+      if (k === 1 && plainWord(toks[0].text).length < 2) break;
+      found = findInMain(toks.slice(0, k).map((t) => t.text), mainWords, cursor[piece.commentator]);
+      if (found) break;
     }
     const key = `${piece.commentator}:${counter[piece.commentator]++}`;
     if (!found) {
@@ -405,7 +398,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
       key,
       commentator: piece.commentator,
       dhIds: piece.words.map((h) => h.id),
-      mainIds: main.slice(found.start, found.end + 1).map((h) => h.id),
+      mainIds: main.slice(found.start, found.end + 1).flatMap((t) => t.hs.map((h) => h.id)),
     };
     links.push(link);
     for (const id of link.dhIds) roles.set(id, { [piece.commentator]: key });
