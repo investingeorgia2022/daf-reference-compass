@@ -85,6 +85,8 @@ export interface VilnaPdfHotspot {
   textSource?: 'pdf' | 'sefaria';
   /** A "." or ":" is printed right after this word. */
   stopAfter?: '.' | ':';
+  /** A separate geresh (ר') or gershayim (ק"ש) is printed right after this word. */
+  quoteAfter?: '"' | "'";
 }
 
 export interface PdfDafLine {
@@ -1318,7 +1320,20 @@ function extractHotspotsFromTextContent(
       }
 
       // If a run is an inline small marker/citation or a bold lead word sitting horizontally adjacent to this bucket in the main body, keep it on the same line!
-      if (b.section !== 'margin' && run.section !== 'margin' && b.section !== 'header' && run.section !== 'header') {
+      // Never move text between columns: Rashi and Tosafot touch at the top of the page, and the
+      // first Gemara line sits right beside them — absorbing them mixes three texts into one line.
+      const isComm = (s: RawPdfRun['section']) => s === 'rashi' || s === 'tosafot';
+      const crossesColumns =
+        (isComm(b.section) && isComm(run.section)) ||
+        ((run.section === 'mishnah' || run.section === 'gemara') && run.pdfH >= 12.6 && run.pdfH < 15.5) ||
+        ((b.section === 'mishnah' || b.section === 'gemara') && isComm(run.section) && run.pdfH >= 9.6 && run.pdfH < 15.5);
+      if (
+        !crossesColumns &&
+        b.section !== 'margin' &&
+        run.section !== 'margin' &&
+        b.section !== 'header' &&
+        run.section !== 'header'
+      ) {
         const horizGap =
           run.leftPct > b.maxRightPct
             ? run.leftPct - b.maxRightPct
@@ -2264,8 +2279,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const segmentBox = useCallback(
     (rowId: string | undefined, anchorId: string | undefined): LineBox | null => {
       if (!rowId || !anchorId) return null;
+      // Inline markers (ג) occupy space in the line: keep them in the gap walk so the band runs to the end.
       const row = hotspots
-        .filter((x) => x.rowId === rowId && !x.isSmallMarker)
+        .filter((x) => x.rowId === rowId)
         .sort((a, b) => a.leftPct - b.leftPct);
       if (!row.some((x) => x.id === anchorId)) return null;
       let seg: VilnaPdfHotspot[] = [];
