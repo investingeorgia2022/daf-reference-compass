@@ -1917,6 +1917,7 @@ function extractHotspotsFromTextContent(
   }
 
   // Attach printed "." / ":" (separate PDF runs) to the commentary word they follow (RTL: on its left).
+  const usedStopMarks = new Set<(typeof stopMarks)[number]>();
   for (const h of hotspots) {
     if (h.section !== 'rashi' && h.section !== 'tosafot') continue;
     if (/[.:]["'״׳]?$/.test(h.word.trim())) {
@@ -1931,7 +1932,37 @@ function extractHotspotsFromTextContent(
         m.baselinePct <= bottom + h.heightPct * 0.35 &&
         m.baselinePct >= h.topPct + h.heightPct * 0.3
     );
-    if (mark) h.stopAfter = mark.mark;
+    if (mark) {
+      h.stopAfter = mark.mark;
+      usedStopMarks.add(mark);
+    }
+  }
+  // Justified lines often push a closing ":" (or ".") to the far end of the line, away from its
+  // word. Such a mark still closes the last word printed before it on that line, so the entry on
+  // the next line opens a new dibbur hamatchil.
+  for (const m of stopMarks) {
+    if (usedStopMarks.has(m)) continue;
+    let best: VilnaPdfHotspot | null = null;
+    let bestGap = Infinity;
+    for (const h of hotspots) {
+      if ((h.section !== 'rashi' && h.section !== 'tosafot') || h.isSmallMarker || h.stopAfter) continue;
+      const bottom = h.topPct + h.heightPct;
+      if (m.baselinePct > bottom + h.heightPct * 0.35 || m.baselinePct < h.topPct + h.heightPct * 0.3) continue;
+      const gap = h.leftPct - m.rightPct;
+      if (gap < -0.5 || gap > 4.5) continue;
+      if (gap < bestGap) { bestGap = gap; best = h; }
+    }
+    if (!best) continue;
+    // Only the line's last word may own a distant mark: no other word may sit between them.
+    const between = hotspots.some(
+      (o) =>
+        o !== best &&
+        o.section === best!.section &&
+        o.rowId === best!.rowId &&
+        o.leftPct + o.widthPct > m.rightPct &&
+        o.leftPct + o.widthPct <= best!.leftPct + 0.2
+    );
+    if (!between) best.stopAfter = m.mark;
   }
 
   // Attach separate quote runs to the word they follow (RTL: on its left): ר' / ק"ש stay abbreviations.
