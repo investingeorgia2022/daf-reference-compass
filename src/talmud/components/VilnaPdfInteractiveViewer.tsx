@@ -1928,20 +1928,21 @@ function extractHotspotsFromTextContent(
   }
 
   // Attach separate quote runs to the word they follow (RTL: on its left): ר' / ק"ש stay abbreviations.
-  if (quoteMarks.length > 0) {
+  // Each quote belongs to the one word whose left edge it touches most closely.
+  for (const m of quoteMarks) {
+    let best: VilnaPdfHotspot | null = null;
+    let bestGap = Infinity;
     for (const h of hotspots) {
       if (h.section === 'margin' || h.section === 'header' || h.isSmallMarker) continue;
       if (/["'״׳]/.test(h.word)) continue;
       const bottom = h.topPct + h.heightPct;
-      const q = quoteMarks.find(
-        (m) =>
-          m.rightPct >= h.leftPct - 1.0 &&
-          m.rightPct <= h.leftPct + 0.6 &&
-          m.baselinePct <= bottom + h.heightPct * 0.35 &&
-          m.baselinePct >= h.topPct + h.heightPct * 0.2
-      );
-      if (q) h.quoteAfter = q.mark;
+      if (m.baselinePct > bottom + h.heightPct * 0.35 || m.baselinePct < h.topPct + h.heightPct * 0.2) continue;
+      const gap = Math.abs(m.rightPct - h.leftPct);
+      if (m.rightPct < h.leftPct - 1.0 || m.rightPct > h.leftPct + 0.6 || gap >= bestGap) continue;
+      best = h;
+      bestGap = gap;
     }
+    if (best) best.quoteAfter = m.mark;
   }
 
   return getIndependentMarkerBoxes(hotspots);
