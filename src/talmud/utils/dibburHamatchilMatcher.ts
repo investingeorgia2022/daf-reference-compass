@@ -224,6 +224,8 @@ interface Piece<T> { commentator: DhCommentator; words: T[] }
  * opening-type words; a run cut at the end of a line continues on the next line of the same column.
  */
 export const MAX_DH_WORDS = 5;
+/** Openings bounded by their own typeface may quote a longer passage. */
+export const MAX_TYPEFACE_DH_WORDS = 10;
 
 const endsWith = (w: string, ch: string) => String(w || '').trim().endsWith(ch);
 
@@ -268,17 +270,24 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
           (h.section === sec || (sec === 'tosafot' && isLargeTosafotWord(h, bodyH)))
       )
     );
+    // With a distinct opening typeface the run itself bounds the opening; without one, cap it.
+    const maxWords = bodyFont ? MAX_TYPEFACE_DH_WORDS : MAX_DH_WORDS;
     let open = true;
     let cur: Piece<T> | null = null;
+    // An opening is only real once its closing "." (or וכו׳) is printed.
+    const drop = () => {
+      if (cur) raw.splice(raw.indexOf(cur), 1);
+      cur = null;
+    };
     for (const w of words) {
       const p = plainWord(w.word);
       const colon = w.stopAfter === ':' || endsWith(w.word, ':');
       const dot = w.stopAfter === '.' || endsWith(w.word, '.');
       if (open && !HEADINGS.has(p)) {
         if (cur && cur.words.length > 0 && bodyFont && w.font === bodyFont && w.font !== cur.words[0].font) {
-          // Body script resumed without a printed "." — the opening typeface already ended.
+          // Body script resumed without a printed "." — that was not an opening.
+          drop();
           open = false;
-          cur = null;
         } else {
           if (!cur) {
             if (bodyFont && !isOpeningType(w)) {
@@ -291,11 +300,16 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
             raw.push(cur);
           }
           cur.words.push(w);
-          if (dot || ETC.has(p) || cur.words.length >= MAX_DH_WORDS) { open = false; cur = null; }
+          if (dot || ETC.has(p)) { open = false; cur = null; }
+          else if (cur.words.length >= maxWords) { drop(); open = false; }
         }
       }
-      if (colon) { open = true; cur = null; }
+      if (colon) {
+        drop();
+        open = true;
+      }
     }
+    drop();
   }
 
   // Bind each opening typeface to one commentator by majority of its entries.
