@@ -1112,8 +1112,19 @@ function extractHotspotsFromTextContent(
   // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of
   // the commentary text printed on the same baseline right next to them.
   if (!isSiddurPdf && !isChumashPdf) {
+    // The Gemara's own square type is not an enlarged opening: its first line sits beside the commentary too.
+    const mainSizes = new Map<number, number>();
+    for (const r of initialRuns) {
+      if (r.pdfH < 12.6 || r.pdfH >= 15.8) continue;
+      const k = Math.round(r.pdfH * 10);
+      mainSizes.set(k, (mainSizes.get(k) || 0) + r.str.length);
+    }
+    let mainBodyH = 0;
+    let mainBodyN = 0;
+    for (const [k, c] of mainSizes) if (c > mainBodyN) { mainBodyH = k / 10; mainBodyN = c; }
     for (const r of initialRuns) {
       if (r.topPct >= 9 || r.pdfH < 12.9 || r.pdfH > 18.5) continue;
+      if (mainBodyH && Math.abs(r.pdfH - mainBodyH) < 0.6) continue;
       if (r.section === 'rashi' || r.section === 'tosafot' || r.section === 'gemara') continue;
       const rBottom = r.vpTop + r.vpHeight;
       const rRight = r.vpLeft + r.vpWidth;
