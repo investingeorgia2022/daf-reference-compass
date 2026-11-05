@@ -112,10 +112,9 @@ describe('structural opening rule (scan letter sizes ignored)', () => {
     expect(roles.get(g[0].id)).toEqual({ rashi: 'rashi:0' });
     expect(roles.get(r[3].id)).toBeUndefined();
   });
-  it('an opening without a period stops after 5 words; the rest stays uncoloured', () => {
+  it('words with no closing period are never an opening', () => {
     const r = row('rashi', ['א1','ב1','ג1','ד1','ה1','ו1','ז1'].map((w) => ['מילה' + w.length + w, BODY] as [string, number]), 30);
     const { roles } = buildDibburHamatchilLinks(r);
-    expect(roles.get(r[4].id)).toBeDefined();
-    expect(roles.get(r[5].id)).toBeUndefined();
+    expect(roles.size).toBe(0);
   });
 });

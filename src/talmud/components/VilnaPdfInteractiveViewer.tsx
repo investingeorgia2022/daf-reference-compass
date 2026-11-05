@@ -85,6 +85,8 @@ export interface VilnaPdfHotspot {
   textSource?: 'pdf' | 'sefaria';
   /** A "." or ":" is printed right after this word. */
   stopAfter?: '.' | ':';
+  /** A separate geresh (ר') or gershayim (ק"ש) is printed right after this word. */
+  quoteAfter?: '"' | "'";
 }
 
 export interface PdfDafLine {
@@ -964,6 +966,7 @@ function extractHotspotsFromTextContent(
   const vpH = Math.max(1, viewport.height);
   const initialRuns: RawPdfRun[] = [];
   const stopMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '.' | ':' }> = [];
+  const quoteMarks: Array<{ leftPct: number; rightPct: number; baselinePct: number; mark: '"' | "'" }> = [];
   const isSiddurPdf = dafData.tractateId.startsWith('Siddur_');
   const isChumashPdf = dafData.tractateId.startsWith('Chumash_');
 
@@ -999,6 +1002,18 @@ function extractHotspotsFromTextContent(
     // Quote marks are kept briefly: they reveal abbreviations (ב"ח) and are dropped in Step 1.
     const isQuoteOnly = /^["'״׳`]+$/.test(str);
     const transform = rawItem.transform as number[] | undefined;
+    // Separate quote runs (ר' / ק"ש in Mac-Hebrew scans): remember them so the word they follow
+    // keeps its abbreviation mark for dibbur-hamatchil matching.
+    if (isQuoteOnly && transform && transform.length >= 6) {
+      const [qx1, qy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
+      const [qx2] = viewport.convertToViewportPoint((Number(transform[4]) || 0) + Math.max(1, Number(rawItem.width) || 2), Number(transform[5]) || 0);
+      quoteMarks.push({
+        leftPct: (Math.min(qx1, qx2) / vpW) * 100,
+        rightPct: (Math.max(qx1, qx2) / vpW) * 100,
+        baselinePct: (qy / vpH) * 100,
+        mark: /["״]/.test(str) || str.length > 1 ? '"' : "'",
+      });
+    }
     // Standalone "." / ":" runs end a dibbur hamatchil; remember where they sit before dropping them.
     if (str && /^[.:'"״׳\s]+$/.test(str) && /[.:]/.test(str) && transform && transform.length >= 6) {
       const [sx1, sy] = viewport.convertToViewportPoint(Number(transform[4]) || 0, Number(transform[5]) || 0);
@@ -1097,8 +1112,19 @@ function extractHotspotsFromTextContent(
   // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of
   // the commentary text printed on the same baseline right next to them.
   if (!isSiddurPdf && !isChumashPdf) {
+    // The Gemara's own square type is not an enlarged opening: its first line sits beside the commentary too.
+    const mainSizes = new Map<number, number>();
+    for (const r of initialRuns) {
+      if (r.pdfH < 12.6 || r.pdfH >= 15.8) continue;
+      const k = Math.round(r.pdfH * 10);
+      mainSizes.set(k, (mainSizes.get(k) || 0) + r.str.length);
+    }
+    let mainBodyH = 0;
+    let mainBodyN = 0;
+    for (const [k, c] of mainSizes) if (c > mainBodyN) { mainBodyH = k / 10; mainBodyN = c; }
     for (const r of initialRuns) {
       if (r.topPct >= 9 || r.pdfH < 12.9 || r.pdfH > 18.5) continue;
+      if (mainBodyH && Math.abs(r.pdfH - mainBodyH) < 0.6) continue;
       if (r.section === 'rashi' || r.section === 'tosafot' || r.section === 'gemara') continue;
       const rBottom = r.vpTop + r.vpHeight;
       const rRight = r.vpLeft + r.vpWidth;
@@ -1305,7 +1331,20 @@ function extractHotspotsFromTextContent(
       }
 
       // If a run is an inline small marker/citation or a bold lead word sitting horizontally adjacent to this bucket in the main body, keep it on the same line!
-      if (b.section !== 'margin' && run.section !== 'margin' && b.section !== 'header' && run.section !== 'header') {
+      // Never move text between columns: Rashi and Tosafot touch at the top of the page, and the
+      // first Gemara line sits right beside them — absorbing them mixes three texts into one line.
+      const isComm = (s: RawPdfRun['section']) => s === 'rashi' || s === 'tosafot';
+      const crossesColumns =
+        (isComm(b.section) && isComm(run.section)) ||
+        ((run.section === 'mishnah' || run.section === 'gemara') && run.pdfH >= 12.6 && run.pdfH < 15.5) ||
+        ((b.section === 'mishnah' || b.section === 'gemara') && isComm(run.section) && run.pdfH >= 9.6 && run.pdfH < 12.6);
+      if (
+        !crossesColumns &&
+        b.section !== 'margin' &&
+        run.section !== 'margin' &&
+        b.section !== 'header' &&
+        run.section !== 'header'
+      ) {
         const horizGap =
           run.leftPct > b.maxRightPct
             ? run.leftPct - b.maxRightPct
@@ -1888,6 +1927,24 @@ function extractHotspotsFromTextContent(
     if (mark) h.stopAfter = mark.mark;
   }
 
+  // Attach separate quote runs to the word they follow (RTL: on its left): ר' / ק"ש stay abbreviations.
+  // Each quote belongs to the one word whose left edge it touches most closely.
+  for (const m of quoteMarks) {
+    let best: VilnaPdfHotspot | null = null;
+    let bestGap = Infinity;
+    for (const h of hotspots) {
+      if (h.section === 'margin' || h.section === 'header' || h.isSmallMarker) continue;
+      if (/["'״׳]/.test(h.word)) continue;
+      const bottom = h.topPct + h.heightPct;
+      if (m.baselinePct > bottom + h.heightPct * 0.35 || m.baselinePct < h.topPct + h.heightPct * 0.2) continue;
+      const gap = Math.abs(m.rightPct - h.leftPct);
+      if (m.rightPct < h.leftPct - 1.0 || m.rightPct > h.leftPct + 0.6 || gap >= bestGap) continue;
+      best = h;
+      bestGap = gap;
+    }
+    if (best) best.quoteAfter = m.mark;
+  }
+
   return getIndependentMarkerBoxes(hotspots);
 }
 
@@ -2234,8 +2291,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   const segmentBox = useCallback(
     (rowId: string | undefined, anchorId: string | undefined): LineBox | null => {
       if (!rowId || !anchorId) return null;
+      // Inline markers (ג) occupy space in the line: keep them in the gap walk so the band runs to the end.
       const row = hotspots
-        .filter((x) => x.rowId === rowId && !x.isSmallMarker)
+        .filter((x) => x.rowId === rowId)
         .sort((a, b) => a.leftPct - b.leftPct);
       if (!row.some((x) => x.id === anchorId)) return null;
       let seg: VilnaPdfHotspot[] = [];
@@ -3076,6 +3134,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             latest.dafData
           );
           setHotspots(parsed);
+          if (import.meta.env.DEV && typeof window !== 'undefined') {
+            (window as any).__vilnaHotspots = { dafKey, hotspots: parsed };
+          }
 
           // Tint ONLY the dark ink glyph letters of linked citations and dibbur-hamatchil words.
           try {
