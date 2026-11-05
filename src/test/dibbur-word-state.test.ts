@@ -16,6 +16,7 @@ describe('word-level Rashi/Tosafot state', () => {
     const r = row('rashi', [['מאימתי', 'R', ''], ['קורין', 'R'], ['את', 'R'], ['שמע', 'R'], ['בערבין', 'R', '.'], ...body()], 60);
     const t = row('tosafot', [['מאימתי', 'T'], ['קורין', 'T'], ['וכו', 'T', '.'], ...body()], 60);
     const { roles } = buildDibburHamatchilLinks([...g, ...r, ...t]);
+    console.log(JSON.stringify(buildDibburHamatchilLinks([...g, ...r, ...t]).links));
     for (let i = 0; i < 5; i++) expect(roles.get(g[i].id)?.splitWord).toBe(true);
     expect(roles.get(g[5].id)).toBeUndefined();
   });
