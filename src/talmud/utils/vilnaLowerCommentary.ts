@@ -21,15 +21,17 @@ export function assignFullWidthCommentaryRows<T extends LowerRun>(runs: T[]): vo
   if (mainRuns.length === 0) return;
   const mainBottom = Math.max(...mainRuns.map((r) => r.topPct));
 
+  // Every word on a printed line below the Gemara follows that line's commentator, whatever its
+  // letter size: enlarged opening words of a dibbur stay with their own line.
   const lower = runs
-    .filter((r) => r.section !== 'margin' && r.section !== 'header' && r.pdfH < MAIN_MIN_H && r.topPct > mainBottom + 0.8)
+    .filter((r) => r.section !== 'margin' && r.section !== 'header' && r.topPct > mainBottom + 0.8)
     .sort((a, b) => a.topPct - b.topPct);
   if (lower.length === 0) return;
 
   const rows: T[][] = [];
   for (const r of lower) {
     const last = rows[rows.length - 1];
-    if (last && last[0] && Math.abs(last[0].topPct - r.topPct) < 0.6) last.push(r);
+    if (last && last.some((x) => Math.abs(x.topPct - r.topPct) < 0.9)) last.push(r);
     else rows.push([r]);
   }
   const fullWidth = rows.filter((row) => row.some((r) => r.centerPct > 38 && r.centerPct < 56));
