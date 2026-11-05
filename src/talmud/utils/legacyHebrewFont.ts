@@ -70,6 +70,8 @@ export function healLostNun(text: string, opts: NunHealOptions = {}): string {
     let join = false;
     if (canGlue) {
       if (NON_FINAL_END.test(prev)) join = true;
+      // Two lone letters are one word split by its נ (ת א → תנא).
+      else if (prev.length === 1 && part.length === 1) join = true;
       // A lone letter: word endings נ+י/ו/ה or a final letter close the previous fragment (שא י → שאני);
       // any other letter opens the following one (ד יאל → דניאל) unless it ends the run.
       else if (part.length === 1) join = CLOSING_LETTER.test(part) || !(next && HEB.test(next));

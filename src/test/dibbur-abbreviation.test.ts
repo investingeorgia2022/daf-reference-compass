@@ -77,6 +77,7 @@ describe('lost nun next to quote marks', () => {
     expect(healLostNun('שהיה מכלים פ י מפיבשת')).toBe('שהיה מכלים פני מפיבשת');
     expect(healLostNun('שמו אלא ד יאל שמו')).toBe('שמו אלא דניאל שמו');
     expect(healLostNun('מה שא י עושה א י')).toBe('מה שאני עושה אני');
+    expect(healLostNun('העבירה ת א היכא קאי')).toBe('העבירה תנא היכא קאי');
   });
 
   it('still restores נ inside the run', () => {
