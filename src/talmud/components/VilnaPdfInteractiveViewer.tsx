@@ -338,6 +338,13 @@ function classifyVilnaCoordinateZone(
 
   const rashiSideIsRight = !isAmudBet;
 
+  // Top lines of the outer columns hold only commentary: a bold opening word (e.g. Rashi's
+  // מאימתי) stays in its column whatever its size. The central block is never affected.
+  if (topPct < 9.0 && pdfH < 15.8 && (leftPct > 61.8 || leftPct < 33.2)) {
+    if (leftPct > 61.8) return rashiSideIsRight ? 'rashi' : 'tosafot';
+    return rashiSideIsRight ? 'tosafot' : 'rashi';
+  }
+
   // Square font (pdfH >= 12.6) inside the main body (between 31% and 80.2%) is always Mishnah or Gemara
   // (unless it is a single bold lead word at the very start of Rashi/Tosafot on the outer column edge)
   if (pdfH >= 12.6 && pdfH < 15.8 && leftPct >= 32.5) {

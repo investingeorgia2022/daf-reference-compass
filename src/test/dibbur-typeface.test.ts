@@ -29,14 +29,14 @@ describe('typeface-driven dibbur hamatchil', () => {
     expect(roles.get(r[1].id)).toBeUndefined();
   });
 
-  it('the typeface, not the column, names the commentator', () => {
+  it('the column, not the PDF font id, names the commentator', () => {
     const g = gem(['קורין', 'את', 'שמע', 'בערבין']);
     // Two Tosafot entries in square type; one was misplaced into the Rashi column by the zone rules.
     const t = row('tosafot', [['קורין', 'TOS_DH', '.'], ['גוף', 'BODY', ':'], ['שמע', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 60);
     const stray = row('rashi', [['בערבין', 'TOS_DH', '.'], ['גוף', 'BODY'], ['גוף', 'BODY'], ['והיינו', 'BODY'], ['דאמרינן', 'BODY']], 70);
     const { roles } = buildDibburHamatchilLinks([...g, ...t, ...stray]);
-    expect(roles.get(g[3].id)?.tosafot).toBeTruthy();
-    expect(roles.get(g[3].id)?.rashi).toBeUndefined();
+    expect(roles.get(g[3].id)?.rashi).toBeTruthy();
+    expect(roles.get(g[0].id)?.tosafot).toBeTruthy();
   });
 
   it('a word quoted by both Rashi and Tosafot is split green / bordeaux', () => {
