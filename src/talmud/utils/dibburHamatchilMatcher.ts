@@ -251,9 +251,9 @@ interface Piece<T> { commentator: DhCommentator; words: T[] }
  * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
  * opening-type words; a run cut at the end of a line continues on the next line of the same column.
  */
-export const MAX_DH_WORDS = 10;
+export const MAX_DH_WORDS = 15;
 /** Openings bounded by their own typeface may quote a longer passage. */
-export const MAX_TYPEFACE_DH_WORDS = 10;
+export const MAX_TYPEFACE_DH_WORDS = 15;
 
 const endsWith = (w: string, ch: string) => String(w || '').trim().endsWith(ch);
 
