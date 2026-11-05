@@ -91,8 +91,8 @@ export function wordsMatch(a: string, b: string): boolean {
   if (!pa || !pb) return false;
   if (pa === pb) return true;
   // ר' = רבי, דר' = דרבי: a geresh-shortened word matches the full word it begins.
-  if (isTruncated(a) && !isTruncated(b) && pb.length > pa.length && pb.startsWith(pa)) return true;
-  if (isTruncated(b) && !isTruncated(a) && pa.length > pb.length && pa.startsWith(pb)) return true;
+  if (isTruncated(a) && !isTruncated(b) && !isAbbreviation(b) && pb.length > pa.length && pb.startsWith(pa)) return true;
+  if (isTruncated(b) && !isTruncated(a) && !isAbbreviation(a) && pa.length > pb.length && pa.startsWith(pb)) return true;
   // Hebrew plural -ים and Aramaic plural -ין are the same word (טובלים / טובלין).
   const plur = (w: string) => (w.length >= 4 && /י[מנ]$/.test(w) ? w.slice(0, -1) : w);
   if (plur(pa) === plur(pb) && plur(pa) !== pa) return true;
