@@ -100,7 +100,32 @@ export function wordsMatch(a: string, b: string): boolean {
   if (plur(pa) === plur(pb) && plur(pa) !== pa) return true;
   const va = stripPrefixes(pa);
   const vb = stripPrefixes(pb);
-  return va.some((x) => x.length >= 3 && vb.includes(x));
+  if (va.some((x) => x.length >= 3 && vb.includes(x))) return true;
+  return isSkeletonMatch(toOCRSkeleton(pa), toOCRSkeleton(pb));
+}
+
+/** Collapses letters the scans' OCR confuses (ש/ס, א/ל, ב/כ, ה/ח/ת, ד/ר/ו, י/ז/נ, מ/ם, ע/צ). */
+export function toOCRSkeleton(word: string): string {
+  return plain(String(word || ''))
+    .replace(/[^א-ת]/g, '')
+    .replace(/[שס]/g, 'S')
+    .replace(/[אל]/g, 'A')
+    .replace(/[בכ]/g, 'B')
+    .replace(/[החת]/g, 'H')
+    .replace(/[דרו]/g, 'D')
+    .replace(/[יזנ]/g, 'V')
+    .replace(/[מ]/g, 'M')
+    .replace(/[עצ]/g, 'E');
+}
+
+/** Equal skeletons (≥3 letters) match; long words (≥5) tolerate one differing letter. */
+export function isSkeletonMatch(a: string, b: string): boolean {
+  if (a.length < 3 || b.length < 3) return false;
+  if (a === b) return true;
+  if (a.length !== b.length || a.length < 5) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i] && ++d > 1) return false;
+  return true;
 }
 
 /**
@@ -320,16 +345,32 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
   return raw;
 }
 
-function findInMain(tokens: string[], main: string[], from: number): { start: number; end: number } | null {
+function findInMain(
+  tokens: string[],
+  main: string[],
+  from: number,
+  claimed: Set<number>
+): { start: number; end: number } | null {
   if (tokens.length === 0) return null;
+  const free = (a: number, b: number) => {
+    for (let i = a; i <= b; i++) if (claimed.has(i)) return false;
+    return true;
+  };
   const search = (startAt: number) => {
     for (let s = startAt; s < main.length; s++) {
+      if (claimed.has(s)) continue;
       const p = alignAt(tokens, main, s);
-      if (p > s) return { start: s, end: p - 1 };
+      // Words already quoted by this commentator's earlier opening are never taken again.
+      if (p > s && free(s, p - 1)) return { start: s, end: p - 1 };
     }
     return null;
   };
-  return search(from) || (from > 0 ? search(0) : null);
+  return search(Math.max(0, from - 3)) || (from > 3 ? search(0) : null);
+}
+
+function free(a: number, b: number, set: Set<number>): boolean {
+  for (let i = a; i <= b; i++) if (set.has(i)) return false;
+  return true;
 }
 
 /** Builds Rashi/Tosafot ↔ main-text links for one page. */
@@ -356,7 +397,14 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
   const cursor: Record<DhCommentator, number> = { rashi: 0, tosafot: 0 };
   const counter: Record<DhCommentator, number> = { rashi: 0, tosafot: 0 };
 
-  for (const piece of extractDibburim(hotspots)) {
+  // Word-level state: each commentator claims main words independently. Rashi links first,
+  // so Tosafot can join (split half/half) but never steal its own earlier claims.
+  const claimed: Record<DhCommentator, Set<number>> = { rashi: new Set(), tosafot: new Set() };
+  const spans: Array<{ key: string; start: number; end: number }> = [];
+  const pieces = extractDibburim(hotspots);
+  const ordered = [...pieces.filter((p) => p.commentator === 'rashi'), ...pieces.filter((p) => p.commentator === 'tosafot')];
+  for (const piece of ordered) {
+    const hasEtc = piece.words.some((h) => ETC.has(plainWord(h.word)));
     const words = piece.words.filter((h) => {
       const p = plainWord(h.word);
       return p && !ETC.has(p) && !HEADINGS.has(p);
@@ -369,7 +417,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     const minK = toks.length === 1 ? 1 : 2;
     for (let k = toks.length; k >= minK; k--) {
       if (k === 1 && plainWord(toks[0].text).length < 2) break;
-      found = findInMain(toks.slice(0, k).map((t) => t.text), mainWords, cursor[piece.commentator]);
+      found = findInMain(toks.slice(0, k).map((t) => t.text), mainWords, cursor[piece.commentator], claimed[piece.commentator]);
       if (found) break;
     }
     const key = `${piece.commentator}:${counter[piece.commentator]++}`;
@@ -384,6 +432,13 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     }
     // Commentaries follow the text in order: an identical later quote binds to the next occurrence.
     cursor[piece.commentator] = found.start + 1;
+    // וכו׳: a Tosafot opening that starts where a longer Rashi quotation starts quotes all of it.
+    if (piece.commentator === 'tosafot' && hasEtc) {
+      const r = spans.find((x) => x.start === found!.start && x.end > found!.end);
+      if (r && free(found.start, r.end, claimed.tosafot)) found = { start: found.start, end: r.end };
+    }
+    for (let i = found.start; i <= found.end; i++) claimed[piece.commentator].add(i);
+    if (piece.commentator === 'rashi') spans.push({ key, start: found.start, end: found.end });
     const link: DhLink = {
       key,
       commentator: piece.commentator,
