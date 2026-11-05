@@ -315,21 +315,8 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
     drop();
   }
 
-  // Bind each opening typeface to one commentator by majority of its entries.
-  const votes = new Map<string, Record<DhCommentator, number>>();
-  const fontOf = (pc: (typeof raw)[number]) => pc.words.find((w) => w.font && w.font !== pc.bodyFont)?.font;
-  for (const pc of raw) {
-    const f = fontOf(pc);
-    if (!f) continue;
-    const v = votes.get(f) || { rashi: 0, tosafot: 0 };
-    v[pc.commentator]++;
-    votes.set(f, v);
-  }
-  for (const pc of raw) {
-    const f = fontOf(pc);
-    const v = f ? votes.get(f) : undefined;
-    if (v && v.rashi !== v.tosafot) pc.commentator = v.rashi > v.tosafot ? 'rashi' : 'tosafot';
-  }
+  // The commentator is the column the opening was printed in (geometric zone); PDF font IDs
+  // are per-line OCR artefacts and never vote on identity — they only bound the opening.
   return raw;
 }
 
