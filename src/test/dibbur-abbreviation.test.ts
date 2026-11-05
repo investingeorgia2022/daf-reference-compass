@@ -73,6 +73,12 @@ describe('lost nun next to quote marks', () => {
     expect(healLostNun('רישא לאו ר', { quoteAtEnd: true })).toBe('רישא לאו ר');
   });
 
+  it('never glues after a final letter, and a lone letter opens the next fragment (Berakhot 4a)', () => {
+    expect(healLostNun('שהיה מכלים פ י מפיבשת')).toBe('שהיה מכלים פני מפיבשת');
+    expect(healLostNun('שמו אלא ד יאל שמו')).toBe('שמו אלא דניאל שמו');
+    expect(healLostNun('מה שא י עושה א י')).toBe('מה שאני עושה אני');
+  });
+
   it('still restores נ inside the run', () => {
     expect(healLostNun('שתים לפ יה ושתים', { quoteAtStart: true, quoteAtEnd: true })).toBe('שתים לפניה ושתים');
   });
