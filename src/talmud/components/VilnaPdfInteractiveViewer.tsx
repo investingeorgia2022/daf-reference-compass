@@ -3076,6 +3076,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             latest.dafData
           );
           setHotspots(parsed);
+          if (import.meta.env.DEV && typeof window !== 'undefined') {
+            (window as any).__vilnaHotspots = { dafKey, hotspots: parsed };
+          }
 
           // Tint ONLY the dark ink glyph letters of linked citations and dibbur-hamatchil words.
           try {
