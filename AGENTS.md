@@ -31,3 +31,4 @@
 - A user-supplied Gemini key (device-local, sent as x-gemini-* headers by a fetch patch) routes /api/talmud/* AI through src/server/geminiRouter tiers with Flash fallback; without it the Lovable AI Gateway is used, so users can avoid project credits.
 - Row bucketing never moves runs between Rashi, Tosafot and main text; at the page top the columns touch, and absorbing them mixes texts and breaks matching.
 - Mac-Hebrew lost-נ repair (legacyHebrewFont) is per font: control-code נ fonts keep spaces as gaps; space-healing never glues after a final letter or beside a quote mark.
+- Gemara↔commentary linking is word-level: Rashi links first, then Tosafot; each commentator claims main words independently (never reusing its own claims, so repeated phrases bind to the next free occurrence), Tosafot וכו׳ starting at a Rashi start extends to Rashi's span, and OCR-confused letters match via toOCRSkeleton.
