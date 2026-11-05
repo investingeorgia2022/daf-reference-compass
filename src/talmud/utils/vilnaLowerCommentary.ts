@@ -29,12 +29,13 @@ export function assignFullWidthCommentaryRows<T extends LowerRun>(runs: T[]): vo
   const rows: T[][] = [];
   for (const r of lower) {
     const last = rows[rows.length - 1];
-    if (last && Math.abs(last[0].topPct - r.topPct) < 0.6) last.push(r);
+    if (last && last[0] && Math.abs(last[0].topPct - r.topPct) < 0.6) last.push(r);
     else rows.push([r]);
   }
   const fullWidth = rows.filter((row) => row.some((r) => r.centerPct > 38 && r.centerPct < 56));
-  if (fullWidth.length === 0) return;
-  const firstFull = fullWidth[0][0].topPct;
+  const firstRun = fullWidth[0]?.[0];
+  if (!firstRun) return;
+  const firstFull = firstRun.topPct;
 
   // The column that is still printed lower down (in its narrow form) is the one that continues.
   const lastNarrow = (sec: 'rashi' | 'tosafot') => {
