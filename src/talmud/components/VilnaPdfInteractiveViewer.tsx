@@ -1326,7 +1326,7 @@ function extractHotspotsFromTextContent(
       const crossesColumns =
         (isComm(b.section) && isComm(run.section)) ||
         ((run.section === 'mishnah' || run.section === 'gemara') && run.pdfH >= 12.6 && run.pdfH < 15.5) ||
-        ((b.section === 'mishnah' || b.section === 'gemara') && isComm(run.section) && run.pdfH >= 9.6 && run.pdfH < 15.5);
+        ((b.section === 'mishnah' || b.section === 'gemara') && isComm(run.section) && run.pdfH >= 9.6 && run.pdfH < 12.6);
       if (
         !crossesColumns &&
         b.section !== 'margin' &&
