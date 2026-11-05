@@ -13,6 +13,7 @@ import {
 import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
+import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
 import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
@@ -1114,6 +1115,19 @@ function extractHotspotsFromTextContent(
   }
 
   if (initialRuns.length === 0) return [];
+
+  if (!isSiddurPdf && !isChumashPdf) {
+    // Full-width commentary lines below the Gemara belong to one commentator, never split by side.
+    const probe = initialRuns.map((r) => ({
+      run: r,
+      topPct: r.topPct,
+      pdfH: r.pdfH,
+      section: r.section,
+      centerPct: normalizeVilnaX(r.leftPct + (r.vpWidth / vpW) * 50, marginGutters),
+    }));
+    assignFullWidthCommentaryRows(probe);
+    for (const p of probe) p.run.section = p.section;
+  }
 
   // Enlarged opening words of Rashi / Tosafot sit in the top commentary lines but are taller than
   // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of

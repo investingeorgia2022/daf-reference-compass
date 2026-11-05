@@ -251,7 +251,7 @@ interface Piece<T> { commentator: DhCommentator; words: T[] }
  * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
  * opening-type words; a run cut at the end of a line continues on the next line of the same column.
  */
-export const MAX_DH_WORDS = 5;
+export const MAX_DH_WORDS = 10;
 /** Openings bounded by their own typeface may quote a longer passage. */
 export const MAX_TYPEFACE_DH_WORDS = 10;
 
@@ -419,6 +419,15 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
       if (k === 1 && plainWord(toks[0].text).length < 2) break;
       found = findInMain(toks.slice(0, k).map((t) => t.text), mainWords, cursor[piece.commentator], claimed[piece.commentator]);
       if (found) break;
+    }
+    // An abbreviation at the opening's start (קמ״ל ↔ קא משמע לן) may not align with the main text:
+    // set it aside and match the words that follow it.
+    if (!found) {
+      const abbr = toks.findIndex((t) => /["'״׳]/.test(t.text));
+      const rest = abbr >= 0 && abbr < 2 ? toks.slice(abbr + 1).map((t) => t.text) : [];
+      for (let k = rest.length; k >= 2 && !found; k--) {
+        found = findInMain(rest.slice(0, k), mainWords, cursor[piece.commentator], claimed[piece.commentator]);
+      }
     }
     const key = `${piece.commentator}:${counter[piece.commentator]++}`;
     if (!found) {
