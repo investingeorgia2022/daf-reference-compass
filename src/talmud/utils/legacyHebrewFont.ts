@@ -114,7 +114,8 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
     const font = (it as { fontName?: string }).fontName;
     if (font && /[\u0001-\u001f]/.test(s) && isLegacyHebrewRun(s)) controlNunFonts.add(font);
   }
-  return items.map((it, i) => {
+  return items.map((it, i) => repairControlNun(decodeItem(it, i)));
+  function decodeItem(it: T, i: number): T {
     const s = typeof it?.str === 'string' ? it.str : '';
     if (!isLegacyHebrewRun(s)) {
       // Unicode Hebrew runs of the same scans also print נ as a control code (יוח\x15ן → יוחנן).
