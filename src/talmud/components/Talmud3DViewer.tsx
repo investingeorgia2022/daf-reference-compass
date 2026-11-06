@@ -319,6 +319,24 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
+  // iOS Safari: React touch listeners are passive, so a one-finger drag also starts native page
+  // scrolling, which throttles touchmove and freezes the live pan until release. A non-passive
+  // native listener cancels that native scroll while the daf itself is being panned.
+  const panGateRef = useRef({ scale, isPanDragEnabled });
+  panGateRef.current = { scale, isPanDragEnabled };
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onNativeMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || !dragRef.current || !e.cancelable) return;
+      if (document.body.dataset.talmudWordSelecting === 'true') return;
+      const g = panGateRef.current;
+      if (g.scale > 1.01 || g.isPanDragEnabled) e.preventDefault();
+    };
+    el.addEventListener('touchmove', onNativeMove, { passive: false });
+    return () => el.removeEventListener('touchmove', onNativeMove);
+  }, []);
+
   // High-performance Multi-Touch Pinch-to-Zoom & 1:1 Touch-Drag Panning Engine
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     didMoveDafRef.current = false;
