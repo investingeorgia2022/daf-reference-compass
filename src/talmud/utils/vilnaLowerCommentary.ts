@@ -45,12 +45,12 @@ export function assignFullWidthCommentaryRows<T extends LowerRun>(runs: T[]): vo
 
   // Rows printed mostly in the Gemara body type are Gemara rows (below the top commentary lines).
   const body = runs.filter((r) => r.section !== 'margin' && r.section !== 'header' && r.topPct >= 9);
-  const gemaraRows = new Set<T[]>();
+  const gemaraRuns = new Set<T>();
   for (const row of groupRows(body)) {
     const total = row.reduce((s, r) => s + weight(r), 0);
     const main = row.filter(isBody).reduce((s, r) => s + weight(r), 0);
     if (total > 0 && main / total >= 0.6) {
-      gemaraRows.add(row);
+      for (const r of row) gemaraRuns.add(r);
       for (const r of row) {
         if (isBody(r) && (r.section === 'rashi' || r.section === 'tosafot')) r.section = 'gemara';
       }
@@ -70,7 +70,7 @@ export function assignFullWidthCommentaryRows<T extends LowerRun>(runs: T[]): vo
   );
   if (lower.length === 0) return;
 
-  const rows = groupRows(lower).filter((row) => !gemaraRows.has(row));
+  const rows = groupRows(lower).filter((row) => !row.some((r) => gemaraRuns.has(r)));
   const fullWidth = rows.filter((row) => row.some((r) => r.centerPct > 38 && r.centerPct < 56));
   const firstRun = fullWidth[0]?.[0];
   if (!firstRun) return;
