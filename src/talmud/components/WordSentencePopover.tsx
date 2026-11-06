@@ -690,15 +690,15 @@ export const WordSentencePopover: React.FC<WordSentencePopoverProps> = ({
         }`}
       >
         {/* Portal keeps the pointer outside the scrollable note, which previously clipped it. */}
-        {!isNoteMaximized && liveWordRect.bottom > 0 && liveWordRect.top < viewportH && (
+        {!isNoteMaximized && liveWordRect.bottom > 0 && liveWordRect.top < viewportH && createPortal(
           <div
             aria-hidden="true"
             data-word-note-pointer="true"
             className={isDark ? 'bg-[#261A11] border-[#C49A6C]/75' : 'bg-[#FDF9F0] border-[#A68256]/80'}
             style={{
-              position: 'absolute',
-              left: `${arrowLeftPx - 2}px`,
-              ...(placeBelow ? { top: '-9px', borderTopWidth: 2, borderLeftWidth: 2 } : { bottom: '-9px', borderBottomWidth: 2, borderRightWidth: 2 }),
+              position: 'fixed',
+              left: `${noteLeft + arrowLeftPx - 2}px`,
+              top: `${placeBelow ? noteTopPx - 7 : viewportH - noteBottomPx - 9}px`,
               width: '16px',
               height: '16px',
               borderStyle: 'solid',
@@ -707,9 +707,10 @@ export const WordSentencePopover: React.FC<WordSentencePopoverProps> = ({
               borderTopWidth: placeBelow ? 2 : 0,
               borderLeftWidth: placeBelow ? 2 : 0,
               transform: 'rotate(45deg)',
-              zIndex: 30,
+              zIndex: 326,
+              pointerEvents: 'none',
             }}
-          />
+          />, document.body
         )}
 
         {/* Header Row: Selected Word (Always shown in FULL, never truncated) + Transliteration + Audio Play/Stop + Note Toggle + Windows Controls */}
