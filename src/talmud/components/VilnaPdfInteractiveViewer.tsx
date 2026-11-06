@@ -1124,11 +1124,10 @@ function extractHotspotsFromTextContent(
       pdfH: r.pdfH,
       section: r.section,
       centerPct: normalizeVilnaX(r.leftPct + (r.vpWidth / vpW) * 50, marginGutters),
+      chars: r.str.replace(/\s+/g, '').length,
     }));
-    (globalThis as any).__dbgRuns0 = initialRuns.map((r) => ({ s: r.str, sec: r.section, t: r.topPct, l: r.leftPct, h: r.pdfH }));
     assignFullWidthCommentaryRows(probe);
     for (const p of probe) p.run.section = p.section;
-    (globalThis as any).__dbgRuns1 = initialRuns.map((r) => ({ s: r.str, sec: r.section, t: r.topPct, l: r.leftPct, h: r.pdfH }));
   }
 
   // Enlarged opening words of Rashi / Tosafot sit in the top commentary lines but are taller than
