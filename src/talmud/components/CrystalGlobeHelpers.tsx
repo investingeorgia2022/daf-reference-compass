@@ -57,7 +57,7 @@ export const ALL_CRYSTAL_SHORTCUT_ORBS: CrystalShortcutOrbItem[] = [
   {
     id: 'talmud',
     realmId: 'talmud',
-    tractateId: 'berakhot',
+    tractateId: 'Berakhot',
     dafId: '2a',
     badgeHe: 'תלמוד',
     mainKa: 'თალმუდი',

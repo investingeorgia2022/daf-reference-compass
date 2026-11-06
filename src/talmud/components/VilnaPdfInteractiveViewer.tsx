@@ -3080,7 +3080,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         // Sharp zoom beyond that is handled by PdfSharpZoomTile.
         const maxSide = Math.max(baseViewport.width, baseViewport.height) || 1191;
         const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0;
-        const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? 2600 / maxSide : 3.2);
+        const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+        // iOS Safari holds both the offscreen and visible canvas; keep each well under its memory budget.
+        const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? (isIOS ? 1800 : 2600) / maxSide : 3.2);
         const renderViewport = page.getViewport({ scale: renderScale });
 
         // Render onto an offscreen canvas first so concurrent/cancelled renders never conflict on the visible canvas
@@ -3242,8 +3244,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         if (isCancelled || errMsg.includes('cancel') || errMsg.includes('abort')) {
           return;
         }
+        console.error('[vilna-pdf] render failed', err);
         if (!isCancelled) {
           setHotspots([]);
+          setPdfLoadFailed(true);
         }
       } finally {
         if (!isCancelled) {

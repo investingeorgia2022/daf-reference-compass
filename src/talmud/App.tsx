@@ -1432,7 +1432,8 @@ export function App() {
         setRealmTarget({ bookId, chapter });
       }
       if (realmId === 'talmud' && tractateId) {
-        setSelectedTractateId(tractateId);
+        const canon = TRACTATES.find((tr) => tr.id.toLowerCase() === tractateId.toLowerCase());
+        setSelectedTractateId(canon ? canon.id : tractateId);
         if (dafId) setSelectedDafId(dafId);
       }
     },
