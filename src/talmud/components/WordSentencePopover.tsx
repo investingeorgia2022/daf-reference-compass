@@ -690,11 +690,26 @@ export const WordSentencePopover: React.FC<WordSentencePopoverProps> = ({
         }`}
       >
         {/* Portal keeps the pointer outside the scrollable note, which previously clipped it. */}
-        {!isNoteMaximized && liveWordRect.bottom > 0 && liveWordRect.top < viewportH && createPortal(
-          <svg className="word-note-pointer" data-word-note-pointer="true" width={viewportW} height={viewportH} aria-hidden="true">
-            <defs><marker id="word-note-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M 0 0 L 8 4 L 0 8 Z" /></marker></defs>
-            <path markerEnd="url(#word-note-arrow)" d={`M ${noteLeft + arrowLeftPx + 6} ${placeBelow ? noteTopPx : viewportH - noteBottomPx} L ${clampedCenterX} ${placeBelow ? liveWordRect.bottom + 2 : liveWordRect.top - 2}`} />
-          </svg>, document.body
+        {!isNoteMaximized && liveWordRect.bottom > 0 && liveWordRect.top < viewportH && (
+          <div
+            aria-hidden="true"
+            data-word-note-pointer="true"
+            className={isDark ? 'bg-[#261A11] border-[#C49A6C]/75' : 'bg-[#FDF9F0] border-[#A68256]/80'}
+            style={{
+              position: 'absolute',
+              left: `${arrowLeftPx - 2}px`,
+              ...(placeBelow ? { top: '-9px', borderTopWidth: 2, borderLeftWidth: 2 } : { bottom: '-9px', borderBottomWidth: 2, borderRightWidth: 2 }),
+              width: '16px',
+              height: '16px',
+              borderStyle: 'solid',
+              borderRightWidth: placeBelow ? 0 : 2,
+              borderBottomWidth: placeBelow ? 0 : 2,
+              borderTopWidth: placeBelow ? 2 : 0,
+              borderLeftWidth: placeBelow ? 2 : 0,
+              transform: 'rotate(45deg)',
+              zIndex: 30,
+            }}
+          />
         )}
 
         {/* Header Row: Selected Word (Always shown in FULL, never truncated) + Transliteration + Audio Play/Stop + Note Toggle + Windows Controls */}
