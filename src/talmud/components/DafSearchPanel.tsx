@@ -45,6 +45,8 @@ export function DafSearchPanel({ spots, onPick }: Props) {
     picked.current = i;
     // Keep only the search bar so the found words on the daf stay visible.
     setShowList(false);
+    // Keep only the search bar so the found words on the daf stay visible.
+    setShowList(false);
     onPick(hit);
   };
 
@@ -68,6 +70,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowList(true)}
               onFocus={() => setShowList(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && hits.length) pick(picked.current === active ? (active + 1) % hits.length : active);
