@@ -9,6 +9,7 @@ export interface SearchableSpot {
   heightPct: number;
   widthPct: number;
   isSmallMarker?: boolean;
+  quoteAfter?: string;
 }
 
 export interface DafSearchHit {
@@ -59,7 +60,7 @@ export function searchDaf<T extends SearchableSpot>(spots: T[], query: string, l
         if (Math.abs(dy) > Math.min(a.heightPct, b.heightPct) * 0.5) return dy;
         return b.leftPct + b.widthPct - (a.leftPct + a.widthPct);
       });
-    const words = list.map((s) => s.word);
+    const words = list.map((s) => (s.quoteAfter ? `${s.word}${s.quoteAfter}` : s.word));
     for (let s = 0; s < words.length; s++) {
       let p = s;
       let quality = 0;
