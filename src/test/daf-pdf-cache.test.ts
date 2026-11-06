@@ -35,3 +35,18 @@ describe('stored daf scans', () => {
     await expect(writeCachedDafPdf('daf-x', htmlBytes())).resolves.toBeUndefined();
   });
 });
+
+describe('offline daf database', () => {
+  it('never evicts dafim saved on purpose, even far past the limit', async () => {
+    const { selectPdfCacheEvictions: pick } = await import('../talmud/utils/dafPdfCache');
+    const pinned = Array.from({ length: 200 }, (_, i) => ({ url: `p-${i}`, savedAt: i, pinned: true }));
+    const loose = Array.from({ length: DAF_PDF_CACHE_LIMIT + 1 }, (_, i) => ({ url: `l-${i}`, savedAt: 500 + i }));
+    expect(pick([...pinned, ...loose])).toEqual(['l-0']);
+  });
+
+  it('reads the tractate back from a saved scan address', async () => {
+    const { talmudDafPdfUrl, tractateFromDafPdfUrl } = await import('../talmud/utils/dafPdfCache');
+    expect(tractateFromDafPdfUrl(talmudDafPdfUrl('Bava_Kamma', '12b'))).toBe('Bava_Kamma');
+    expect(tractateFromDafPdfUrl('/chumash-pdf/Genesis-1.pdf')).toBeNull();
+  });
+});

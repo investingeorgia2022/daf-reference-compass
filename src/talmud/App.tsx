@@ -662,6 +662,11 @@ export function App() {
     initialTab: 'voice' | 'ai';
   }>({ isOpen: false, initialTab: 'voice' });
   const [isOfflineLibraryModalOpen, setIsOfflineLibraryModalOpen] = useState<boolean>(false);
+  useEffect(() => {
+    const open = () => setIsOfflineLibraryModalOpen(true);
+    window.addEventListener('talmud-open-offline-library', open);
+    return () => window.removeEventListener('talmud-open-offline-library', open);
+  }, []);
   const [isJoystickOpen, setIsJoystickOpen] = useState<boolean>(false);
   const [isStudyCenterCollapsed, setIsStudyCenterCollapsed] = useState<boolean>(false);
   const [activeRealm, setActiveRealm] = useState<SacredRealmId>('talmud');
@@ -3863,6 +3868,21 @@ export function App() {
                         ) : (
                           <Maximize2 className="w-4 h-4 stroke-[2.25] shrink-0" />
                         )}
+                      </AnimatedGlobeIconWrapper>
+                    </button>
+
+                    {/* Offline daf database */}
+                    <button
+                      type="button"
+                      data-raw-btn="true"
+                      data-flat-btn="true"
+                      onClick={() => setIsOfflineLibraryModalOpen(true)}
+                      className="w-9 h-9 rounded-xl bg-white/90 dark:bg-stone-800/85 hover:bg-amber-500/15 text-stone-800 dark:text-stone-200 border border-stone-300/70 dark:border-white/10 flex items-center justify-center cursor-pointer transition-all shrink-0 shadow-xs active:scale-95"
+                      title="დაფების ბაზა ტელეფონში"
+                      aria-label="დაფების ბაზა ტელეფონში"
+                    >
+                      <AnimatedGlobeIconWrapper duration={6}>
+                        <HardDrive className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                       </AnimatedGlobeIconWrapper>
                     </button>
 

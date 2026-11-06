@@ -43,6 +43,7 @@ import {
   importOfflineLibraryBackup,
   saveDafToOfflineStorage,
 } from '../utils/offlineTalmudStorage';
+import { OfflineDafDatabaseBuilder } from './OfflineDafDatabaseBuilder';
 
 interface OfflineLibraryPanelProps {
   currentDafData: DafPageData;
@@ -468,6 +469,7 @@ export const OfflineLibraryPanel: React.FC<OfflineLibraryPanelProps> = ({
 
   return (
     <div className="space-y-4">
+      <OfflineDafDatabaseBuilder isDark={isDark} />
       {/* Top Status & Workbox Service Worker Dashboard */}
       <div
         className={`rounded-2xl border p-4 transition-all ${
