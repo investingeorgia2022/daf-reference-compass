@@ -34,8 +34,13 @@ export function DafSearchPanel({ spots, onPick }: Props) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); setOpen(true); }
       if (e.key === 'Escape') setOpen(false);
     };
+    const onOpen = () => setOpen((v) => !v);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('talmud-open-daf-search', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('talmud-open-daf-search', onOpen);
+    };
   }, []);
 
   const pick = (i: number) => {
@@ -54,14 +59,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
   return createPortal(
     <div className="fixed right-3 top-[132px] z-[60] flex flex-col items-end gap-2" dir="rtl">
       {!open ? (
-        <button
-          type="button"
-          aria-label="ძებნა დაფზე"
-          onClick={() => setOpen(true)}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--study-rule)] bg-[var(--study-surface)] text-[var(--study-ink)] shadow-[var(--study-shadow)]"
-        >
-          <Search className="h-5 w-5" />
-        </button>
+        null
       ) : (
         <div className="w-[min(92vw,380px)] rounded-2xl border border-[var(--study-rule)] bg-[var(--study-surface)] text-[var(--study-ink)] shadow-[var(--study-shadow)]">
           <div className="flex items-center gap-2 border-b border-[var(--study-rule)] p-2">
