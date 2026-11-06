@@ -20,6 +20,13 @@ interface CachedDafPdf {
   url: string;
   buffer: ArrayBuffer;
   savedAt: number;
+  /** Saved on purpose through the offline daf database; never evicted automatically. */
+  pinned?: boolean;
+}
+
+/** Address of a Talmud daf scan, identical to the one the reader opens. */
+export function talmudDafPdfUrl(tractateId: string, dafId: string): string {
+  return `/api/talmud/vilna-pdf?tractate=${encodeURIComponent(tractateId)}&daf=${encodeURIComponent(dafId)}`;
 }
 
 /** `%PDF` magic header — an SPA HTML fallback must never reach pdf.js from the cache. */
@@ -37,13 +44,15 @@ export function isPdfBuffer(data: ArrayBuffer | Uint8Array | null | undefined): 
 
 /** Oldest-first eviction list so the cache never grows past `limit` entries. */
 export function selectPdfCacheEvictions(
-  entries: Array<{ url: string; savedAt: number }>,
+  entries: Array<{ url: string; savedAt: number; pinned?: boolean }>,
   limit: number = DAF_PDF_CACHE_LIMIT
 ): string[] {
-  if (!Array.isArray(entries) || entries.length <= limit) return [];
-  return [...entries]
+  if (!Array.isArray(entries)) return [];
+  const loose = entries.filter((e) => !e.pinned);
+  if (loose.length <= limit) return [];
+  return [...loose]
     .sort((a, b) => a.savedAt - b.savedAt)
-    .slice(0, entries.length - limit)
+    .slice(0, loose.length - limit)
     .map((e) => e.url);
 }
 
@@ -102,15 +111,29 @@ export async function readCachedDafPdf(url: string): Promise<ArrayBuffer | null>
 }
 
 /** Store a scan for next time. Never throws: a full or blocked cache is not an error. */
-export async function writeCachedDafPdf(url: string, buffer: ArrayBuffer): Promise<void> {
+export async function writeCachedDafPdf(
+  url: string,
+  buffer: ArrayBuffer,
+  options: { pinned?: boolean } = {}
+): Promise<void> {
   if (!url || !isPdfBuffer(buffer)) return;
   const db = await openCacheDb();
   if (!db) return;
   try {
     await new Promise<void>((resolve) => {
       const tx = db.transaction(STORE, 'readwrite');
-      const record: CachedDafPdf = { url, buffer, savedAt: Date.now() };
-      tx.objectStore(STORE).put(record);
+      const store = tx.objectStore(STORE);
+      const prev = store.get(url);
+      prev.onsuccess = () => {
+        const wasPinned = !!(prev.result as CachedDafPdf | undefined)?.pinned;
+        const record: CachedDafPdf = {
+          url,
+          buffer,
+          savedAt: Date.now(),
+          pinned: wasPinned || !!options.pinned,
+        };
+        store.put(record);
+      };
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();
@@ -129,12 +152,16 @@ export async function writeCachedDafPdf(url: string, buffer: ArrayBuffer): Promi
 
 async function prunePdfCache(db: IDBDatabase): Promise<void> {
   try {
-    const entries = await new Promise<Array<{ url: string; savedAt: number }>>((resolve) => {
+    const entries = await new Promise<Array<{ url: string; savedAt: number; pinned?: boolean }>>((resolve) => {
       const tx = db.transaction(STORE, 'readonly');
       const request = tx.objectStore(STORE).getAll();
       request.onsuccess = () =>
         resolve(
-          ((request.result as CachedDafPdf[]) || []).map((r) => ({ url: r.url, savedAt: r.savedAt || 0 }))
+          ((request.result as CachedDafPdf[]) || []).map((r) => ({
+            url: r.url,
+            savedAt: r.savedAt || 0,
+            pinned: !!r.pinned,
+          }))
         );
       request.onerror = () => resolve([]);
     });
@@ -183,6 +210,80 @@ export async function clearDafPdfCache(): Promise<void> {
     await new Promise<void>((resolve) => {
       const tx = db.transaction(STORE, 'readwrite');
       tx.objectStore(STORE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+      tx.onabort = () => resolve();
+    });
+  } catch {
+    /* storage is best-effort */
+  } finally {
+    try {
+      db.close();
+    } catch {
+      /* already closed */
+    }
+  }
+}
+
+/** Tractate id parsed back out of a Talmud scan address, or null for other books. */
+export function tractateFromDafPdfUrl(url: string): string | null {
+  const m = /^\/api\/talmud\/vilna-pdf\?tractate=([^&]+)&daf=/.exec(url || '');
+  return m && m[1] ? decodeURIComponent(m[1]) : null;
+}
+
+/** Saved-database summary: deliberately saved dafim per tractate, and their size in bytes. */
+export async function getPinnedDafPdfSummary(): Promise<
+  Record<string, { count: number; bytes: number; urls: string[] }>
+> {
+  const out: Record<string, { count: number; bytes: number; urls: string[] }> = {};
+  const db = await openCacheDb();
+  if (!db) return out;
+  try {
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const request = tx.objectStore(STORE).openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return resolve();
+        const r = cursor.value as CachedDafPdf;
+        const tr = r.pinned ? tractateFromDafPdfUrl(r.url) : null;
+        if (tr) {
+          const slot = (out[tr] ||= { count: 0, bytes: 0, urls: [] });
+          slot.count += 1;
+          slot.bytes += r.buffer?.byteLength || 0;
+          slot.urls.push(r.url);
+        }
+        cursor.continue();
+      };
+      request.onerror = () => resolve();
+    });
+  } catch {
+    /* storage is best-effort */
+  } finally {
+    try {
+      db.close();
+    } catch {
+      /* already closed */
+    }
+  }
+  return out;
+}
+
+/** Remove a tractate's deliberately saved dafim. */
+export async function deletePinnedTractateDafPdfs(tractateId: string): Promise<void> {
+  const db = await openCacheDb();
+  if (!db) return;
+  try {
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const request = tx.objectStore(STORE).openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        const r = cursor.value as CachedDafPdf;
+        if (r.pinned && tractateFromDafPdfUrl(r.url) === tractateId) cursor.delete();
+        cursor.continue();
+      };
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();

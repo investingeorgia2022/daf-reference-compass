@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   X,
+  Database,
   Settings,
   Eye,
   EyeOff,
@@ -196,6 +197,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="settings-body p-4 sm:p-5 space-y-4">
+          {/* Offline daf database */}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(new CustomEvent('talmud-open-offline-library'));
+            }}
+            className={`w-full p-4 rounded-2xl border text-start flex items-center gap-3 cursor-pointer ${
+              isDark ? 'bg-[#2A1D14] border-[#5C3A21]' : 'bg-[#EFE5D0] border-[#CBB89D]'
+            }`}
+          >
+            <Database className="w-5 h-5 text-amber-500 shrink-0" />
+            <span>
+              <span className="block text-xs sm:text-sm font-extrabold">დაფების ბაზა ტელეფონში</span>
+              <span className="block text-[11px] opacity-80">
+                აირჩიეთ ტრაქტატები და შეინახეთ მათი დაფები ინტერნეტის გარეშე მყისიერად გასახსნელად
+              </span>
+            </span>
+          </button>
           {/* 1. Theme Color Design Selection (დიზაინის გადართვა • ნაზი ცისფერი / სერი და სხვა თემები) */}
           <div
             className={`p-4 rounded-2xl border space-y-3.5 w-full ${
