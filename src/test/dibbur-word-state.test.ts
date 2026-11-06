@@ -39,8 +39,17 @@ describe('word-level Rashi/Tosafot state', () => {
     expect(links[1].mainIds[0]).toBe(g[5].id);
   });
 
-  it('OCR-confused letters still match (ס for ש)', () => {
-    expect(wordsMatch('שיעלה', 'סיעלה')).toBe(true);
+  it('words of two letters or more never match by substituting letters', () => {
+    expect(wordsMatch('ודומו', 'ואומר')).toBe(false);
+    expect(wordsMatch('ודומו', 'ורומו')).toBe(false);
     expect(wordsMatch('שמע', 'בית')).toBe(false);
+    expect(wordsMatch('ודומו', 'ודומו')).toBe(true);
+  });
+
+  it('any reference marker inside a quotation is transparent', async () => {
+    const { isInlineMarker, stripGluedMarker } = await import('../talmud/utils/dibburHamatchilMatcher');
+    for (const m of ['ג)', '(ד)', '[א]', '7', '⊙', '(ב']) expect(isInlineMarker(m)).toBe(true);
+    expect(isInlineMarker('אמר')).toBe(false);
+    expect(stripGluedMarker('ב)איזהו')).toBe('איזהו');
   });
 });
