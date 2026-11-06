@@ -80,10 +80,12 @@ export function tintHotspotsInkOnCanvas(
   for (const h of hotspots) {
     const c = colors.get(h.id);
     if (!c) continue;
+    // The word box includes line spacing above the letters; tinting it would recolour the
+    // descenders of the line above. Paint only the word's own letter band.
     const rx = Math.max(0, Math.floor((h.leftPct / 100) * canvasWidth));
-    const ry = Math.max(0, Math.floor((h.topPct / 100) * canvasHeight));
+    const ry = Math.max(0, Math.round(((h.topPct + h.heightPct * 0.22) / 100) * canvasHeight));
     const rw = Math.min(canvasWidth - rx, Math.ceil((h.widthPct / 100) * canvasWidth) + 1);
-    const rh = Math.min(canvasHeight - ry, Math.ceil((h.heightPct / 100) * canvasHeight) + 1);
+    const rh = Math.min(canvasHeight - ry, Math.floor(((h.heightPct * 0.8) / 100) * canvasHeight));
     if (rw <= 1 || rh <= 1) continue;
     try {
       const img = ctx.getImageData(rx, ry, rw, rh);
