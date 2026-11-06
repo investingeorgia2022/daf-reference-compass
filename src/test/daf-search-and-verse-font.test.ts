@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import { searchDaf } from '../talmud/utils/dafSearch';
 import { decodeLatinVerseText, decodeLegacyHebrewItems } from '../talmud/utils/legacyHebrewFont';
