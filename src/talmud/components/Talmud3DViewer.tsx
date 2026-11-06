@@ -109,6 +109,23 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
     isDraggingWindow?: boolean;
   } | null>(null);
 
+  // Live one-finger drag writes the transform straight to the DOM once per frame (no React re-render per touchmove).
+  const transformElRef = useRef<HTMLDivElement | null>(null);
+  const livePanRef = useRef<{ x: number; y: number } | null>(null);
+  const panRafRef = useRef<number | null>(null);
+  const applyLivePan = useCallback((x: number, y: number, s: number) => {
+    livePanRef.current = { x, y };
+    if (panRafRef.current != null) return;
+    panRafRef.current = requestAnimationFrame(() => {
+      panRafRef.current = null;
+      const el = transformElRef.current;
+      const p = livePanRef.current;
+      if (!el || !p) return;
+      el.style.transition = 'none';
+      el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0px) scale(${s})`;
+    });
+  }, []);
+
   const isZoomed = scale > 1.02 || isPanDragEnabled;
 
   const isTransformed =
@@ -342,6 +359,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       dragRef.current = null;
     } else if (e.touches.length === 1) {
       const t = e.touches[0];
+      if (transformElRef.current) transformElRef.current.style.transition = 'none';
       dragRef.current = {
         startX: t.clientX,
         startY: t.clientY,
@@ -411,14 +429,13 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           document.body.dataset.talmudPanning = 'true';
         }
         if (scale > 1.01 || isPanDragEnabled) {
-          setIsInteracting(true);
+          if (!isInteracting) setIsInteracting(true);
           const clamped = clampPanToContentBounds(
             dragRef.current.startPanX + dx,
             dragRef.current.startPanY + dy,
             scale
           );
-          setPanX(clamped.x);
-          setPanY(clamped.y);
+          applyLivePan(clamped.x, clamped.y, scale);
         }
       }
     }
@@ -441,6 +458,13 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       } else {
         resetTransform();
       }
+    }
+    if (livePanRef.current) {
+      if (panRafRef.current != null) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
+      const p = livePanRef.current;
+      livePanRef.current = null;
+      setPanX(p.x);
+      setPanY(p.y);
     }
     if (dragRef.current && e.touches.length === 0) {
       const completedDrag = dragRef.current;
@@ -859,6 +883,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           }`}
         >
           <div
+            ref={transformElRef}
             style={{
               transformOrigin: '50% 0%',
               transform: isTransformed
