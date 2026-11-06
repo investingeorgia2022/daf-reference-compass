@@ -3092,6 +3092,35 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         // iOS Safari holds both the offscreen and visible canvas; keep each well under its memory budget.
         const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? (isIOS ? 1800 : 2600) / maxSide : 3.2);
         const renderViewport = page.getViewport({ scale: renderScale });
+        const renderW = Math.floor(renderViewport.width);
+        const renderH = Math.floor(renderViewport.height);
+        const renderKey = isTalmudApiScan
+          ? dafRenderCacheKey(activePdfUrl, renderW, renderH, false)
+          : null;
+
+        // Fast path: an already processed daf paints its finished picture immediately.
+        if (renderKey) {
+          const cachedRender = await readDafRender(renderKey);
+          if (isCancelled) return;
+          if (cachedRender && cachedRender.width === renderW && cachedRender.height === renderH) {
+            try {
+              const bitmap = await createImageBitmap(cachedRender.image);
+              if (isCancelled) return;
+              const fastCtx = canvas.getContext('2d');
+              if (fastCtx) {
+                canvas.width = renderW;
+                canvas.height = renderH;
+                fastCtx.drawImage(bitmap, 0, 0);
+                try { bitmap.close(); } catch { /* ignore */ }
+                const items = JSON.parse(cachedRender.itemsJson) as Array<Record<string, unknown>>;
+                applyCachedOrFreshItems(items, fastCtx, true);
+                return;
+              }
+            } catch {
+              // fall through to a normal render
+            }
+          }
+        }
 
         // Render onto an offscreen canvas first so concurrent/cancelled renders never conflict on the visible canvas
         const offscreenCanvas = document.createElement('canvas');
@@ -3195,7 +3224,35 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           ctx.restore();
         }
 
-        const applyTextItems = (rawItems: Array<Record<string, unknown>>) => {
+        if (textContent && Array.isArray(textContent.items)) {
+          const rawItems = decodeLegacyHebrewItems(textContent.items as Array<Record<string, unknown>>);
+          if (import.meta.env.DEV) (window as any).__dafTextItems = { items: rawItems, orig: textContent.items, vp: page.getViewport({ scale: 1 }) };
+          applyCachedOrFreshItems(rawItems, ctx, false);
+          if (renderKey && !shouldStampHeader) {
+            const w = canvas.width;
+            const h = canvas.height;
+            let itemsJson = '';
+            try { itemsJson = JSON.stringify(rawItems); } catch { itemsJson = ''; }
+            if (itemsJson) {
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) void writeDafRender({ key: renderKey, image: blob, width: w, height: h, itemsJson });
+                },
+                'image/webp',
+                0.9
+              );
+            }
+          }
+        }
+        } finally {
+          // pdfPageRef stays set for sharp zoom tiles either way
+        }
+        function applyCachedOrFreshItems(
+          rawItems: Array<Record<string, unknown>>,
+          ctx: CanvasRenderingContext2D,
+          alreadyTinted: boolean
+        ) {
+          const baseViewport = pdfPageRef.current!.getViewport({ scale: 1 });
           lastPdfTextLayerRef.current = {
             dafKey,
             items: rawItems,
