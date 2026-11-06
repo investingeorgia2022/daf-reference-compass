@@ -2069,6 +2069,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   // Marker navigation is independent of the two-stage word-selection workflow.
   const [blinkingTarget, setBlinkingTarget] = useState<BlinkingTargetRegion | null>(null);
+  const [searchHitIds, setSearchHitIds] = useState<Set<string>>(() => new Set());
+  const onSearchHits = useCallback((hits: DafSearchHit[]) => {
+    setSearchHitIds(new Set(hits.flatMap((h) => h.ids)));
+  }, []);
 
   // Drag / Long-press Copy/Paste state
   const [isDraggingSelection, setIsDraggingSelection] = useState<boolean>(false);
@@ -4851,7 +4855,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   return (
     <div className="w-full flex flex-col items-center">
-      {hotspots.length > 0 && <DafSearchPanel spots={hotspots} onPick={jumpToSearchHit} showButton={!!isFullScreen} />}
+      {hotspots.length > 0 && <DafSearchPanel spots={hotspots} onPick={jumpToSearchHit} onHits={onSearchHits} showButton={!!isFullScreen} />}
       {blinkingTarget?.originMarker && (
         <ReferenceOriginLabel container={pageContainerRef} label={blinkingTarget.labelKa} origin={blinkingTarget.originMarker} />
       )}
@@ -5346,15 +5350,19 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             {hotspots.map((h, idx) => {
               const isSelected = selectedHotspotIdsSet.has(h.id);
               const isBlinkingWord = blinkingTarget?.hotspotIds.has(h.id) || false;
+              const isSearchFocus = isBlinkingWord && String(blinkingTarget?.key || '').startsWith('dh:search:');
+              const isSearchHit = !isBlinkingWord && searchHitIds.has(h.id);
               const isMarkerOrCitation = h.isSmallMarker || citationHotspotIdsSet.has(h.id);
 
               // Royal Blue ink tinting is applied strictly on the letter glyphs on the canvas.
               // Markers and citation nodes remain 100% transparent without any background overlays masking surrounding characters.
               const bgStyle = isBlinkingWord
                 ? 'var(--reference-target-highlight)'
-                : isSelected
-                  ? 'rgba(245, 168, 28, 0.25)'
-                  : 'transparent';
+                : isSearchHit
+                  ? 'var(--reference-target-highlight)'
+                  : isSelected
+                    ? 'rgba(245, 168, 28, 0.25)'
+                    : 'transparent';
 
               return (
                 <div
@@ -5452,9 +5460,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     pointerEvents: 'auto',
                     backgroundColor: bgStyle,
                     mixBlendMode: 'normal',
-                    border: isBlinkingWord ? '2px solid var(--study-gold, oklch(0.68 0.16 70))' : 'none',
-                    borderRadius: isBlinkingWord ? 4 : undefined,
-                    boxShadow: isBlinkingWord ? '0 0 14px 3px oklch(0.78 0.16 75 / 0.75)' : 'none',
+                    border: isBlinkingWord && !isSearchFocus ? '2px solid var(--study-gold, oklch(0.68 0.16 70))' : 'none',
+                    borderRadius: isBlinkingWord || isSearchHit ? 3 : undefined,
+                    boxShadow: isBlinkingWord && !isSearchFocus ? '0 0 14px 3px oklch(0.78 0.16 75 / 0.75)' : 'none',
+                    animation: isSearchFocus ? 'dafSearchBlink 0.9s ease-in-out infinite' : undefined,
                     outline: 'none',
                   }}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}
