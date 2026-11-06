@@ -43,10 +43,11 @@ function InkWord({ spot, baseCanvasRef, tile, focused }) {
     maskPrintedInk(image.data);
     ctx.putImageData(image, 0, 0);
     ctx.globalCompositeOperation = 'source-in';
-    ctx.fillStyle = getComputedStyle(canvas).getPropertyValue('--reference-target-ink').trim();
+    ctx.fillStyle = getComputedStyle(canvas).getPropertyValue(focused ? '--reference-focus-gold' : '--reference-target-ink').trim();
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (focused) ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalCompositeOperation = 'source-over';
-  }, [baseCanvasRef, tile, spot, left, top, width, height]);
+  }, [baseCanvasRef, tile, spot, left, top, width, height, focused]);
   return <canvas ref={ref} data-daf-ink-highlight={spot.id} data-focused-ink={focused ? 'true' : undefined}
     className="absolute pointer-events-none"
     style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }} />;

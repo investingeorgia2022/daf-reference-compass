@@ -807,6 +807,6 @@ button .mg-ka { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient:
 }
 
 /* Only the transparent printed-ink mask pulses; paper and tap boxes never do. */
-@keyframes dafInkBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+@keyframes dafInkBlink { 0%, 100% { opacity: 0; } 35%, 65% { opacity: 1; } }
 [data-focused-ink="true"] { animation: dafInkBlink 0.9s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { [data-focused-ink="true"] { animation: none; } }
