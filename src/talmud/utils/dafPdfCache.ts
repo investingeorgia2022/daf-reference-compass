@@ -228,7 +228,7 @@ export async function clearDafPdfCache(): Promise<void> {
 /** Tractate id parsed back out of a Talmud scan address, or null for other books. */
 export function tractateFromDafPdfUrl(url: string): string | null {
   const m = /^\/api\/talmud\/vilna-pdf\?tractate=([^&]+)&daf=/.exec(url || '');
-  return m ? decodeURIComponent(m[1]) : null;
+  return m && m[1] ? decodeURIComponent(m[1]) : null;
 }
 
 /** Saved-database summary: deliberately saved dafim per tractate, and their size in bytes. */
