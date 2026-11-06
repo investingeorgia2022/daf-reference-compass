@@ -3222,7 +3222,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         if (textContent && Array.isArray(textContent.items)) {
           const rawItems = decodeLegacyHebrewItems(textContent.items as Array<Record<string, unknown>>);
-          if (import.meta.env.DEV) (window as any).__dafTextItems = { items: rawItems, vp: page.getViewport({ scale: 1 }) };
+          if (import.meta.env.DEV) (window as any).__dafTextItems = { items: rawItems, orig: textContent.items, vp: page.getViewport({ scale: 1 }) };
           applyTextItems(rawItems);
 
         }
