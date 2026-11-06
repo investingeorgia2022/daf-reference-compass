@@ -149,8 +149,9 @@ const LATIN_VERSE_MAP: Record<string, string> = {
   l: 'ל', m: 'ם', n: 'מ', o: 'ן', p: 'נ', q: 'ס', r: 'ע', s: 'ף', t: 'פ', u: 'ץ', v: 'צ', w: 'ק',
   x: 'ר', y: 'ש', z: 'ת',
   // Vowel/dagesh-bearing variants observed in the Vilna verse font.
-  A: 'ב', B: 'ג', C: 'ד', D: 'ה', E: 'ו', F: 'ו', G: 'ח', H: 'ט', I: 'י', K: 'ך', M: 'כ', N: 'מ',
-  P: 'נ', R: 'ע', T: 'פ', U: 'ש', V: 'צ', W: 'ש', X: 'ר', Y: 'ש', Z: 'ת', '\u00F5': 'א',
+  A: 'ב', B: 'ג', C: 'ד', D: 'ה', E: 'ו', F: 'ו', G: 'ח', H: 'ט', I: 'י', K: 'ך', L: 'ך', M: 'כ',
+  N: 'ל', O: 'מ', P: 'נ', R: 'ו', T: 'פ', U: 'ש', V: 'צ', W: 'ש', X: 'ר', Y: 'ת', Z: 'ת',
+  '\u00F5': 'א', '\u00F7': 'ל',
 };
 
 /** Decodes a Latin-encoded vowelled verse run (visual order) into Hebrew; nikud glyphs vanish. */
