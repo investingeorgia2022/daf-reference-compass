@@ -20,6 +20,7 @@ import { getIndependentMarkerBoxes, getGilyonNote, getGilyonNoteByOrder, getExac
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import { ReferenceOriginLabel } from './ReferenceOriginLabel';
+import { PdfSharpZoomTile } from './PdfSharpZoomTile';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -1124,6 +1125,7 @@ function extractHotspotsFromTextContent(
       pdfH: r.pdfH,
       section: r.section,
       centerPct: normalizeVilnaX(r.leftPct + (r.vpWidth / vpW) * 50, marginGutters),
+      chars: r.str.replace(/\s+/g, '').length,
     }));
     assignFullWidthCommentaryRows(probe);
     for (const p of probe) p.run.section = p.section;
@@ -2029,6 +2031,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   onSelectWordOrSentence,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const pdfPageRef = useRef<any>(null);
+  const tintDataRef = useRef<any>(null);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
   const multiWordAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -3055,6 +3059,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         const page = await pdfDoc.getPage(1);
         if (isCancelled) return;
+        pdfPageRef.current = page;
+        tintDataRef.current = null;
 
         const baseViewport = page.getViewport({ scale: 1 });
         if (baseViewport.width > 0 && baseViewport.height > 0) {
@@ -3208,6 +3214,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               else if (role.tosafot) dhColors.set(id, { first: TOSAFOT_INK });
             }
             tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
+            tintDataRef.current = { parsed, citSet, dhColors };
           } catch {
             // ignore
           }
@@ -4851,6 +4858,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                 ? 'sepia(0.18) contrast(1.06) brightness(0.95)'
                 : 'contrast(1.05)',
             }}
+          />
+          <PdfSharpZoomTile
+            baseCanvasRef={canvasRef}
+            pageRef={pdfPageRef}
+            tintRef={tintDataRef}
+            renderKey={dafKey}
+            filter={isDark ? 'sepia(0.18) contrast(1.06) brightness(0.95)' : 'contrast(1.05)'}
           />
 
           {/* Independent Rashi / Tosafot reading lines — same sheer band style as the Gemara line */}

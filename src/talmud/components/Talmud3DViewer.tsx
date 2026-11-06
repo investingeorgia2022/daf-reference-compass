@@ -241,7 +241,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       const detail = (e as CustomEvent<{ delta?: number; scale?: number }>).detail;
       if (!detail) return;
       if (typeof detail.scale === 'number') {
-        const next = Math.max(0.7, Math.min(3.5, detail.scale));
+        const next = Math.max(0.7, Math.min(10.0, detail.scale));
         setScale(next);
         if (next <= 1.02) {
           setPanX(0);
@@ -249,7 +249,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         }
       } else if (typeof detail.delta === 'number') {
         setScale((prev) => {
-          const next = Math.max(0.7, Math.min(3.5, prev + (detail.delta ?? 0)));
+          const next = Math.max(0.7, Math.min(10.0, prev + (detail.delta ?? 0)));
           if (next <= 1.02) {
             setPanX(0);
             setPanY(0);
@@ -289,7 +289,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         e.preventDefault();
         const delta = -e.deltaY * 0.008;
         setScale((prev) => {
-          const next = Number(Math.max(0.75, Math.min(5.0, prev + delta)).toFixed(3));
+          const next = Number(Math.max(0.75, Math.min(10.0, prev + delta)).toFixed(3));
           if (next <= 1.01) {
             setPanX(0);
             setPanY(0);
@@ -377,7 +377,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
 
       const ratio = dist / pinchRef.current.startDist;
       const nextScale = Number(
-        Math.max(0.75, Math.min(5.0, pinchRef.current.startScale * ratio)).toFixed(3)
+        Math.max(0.75, Math.min(10.0, pinchRef.current.startScale * ratio)).toFixed(3)
       );
       setScale(nextScale);
 
@@ -725,7 +725,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setScale((s) => Number(Math.min(5.0, s + 0.35).toFixed(2)));
+                        setScale((s) => Number(Math.min(10.0, s + 0.35).toFixed(2)));
                         setShowResetAfterRelease(true);
                       }}
                       className="p-1 rounded hover:bg-[#8B5A2B]/20 cursor-pointer flex items-center justify-center"

@@ -34,3 +34,5 @@
 - Gemara↔commentary linking is word-level: Rashi links first, then Tosafot; each commentator claims main words independently (never reusing its own claims, so repeated phrases bind to the next free occurrence), Tosafot וכו׳ starting at a Rashi start extends to Rashi's span, words never match by substituting letters (distinct words collided), and any reference marker inside a quotation is transparent.
 - Gilyon HaShas markers resolve chronologically (n-th marker → n-th ":"-terminated note); Torah Or entries span from their printed number to the next number so verse and source highlight together.
 - Full-width commentary lines below the Gemara are assigned whole to one commentator (the column that keeps printing after the other ends) by vilnaLowerCommentary, never split by page side; side splits mixed Rashi and Tosafot.
+- Zoomed PDF views re-render only the visible page area into PdfSharpZoomTile at screen resolution; mobile canvases cannot hold a whole page at 10x.
+- A line set mostly in the Gemara body type is Gemara wherever it reaches (vilnaLowerCommentary); full-width last Gemara lines were mislabelled as commentary.
