@@ -21,6 +21,8 @@ import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import { ReferenceOriginLabel } from './ReferenceOriginLabel';
 import { PdfSharpZoomTile } from './PdfSharpZoomTile';
+import { DafSearchPanel } from './DafSearchPanel';
+import type { DafSearchHit } from '../utils/dafSearch';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -3222,6 +3224,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         if (textContent && Array.isArray(textContent.items)) {
           const rawItems = decodeLegacyHebrewItems(textContent.items as Array<Record<string, unknown>>);
+          if (import.meta.env.DEV) (window as any).__dafTextItems = { items: rawItems, orig: textContent.items, vp: page.getViewport({ scale: 1 }) };
           applyTextItems(rawItems);
 
         }
@@ -3732,6 +3735,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   // Rashi (green) / Tosafot (bordeaux) dibbur-hamatchil ↔ main-text links.
   const dibburLinks = useMemo(() => {
     const { links, roles } = buildDibburHamatchilLinks(hotspots);
+    if (import.meta.env.DEV && typeof window !== 'undefined') { (window as any).__dafHotspots = hotspots; (window as any).__dafLinks = links; }
     return { byKey: new Map(links.map((l) => [l.key, l])), roles };
   }, [hotspots]);
 
@@ -3781,6 +3785,41 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       return true;
     },
     [dibburLinks, hotspots, citationHotspotIdsSet]
+  );
+
+  // Search result: same glow and settle-then-scroll path as a dibbur-hamatchil jump.
+  const jumpToSearchHit = useCallback(
+    (hit: DafSearchHit) => {
+      const targets = hotspots.filter((x) => hit.ids.includes(x.id));
+      if (!targets.length) return;
+      const left = Math.min(...targets.map((t) => t.leftPct));
+      const top = Math.min(...targets.map((t) => t.topPct));
+      const right = Math.max(...targets.map((t) => t.leftPct + t.widthPct));
+      const bottom = Math.max(...targets.map((t) => t.topPct + t.heightPct));
+      setSelectedRange(null);
+      setShowRangeHandles(false);
+      setBlinkingTarget({
+        key: `dh:search:${Date.now()}`,
+        labelHe: 'חיפוש',
+        labelKa: 'ძებნა',
+        leftPct: left,
+        topPct: top,
+        widthPct: right - left,
+        heightPct: bottom - top,
+        hotspotIds: new Set(hit.ids),
+        activatedAt: Date.now(),
+      } as any);
+      window.dispatchEvent(
+        new CustomEvent('talmud-focus-target-pct', {
+          detail: { ox: (left + right) / 2, oy: (top + bottom) / 2, keepScale: true, scrollHandled: true },
+        })
+      );
+      requestAnimationFrame(() => {
+        const el = pageContainerRef.current?.querySelector(`[id="pdf-hotspot-${targets[0].id}"]`);
+        if (el instanceof HTMLElement) scrollToTarget(el);
+      });
+    },
+    [hotspots]
   );
 
   // A dibbur-hamatchil destination glows for a few seconds, then fades by itself.
@@ -4808,6 +4847,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   return (
     <div className="w-full flex flex-col items-center">
+      {hotspots.length > 0 && <DafSearchPanel spots={hotspots} onPick={jumpToSearchHit} />}
       {blinkingTarget?.originMarker && (
         <ReferenceOriginLabel container={pageContainerRef} label={blinkingTarget.labelKa} origin={blinkingTarget.originMarker} />
       )}
