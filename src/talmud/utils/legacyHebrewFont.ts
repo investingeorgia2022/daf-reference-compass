@@ -116,7 +116,12 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
   }
   return items.map((it, i) => {
     const s = typeof it?.str === 'string' ? it.str : '';
-    if (!isLegacyHebrewRun(s)) return it;
+    if (!isLegacyHebrewRun(s)) {
+      // Unicode Hebrew runs of the same scans also print נ as a control code (יוח\x15ן → יוחנן).
+      return /[\u05D0-\u05EA][\u0001-\u001f]|[\u0001-\u001f][\u05D0-\u05EA]/.test(s)
+        ? { ...it, str: s.replace(/[\u0001-\u001f]/g, 'נ') }
+        : it;
+    }
     // A quote item printed right beside this run: visually left = touches the reading end.
     let quoteAtStart = false;
     let quoteAtEnd = false;
