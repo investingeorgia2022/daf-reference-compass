@@ -38,3 +38,4 @@
 - A line set mostly in the Gemara body type is Gemara wherever it reaches (vilnaLowerCommentary); full-width last Gemara lines were mislabelled as commentary.
 - Scan text repair lives in legacyHebrewFont: control-code נ is restored in every Hebrew run, and fonts whose items include standalone nikud glyphs are decoded as the Latin-encoded vowelled verse font; otherwise Torah Or verses and Mishnah words vanish from matching.
 - Daf search (dafSearch + DafSearchPanel) reuses the DH matcher's wordsMatch/abbreviationSpan and the DH glow/scroll path, so search, links and abbreviations follow one set of rules.
+- PDF focus/search ink masks use PdfInkHighlight and pdfInkMask over base or visible sharp-tile pixels; small transparent glyph canvases preserve paper, navigation, and mobile memory limits.

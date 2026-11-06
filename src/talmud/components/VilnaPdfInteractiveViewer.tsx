@@ -21,6 +21,7 @@ import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import { ReferenceOriginLabel } from './ReferenceOriginLabel';
 import { PdfSharpZoomTile } from './PdfSharpZoomTile';
+import { PdfInkHighlight } from './PdfInkHighlight';
 import { DafSearchPanel } from './DafSearchPanel';
 import type { DafSearchHit } from '../utils/dafSearch';
 import {
@@ -4914,6 +4915,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             renderKey={dafKey}
             filter={isDark ? 'sepia(0.18) contrast(1.06) brightness(0.95)' : 'contrast(1.05)'}
           />
+          <PdfInkHighlight
+            baseCanvasRef={canvasRef}
+            spots={hotspots.filter((h) => searchHitIds.has(h.id) || blinkingTarget?.hotspotIds.has(h.id))}
+            focusedIds={blinkingTarget?.hotspotIds}
+          />
 
           {/* Independent Rashi / Tosafot reading lines — same sheer band style as the Gemara line */}
           {!loadingPdf &&
@@ -5350,17 +5356,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             {hotspots.map((h, idx) => {
               const isSelected = selectedHotspotIdsSet.has(h.id);
               const isBlinkingWord = blinkingTarget?.hotspotIds.has(h.id) || false;
-              const isSearchFocus = isBlinkingWord && String(blinkingTarget?.key || '').startsWith('dh:search:');
-              const isSearchHit = !isBlinkingWord && searchHitIds.has(h.id);
               const isMarkerOrCitation = h.isSmallMarker || citationHotspotIdsSet.has(h.id);
 
               // Royal Blue ink tinting is applied strictly on the letter glyphs on the canvas.
               // Markers and citation nodes remain 100% transparent without any background overlays masking surrounding characters.
-              const bgStyle = isBlinkingWord
-                ? 'var(--reference-target-highlight)'
-                : isSearchHit
-                  ? 'var(--reference-target-highlight)'
-                  : isSelected
+              const bgStyle = isSelected
                     ? 'rgba(245, 168, 28, 0.25)'
                     : 'transparent';
 
@@ -5460,10 +5460,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     pointerEvents: 'auto',
                     backgroundColor: bgStyle,
                     mixBlendMode: 'normal',
-                    border: isBlinkingWord && !isSearchFocus ? '2px solid var(--study-gold, oklch(0.68 0.16 70))' : 'none',
-                    borderRadius: isBlinkingWord || isSearchHit ? 3 : undefined,
-                    boxShadow: isBlinkingWord && !isSearchFocus ? '0 0 14px 3px oklch(0.78 0.16 75 / 0.75)' : 'none',
-                    animation: isSearchFocus ? 'dafSearchBlink 0.9s ease-in-out infinite' : undefined,
                     outline: 'none',
                   }}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}

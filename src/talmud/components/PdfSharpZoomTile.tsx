@@ -29,6 +29,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
 
   useEffect(() => {
     setRect(null);
+    window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base: baseCanvasRef.current } }));
   }, [renderKey]);
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       tile.height = off.height;
       tile.getContext('2d')?.drawImage(off, 0, 0);
       setRect(r);
+      window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base, canvas: tile, rect: r } }));
     };
 
     const schedule = () => {
@@ -138,6 +140,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       const s = (e as CustomEvent).detail?.scale;
       if (typeof s === 'number') scaleRef.current = s;
       setRect(null);
+      window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base: baseCanvasRef.current } }));
       schedule();
     };
     const onMove = () => {

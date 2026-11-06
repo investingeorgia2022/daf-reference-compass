@@ -807,6 +807,7 @@ button .mg-ka { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient:
   min-height: 100dvh;
 }
 
-/* Focused daf-search hit: only its highlight pulses, no frame. */
-@keyframes dafSearchBlink { 0%, 100% { background-color: oklch(0.86 0.17 90 / 0.65); } 50% { background-color: oklch(0.86 0.17 90 / 0.12); } }
-@media (prefers-reduced-motion: reduce) { [data-reference-highlight="true"] { animation: none !important; } }
+/* Only the transparent printed-ink mask pulses; paper and tap boxes never do. */
+@keyframes dafInkBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+[data-focused-ink="true"] { animation: dafInkBlink 0.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { [data-focused-ink="true"] { animation: none; } }
