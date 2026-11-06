@@ -121,11 +121,8 @@ export function toOCRSkeleton(word: string): string {
 /** Equal skeletons (≥3 letters) match; long words (≥5) tolerate one differing letter. */
 export function isSkeletonMatch(a: string, b: string): boolean {
   if (a.length < 3 || b.length < 3) return false;
-  if (a === b) return true;
-  if (a.length !== b.length || a.length < 5) return false;
-  let d = 0;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i] && ++d > 1) return false;
-  return true;
+  // No letter may differ: a one-letter tolerance confused distinct words (ודומו ↔ ואומר).
+  return a === b;
 }
 
 /**
@@ -196,11 +193,26 @@ function alignAt(tokens: string[], main: string[], pos: number): number {
 
 interface Token<T> { text: string; hs: T[] }
 
+/** A printed reference marker of any kind: (א) א) [א] 1 ⊙ * … — never quoted text. */
+const MARKER_ONLY = /^[\(\[]?(?:[\u05D0-\u05EA]{1,2}|\d{1,3}|[⊙◉◎⊛●○*•°†])[\)\]][.:]?$|^[\(\[](?:[\u05D0-\u05EA]{1,2}|\d{1,3})[.:]?$|^\d{1,3}[.:]?$|^[⊙◉◎⊛●○*•°†]$/;
+export function isInlineMarker(raw: string): boolean {
+  return MARKER_ONLY.test(String(raw || '').replace(NIKUD, '').replace(/[\u200e\u200f\u202a-\u202e\s]/g, ''));
+}
+/** Removes a marker glued to a word (ב)איזהו → איזהו, איזהו1 → איזהו). */
+export function stripGluedMarker(raw: string): string {
+  return String(raw || '')
+    .replace(/^[\(\[]?(?:[\u05D0-\u05EA]{1,2}|\d{1,3}|[⊙◉◎⊛●○*•°†])[\)\]]/, '')
+    .replace(/^\d{1,3}|\d{1,3}$/g, '')
+    .replace(/[\(\[](?:[\u05D0-\u05EA]{1,2}|\d{1,3})[\)\]]$/, '');
+}
+
 /**
  * Joins words the scan printed apart around a separate quote mark: ק + " + ש → ק"ש, ר + ' → ר'.
  * Hotspots must be in reading order.
  */
-function toTokens<T extends DhHotspotLike>(hs: T[]): Token<T>[] {
+function toTokens<T extends DhHotspotLike>(all: T[]): Token<T>[] {
+  // Markers anywhere inside a quotation are transparent.
+  const hs = all.filter((h) => !h.isSmallMarker && !isInlineMarker(h.word) && plainWord(stripGluedMarker(h.word)));
   const out: Token<T>[] = [];
   for (let i = 0; i < hs.length; i++) {
     const h = hs[i];
@@ -210,7 +222,8 @@ function toTokens<T extends DhHotspotLike>(hs: T[]): Token<T>[] {
       i++;
       continue;
     }
-    out.push({ text: h.quoteAfter ? `${normalizeHebrewWord(h.word)}'` : h.word, hs: [h] });
+    const w = stripGluedMarker(h.word);
+    out.push({ text: h.quoteAfter ? `${normalizeHebrewWord(w)}'` : w, hs: [h] });
   }
   return out;
 }
@@ -295,8 +308,7 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
     const words = readingOrder(
       hotspots.filter(
         (h) =>
-          !h.isSmallMarker &&
-          plainWord(h.word) &&
+          (h.isSmallMarker || plainWord(h.word)) &&
           (h.section === sec || (sec === 'tosafot' && isLargeTosafotWord(h, bodyH)))
       )
     );
@@ -310,8 +322,14 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       cur = null;
     };
     for (const w of words) {
+      const colonMark = w.stopAfter === ':' || endsWith(w.word, ':');
+      if (w.isSmallMarker || isInlineMarker(w.word)) {
+        // A marker before ":" still closes the entry; the next word opens a new one.
+        if (colonMark) { drop(); open = true; }
+        continue;
+      }
       const p = plainWord(w.word);
-      const colon = w.stopAfter === ':' || endsWith(w.word, ':');
+      const colon = colonMark;
       const dot = w.stopAfter === '.' || endsWith(w.word, '.');
       if (open && !HEADINGS.has(p)) {
         if (cur && cur.words.length > 0 && bodyFont && w.font === bodyFont && w.font !== cur.words[0].font) {
