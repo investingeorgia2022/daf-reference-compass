@@ -16,15 +16,18 @@ const SECTION_LABEL: Record<string, string> = {
 interface Props {
   spots: SearchableSpot[];
   onPick: (hit: DafSearchHit) => void;
+  /** Every current hit, so the daf can tint all of them at once (empty when closed). */
+  onHits?: (hits: DafSearchHit[]) => void;
 }
 
 /** Floating daf search: every section, abbreviations (ק״ש ↔ קריאת שמע), prefixes, line breaks. */
-export function DafSearchPanel({ spots, onPick, showButton = false }: Props & { showButton?: boolean }) {
+export function DafSearchPanel({ spots, onPick, onHits, showButton = false }: Props & { showButton?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const hits = useMemo(() => (query.trim().length >= 2 ? searchDaf(spots, query) : []), [spots, query]);
+  useEffect(() => { onHits?.(open ? hits : []); }, [hits, open]);
 
   const picked = useRef(-1);
   const [showList, setShowList] = useState(true);

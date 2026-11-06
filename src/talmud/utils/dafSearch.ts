@@ -25,6 +25,8 @@ export interface DafSearchHit {
 const plain = (w: string) => normalizeHebrewWord(w).replace(/[^א-ת"'״׳]/g, '');
 const letters = (w: string) => plain(w).replace(/[^א-ת]/g, '');
 
+const isShortened = (w: string) => /^[א-ת]+['\u05F3\u2019]$/.test(String(w || '').replace(/[\u0591-\u05C7]/g, '').replace(/[.:,;]+$/, '').trim());
+
 /** Splits a query into words; quote marks inside a word are kept (ק"ש). */
 export function tokenizeQuery(q: string): string[] {
   return q.replace(/[\u0591-\u05C7]/g, '').split(/[\s,.:;!?()[\]]+/).map((t) => t.trim()).filter((t) => letters(t));
@@ -36,6 +38,12 @@ function matchWord(q: string, words: string[], pos: number, isLast: boolean): { 
   if (!w) return { used: 0, quality: 0 };
   const lq = letters(q), lw = letters(w);
   if (lq === lw) return { used: 1, quality: 1 };
+  // A geresh-shortened daf word (ר', כלומ') stands only for its known expansions, never for any word
+  // that merely begins with the same letter: רבא is not ר'.
+  if (isShortened(w) && !isShortened(q)) {
+    const ok = lw === 'ר' ? ['רבי', 'רב', 'רבן'].includes(lq) : lw.length >= 3 && lq.startsWith(lw);
+    return ok ? { used: 1, quality: 0.8 } : { used: 0, quality: 0 };
+  }
   if (wordsMatch(q, w)) return { used: 1, quality: 0.85 };
   const span = abbreviationSpan(q, words, pos);
   if (span) return { used: span, quality: 0.8 };
