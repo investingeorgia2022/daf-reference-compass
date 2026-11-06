@@ -16,6 +16,7 @@ import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/
 import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { readCachedDafPdf, writeCachedDafPdf } from '../utils/dafPdfCache';
+import { dafRenderCacheKey, readDafRender, writeDafRender } from '../utils/dafRenderCache';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
 import { getIndependentMarkerBoxes, getGilyonNote, getGilyonNoteByOrder, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
@@ -3244,9 +3245,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             }
           }
         }
-        } finally {
-          // pdfPageRef stays set for sharp zoom tiles either way
-        }
+
         function applyCachedOrFreshItems(
           rawItems: Array<Record<string, unknown>>,
           ctx: CanvasRenderingContext2D,
@@ -3282,7 +3281,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               tractateNameHe,
               tractateNameKa
             );
-            tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
+            if (!alreadyTinted) tintCitationHotspotsBlueOnCanvas(ctx, canvas.width, canvas.height, parsed, citSet);
             const dhColors = new Map();
             const { roles } = buildDibburHamatchilLinks(parsed);
             for (const [id, role] of roles) {
@@ -3291,18 +3290,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
               else if (role.rashi) dhColors.set(id, { first: RASHI_INK });
               else if (role.tosafot) dhColors.set(id, { first: TOSAFOT_INK });
             }
-            tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
+            if (!alreadyTinted) tintHotspotsInkOnCanvas(ctx, canvas.width, canvas.height, parsed, dhColors);
             tintDataRef.current = { parsed, citSet, dhColors };
           } catch {
             // ignore
           }
-        };
-
-        if (textContent && Array.isArray(textContent.items)) {
-          const rawItems = decodeLegacyHebrewItems(textContent.items as Array<Record<string, unknown>>);
-          if (import.meta.env.DEV) (window as any).__dafTextItems = { items: rawItems, orig: textContent.items, vp: page.getViewport({ scale: 1 }) };
-          applyTextItems(rawItems);
-
         }
       } catch (err) {
         const errMsg = String((err as Error)?.message || err || '').toLowerCase();
