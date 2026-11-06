@@ -725,7 +725,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setScale((s) => Number(Math.min(5.0, s + 0.35).toFixed(2)));
+                        setScale((s) => Number(Math.min(10.0, s + 0.35).toFixed(2)));
                         setShowResetAfterRelease(true);
                       }}
                       className="p-1 rounded hover:bg-[#8B5A2B]/20 cursor-pointer flex items-center justify-center"
