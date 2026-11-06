@@ -3733,7 +3733,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
   // Rashi (green) / Tosafot (bordeaux) dibbur-hamatchil ↔ main-text links.
   const dibburLinks = useMemo(() => {
     const { links, roles } = buildDibburHamatchilLinks(hotspots);
-    if (import.meta.env.DEV && typeof window !== 'undefined') (window as any).__dafHotspots = hotspots;
+    if (import.meta.env.DEV && typeof window !== 'undefined') { (window as any).__dafHotspots = hotspots; (window as any).__dafLinks = links; }
     return { byKey: new Map(links.map((l) => [l.key, l])), roles };
   }, [hotspots]);
 
