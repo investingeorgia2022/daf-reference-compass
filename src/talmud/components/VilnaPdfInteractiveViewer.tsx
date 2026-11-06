@@ -16,7 +16,7 @@ import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/
 import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
 import { scrollToTarget } from '../utils/scrollToTarget';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
-import { getIndependentMarkerBoxes, getGilyonNote, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
+import { getIndependentMarkerBoxes, getGilyonNote, getGilyonNoteByOrder, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
 import { BiblicalVerseWindow } from './BiblicalVerseWindow';
 import { ReferenceOriginLabel } from './ReferenceOriginLabel';
@@ -1933,7 +1933,7 @@ function extractHotspotsFromTextContent(
   // Attach printed "." / ":" (separate PDF runs) to the commentary word they follow (RTL: on its left).
   const usedStopMarks = new Set<(typeof stopMarks)[number]>();
   for (const h of hotspots) {
-    if (h.section !== 'rashi' && h.section !== 'tosafot') continue;
+    if (h.section !== 'rashi' && h.section !== 'tosafot' && h.marginCommType !== 'gilyon-hashas') continue;
     if (/[.:]["'״׳]?$/.test(h.word.trim())) {
       h.stopAfter = /:["'״׳]?$/.test(h.word.trim()) ? ':' : '.';
       continue;
@@ -3369,7 +3369,14 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         if (preferredType === 'gilyon-hashas') {
           const sourceSection = markerHotspot.sentence?.source === 'mishnah' ? 'mishnah' : markerHotspot.section;
-          const entry = getGilyonNote(hotspots, sourceSection, expectedSide);
+          // Chronological: the n-th Gilyon marker on the daf points to the n-th note (each ends with ":").
+          const rank = (x: VilnaPdfHotspot) => (x.section === 'mishnah' || x.section === 'gemara' ? 0 : x.section === 'rashi' ? 1 : 2);
+          const gilyonMarkers = hotspots
+            .filter((x) => x.section !== 'margin' && x.isSmallMarker &&
+              (x.markerTargetType === 'gilyon-hashas' || isCircleMarker(x.word)))
+            .sort((a, b) => rank(a) - rank(b) || a.topPct - b.topPct || b.leftPct - a.leftPct);
+          const ordered = getGilyonNoteByOrder(hotspots, gilyonMarkers.findIndex((x) => x.id === markerHotspot.id), expectedSide);
+          const entry = ordered.length ? ordered : getGilyonNote(hotspots, sourceSection, expectedSide);
           return entry.length ? { targetHotspots: entry, commType: preferredType, key, targetSentenceId } : null;
         }
 

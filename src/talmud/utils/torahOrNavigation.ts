@@ -32,7 +32,7 @@ export function getTorahOrEntryHotspots<T extends TorahOrSpot>(
   const lastKeyed = keyed[keyed.length - 1].topPct;
   const end = next ? next.topPct - 0.3 : lastKeyed + 0.3;
   return column
-    .filter(h => h.topPct >= start.topPct - 0.3 && h.topPct <= Math.max(end, next ? -1 : lastKeyed + 0.3))
+    .filter(h => h.topPct >= start.topPct - 0.3 && h.topPct <= end)
     .sort((a, b) => a.topPct - b.topPct || b.leftPct - a.leftPct);
 }
 
