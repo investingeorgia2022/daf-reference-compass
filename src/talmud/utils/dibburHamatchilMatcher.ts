@@ -100,8 +100,8 @@ export function wordsMatch(a: string, b: string): boolean {
   if (plur(pa) === plur(pb) && plur(pa) !== pa) return true;
   const va = stripPrefixes(pa);
   const vb = stripPrefixes(pb);
-  if (va.some((x) => x.length >= 3 && vb.includes(x))) return true;
-  return isSkeletonMatch(toOCRSkeleton(pa), toOCRSkeleton(pb));
+  // Words of two letters or more never match by substituting letters (ודומו ≠ ואומר).
+  return va.some((x) => x.length >= 3 && vb.includes(x));
 }
 
 /** Collapses letters the scans' OCR confuses (ש/ס, א/ל, ב/כ, ה/ח/ת, ד/ר/ו, י/ז/נ, מ/ם, ע/צ). */
