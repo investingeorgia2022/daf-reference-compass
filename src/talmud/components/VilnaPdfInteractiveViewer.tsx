@@ -3806,7 +3806,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         topPct: top,
         widthPct: right - left,
         heightPct: bottom - top,
-        hotspotIds: hit.ids,
+        hotspotIds: new Set(hit.ids),
         activatedAt: Date.now(),
       } as any);
       window.dispatchEvent(
