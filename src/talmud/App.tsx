@@ -3716,7 +3716,7 @@ export function App() {
               {/* Concave pocket cut into the panel's top edge */}
               <span
                 aria-hidden="true"
-                className={`absolute top-[14px] left-1/2 -translate-x-1/2 w-[64px] h-[34px] rounded-b-[34px] border border-t-0 shadow-[inset_0_6px_10px_rgba(0,0,0,0.28)] ${
+                className={`absolute top-[7px] left-1/2 -translate-x-1/2 w-[62px] h-[30px] rounded-b-[31px] border border-t-0 shadow-[inset_0_6px_10px_rgba(0,0,0,0.28)] ${
                   theme === 'celestial-slate'
                     ? 'bg-[#C9DAEC] border-[#94B8DC]'
                     : isDark
@@ -3744,7 +3744,7 @@ export function App() {
                 aria-label="ძებნა დაფზე (ზემოთ/ქვემოთ გაწევით — პანელის გაშლა/ჩაკეცვა)"
                 title="ძებნა დაფზე"
                 style={{ pointerEvents: 'auto' }}
-                className="relative top-[10px]"
+                className="relative -top-[14px]"
               >
                 <AnimatedMiniGlobeIcon sizeClass="w-11 h-11" iconSizeClass="w-5 h-5" search />
               </motion.button>
@@ -3767,7 +3767,7 @@ export function App() {
               }`}
             >
               {/* TOP STRETCH HANDLE + SINGLE-LINE DOCK BAR WITH FLAT MODERN BUTTONS */}
-              <div className="px-2.5 sm:px-3.5 pt-1.5 pb-2 flex flex-col gap-1">
+              <div className="px-2.5 sm:px-3.5 pt-[22px] pb-2 flex flex-col gap-1">
 
                 {/* SINGLE HORIZONTAL ROW: STATIC LEFT/RIGHT PAGE-TURN BUTTONS + SLIDING ICON-ONLY TRACK IN CENTER */}
                 <div data-crystal-bar="true" className="flex items-center justify-between gap-2">
