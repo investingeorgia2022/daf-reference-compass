@@ -117,12 +117,7 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
   return items.map((it, i) => repairControlNun(decodeItem(it, i)));
   function decodeItem(it: T, i: number): T {
     const s = typeof it?.str === 'string' ? it.str : '';
-    if (!isLegacyHebrewRun(s)) {
-      // Unicode Hebrew runs of the same scans also print נ as a control code (יוח\x15ן → יוחנן).
-      return /[\u05D0-\u05EA][\u0001-\u001f]|[\u0001-\u001f][\u05D0-\u05EA]/.test(s)
-        ? { ...it, str: s.replace(/[\u0001-\u001f]/g, 'נ') }
-        : it;
-    }
+    if (!isLegacyHebrewRun(s)) return it;
     // A quote item printed right beside this run: visually left = touches the reading end.
     let quoteAtStart = false;
     let quoteAtEnd = false;
@@ -134,5 +129,13 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
     const font = (it as { fontName?: string }).fontName;
     const d = decodeLegacyHebrew(s, { quoteAtStart, quoteAtEnd, controlNunFont: !!font && controlNunFonts.has(font) });
     return d === s ? it : { ...it, str: d };
-  });
+  }
+}
+
+/** Any Hebrew run (decoded or Unicode) may still carry נ as a control code: יוח\x15ן → יוחנן. */
+function repairControlNun<T extends { str?: unknown }>(it: T): T {
+  const s = typeof it?.str === 'string' ? it.str : '';
+  return /[\u05D0-\u05EA][\u0001-\u001f]|[\u0001-\u001f][\u05D0-\u05EA]/.test(s)
+    ? { ...it, str: s.replace(/[\u0001-\u001f]/g, 'נ') }
+    : it;
 }
