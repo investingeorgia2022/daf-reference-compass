@@ -26,7 +26,8 @@ export function DafSearchPanel({ spots, onPick }: Props) {
   const hits = useMemo(() => (query.trim().length >= 2 ? searchDaf(spots, query) : []), [spots, query]);
 
   const picked = useRef(-1);
-  useEffect(() => { setActive(0); picked.current = -1; }, [query]);
+  const [showList, setShowList] = useState(true);
+  useEffect(() => { setActive(0); picked.current = -1; setShowList(true); }, [query]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -42,6 +43,8 @@ export function DafSearchPanel({ spots, onPick }: Props) {
     if (!hit) return;
     setActive(i);
     picked.current = i;
+    // Keep only the search bar so the found words on the daf stay visible.
+    setShowList(false);
     onPick(hit);
   };
 
@@ -65,6 +68,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowList(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && hits.length) pick(picked.current === active ? (active + 1) % hits.length : active);
                 if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
@@ -80,7 +84,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
             <button type="button" aria-label="შემდეგი" disabled={!hits.length} onClick={() => pick((active + 1) % hits.length)} className="p-1 disabled:opacity-30"><ChevronDown className="h-4 w-4" /></button>
             <button type="button" aria-label="დახურვა" onClick={() => setOpen(false)} className="p-1"><X className="h-4 w-4" /></button>
           </div>
-          {query.trim().length >= 2 && (
+          {showList && query.trim().length >= 2 && (
             <ul className="max-h-[45vh] overflow-y-auto p-1">
               {hits.length === 0 && <li className="p-3 text-center text-sm text-[var(--study-muted)]">ვერაფერი მოიძებნა</li>}
               {hits.map((h, i) => (
