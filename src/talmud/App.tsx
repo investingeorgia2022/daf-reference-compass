@@ -3684,9 +3684,9 @@ export function App() {
             }}
             transition={{
               type: 'spring',
-              stiffness: 360,
-              damping: 34,
-              mass: 0.8,
+              stiffness: 170,
+              damping: 26,
+              mass: 1,
             }}
             onTouchStart={(e) => {
               if (e.touches.length === 1) {
@@ -3712,33 +3712,48 @@ export function App() {
             className="fixed bottom-0 left-0 right-0 z-[290] pointer-events-none flex flex-col items-center px-0 w-full transition-opacity"
           >
             {/* Curtain pull tab — rises above the panel edge */}
-            <button
-              type="button"
-              data-raw-btn="true"
-              data-flat-btn="true"
-              onClick={() => setIsGlobalBottomSheetOpen((v) => !v)}
-              aria-label={isGlobalBottomSheetOpen ? 'პანელის ჩაკეცვა' : 'პანელის ამოწევა'}
-              title={isGlobalBottomSheetOpen ? 'პანელის ჩაკეცვა' : 'პანელის ამოწევა'}
-              style={{ pointerEvents: 'auto', marginBottom: -1 }}
-              className={`curtain-tab group relative z-10 w-24 h-5 rounded-t-[16px] border border-b-0 flex items-center justify-center cursor-pointer transition-colors ${
-                theme === 'celestial-slate'
-                  ? 'bg-[#E2EDF8] border-[#94B8DC]'
-                  : isDark
-                    ? 'bg-[#1C130D] border-[#4A3322]'
-                    : 'bg-[#F9F4EB] border-[#D8C7B0]'
-              }`}
-            >
-              <span className="flex items-center gap-[3px]">
-                <span className="w-1 h-1 rounded-full bg-amber-600/70 dark:bg-amber-400/80" />
-                <span className="w-6 h-[3px] rounded-full bg-amber-600/70 dark:bg-amber-400/80 group-hover:w-8 transition-all" />
-                <span className="w-1 h-1 rounded-full bg-amber-600/70 dark:bg-amber-400/80" />
-              </span>
-            </button>
+            <div className="relative z-10 flex justify-center" style={{ marginBottom: -22, height: 30 }}>
+              {/* Concave pocket cut into the panel's top edge */}
+              <span
+                aria-hidden="true"
+                className={`absolute top-[14px] left-1/2 -translate-x-1/2 w-[64px] h-[34px] rounded-b-[34px] border border-t-0 shadow-[inset_0_6px_10px_rgba(0,0,0,0.28)] ${
+                  theme === 'celestial-slate'
+                    ? 'bg-[#C9DAEC] border-[#94B8DC]'
+                    : isDark
+                      ? 'bg-[#120B06] border-[#4A3322]'
+                      : 'bg-[#E9DCC6] border-[#D8C7B0]'
+                }`}
+              />
+              <motion.button
+                type="button"
+                data-raw-btn="true"
+                data-flat-btn="true"
+                onTouchStart={(e) => {
+                  (e.currentTarget as any)._sy = e.touches[0]?.clientY ?? 0;
+                  (e.currentTarget as any)._moved = false;
+                }}
+                onTouchMove={(e) => {
+                  const sy = (e.currentTarget as any)._sy ?? 0;
+                  if (Math.abs((e.touches[0]?.clientY ?? sy) - sy) > 10) (e.currentTarget as any)._moved = true;
+                }}
+                onClick={(e) => {
+                  if ((e.currentTarget as any)._moved) { (e.currentTarget as any)._moved = false; return; }
+                  window.dispatchEvent(new CustomEvent('talmud-open-daf-search'));
+                }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="ძებნა დაფზე (ზემოთ/ქვემოთ გაწევით — პანელის გაშლა/ჩაკეცვა)"
+                title="ძებნა დაფზე"
+                style={{ pointerEvents: 'auto' }}
+                className="relative top-[10px]"
+              >
+                <AnimatedMiniGlobeIcon sizeClass="w-11 h-11" iconSizeClass="w-5 h-5" search />
+              </motion.button>
+            </div>
             {/* SINGLE UNIFIED PANEL THAT STRETCHES ACROSS THE FULL SCREEN WIDTH */}
             <motion.div
               layout
               transition={{
-                layout: { duration: 0.52, ease: [0.16, 1, 0.3, 1] },
+                layout: { type: 'spring', stiffness: 140, damping: 22, mass: 1.1 },
               }}
               style={{
                 pointerEvents: barsHidden && !isGlobalBottomSheetOpen ? 'none' : 'auto',

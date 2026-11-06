@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Check, Plus, Minus, RotateCcw, X, Crown, Globe } from 'lucide-react';
+import { Sparkles, Check, Plus, Minus, RotateCcw, X, Crown, Globe, Search } from 'lucide-react';
 import { SacredRealmId } from '../data/tanakhAndHalakhaData';
 
 export const MAX_ACTIVE_GLOBE_ORBS = 12;
@@ -1545,15 +1545,19 @@ export const SpinningCrystalCrownMagenDavidEmblem: React.FC<{
 export const AnimatedMiniGlobeIcon: React.FC<{
   sizeClass?: string;
   iconSizeClass?: string;
+  search?: boolean;
 }> = ({
   sizeClass = 'w-6 h-6 sm:w-6.5 sm:h-6.5',
   iconSizeClass = 'w-3 h-3',
+  search = false,
 }) => {
+  const Icon = search ? Search : Globe;
   return (
     <div
       style={{
-        background:
-          'radial-gradient(circle at 30% 24%, rgba(255,255,255,0.45) 0%, rgba(217,119,6,0.34) 38%, rgba(15,23,42,0.78) 78%, rgba(3,7,18,0.92) 100%)',
+        background: search
+          ? 'radial-gradient(circle at 30% 24%, rgba(255,255,255,0.7) 0%, rgba(186,230,253,0.28) 34%, rgba(56,189,248,0.14) 62%, rgba(245,158,11,0.3) 100%)'
+          : 'radial-gradient(circle at 30% 24%, rgba(255,255,255,0.45) 0%, rgba(217,119,6,0.34) 38%, rgba(15,23,42,0.78) 78%, rgba(3,7,18,0.92) 100%)',
         perspective: '300px',
       }}
       className={`relative ${sizeClass} rounded-full border border-amber-400/70 text-amber-200 flex items-center justify-center backdrop-blur-xl shadow-[0_2px_8px_rgba(0,0,0,0.4),0_0_8px_rgba(251,191,36,0.25),inset_0_1px_2.5px_rgba(255,255,255,0.7)] shrink-0 overflow-hidden`}
@@ -1566,7 +1570,7 @@ export const AnimatedMiniGlobeIcon: React.FC<{
         style={{ transformStyle: 'preserve-3d' }}
         className="relative z-10 flex items-center justify-center"
       >
-        <Globe className={`${iconSizeClass} text-amber-200 drop-shadow`} />
+        <Icon className={`${iconSizeClass} ${search ? 'text-amber-600 dark:text-amber-200' : 'text-amber-200'} drop-shadow`} />
       </motion.span>
     </div>
   );
