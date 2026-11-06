@@ -3071,7 +3071,11 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
         const dpr =
           typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.5) : 2;
-        const renderScale = Math.min(3.2, 2.2 * dpr);
+        // iOS Safari silently drops very large canvases; cap the longest side at ~2600px.
+        // Sharp zoom beyond that is handled by PdfSharpZoomTile.
+        const maxSide = Math.max(baseViewport.width, baseViewport.height) || 1191;
+        const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0;
+        const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? 2600 / maxSide : 3.2);
         const renderViewport = page.getViewport({ scale: renderScale });
 
         // Render onto an offscreen canvas first so concurrent/cancelled renders never conflict on the visible canvas
@@ -5448,8 +5452,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
                     pointerEvents: 'auto',
                     backgroundColor: bgStyle,
                     mixBlendMode: 'normal',
-                    border: 'none',
-                    boxShadow: 'none',
+                    border: isBlinkingWord ? '2px solid var(--study-gold, oklch(0.68 0.16 70))' : 'none',
+                    borderRadius: isBlinkingWord ? 4 : undefined,
+                    boxShadow: isBlinkingWord ? '0 0 14px 3px oklch(0.78 0.16 75 / 0.75)' : 'none',
                     outline: 'none',
                   }}
                   data-dibbur-link={dibburLinks.roles.has(h.id) ? 'true' : undefined}

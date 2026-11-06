@@ -77,8 +77,8 @@ export function DafSearchPanel({ spots, onPick, showButton = false }: Props & { 
               onFocus={() => setShowList(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && hits.length) pick(picked.current === active ? (active + 1) % hits.length : active);
-                if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
-                if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
+                if (e.key === 'ArrowDown' && hits.length) { e.preventDefault(); pick(Math.min(hits.length - 1, active + 1)); }
+                if (e.key === 'ArrowUp' && hits.length) { e.preventDefault(); pick(Math.max(0, active - 1)); }
               }}
               placeholder="חפש בדף… / მოძებნე დაფზე"
               className="min-w-0 flex-1 bg-transparent font-serif text-base outline-none placeholder:text-[var(--study-muted)]"
