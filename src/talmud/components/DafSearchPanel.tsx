@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { AnimatedMiniGlobeIcon } from './CrystalGlobeHelpers';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, ChevronUp, ChevronDown } from 'lucide-react';
@@ -18,7 +19,7 @@ interface Props {
 }
 
 /** Floating daf search: every section, abbreviations (ק״ש ↔ קריאת שמע), prefixes, line breaks. */
-export function DafSearchPanel({ spots, onPick }: Props) {
+export function DafSearchPanel({ spots, onPick, showButton = false }: Props & { showButton?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -57,9 +58,13 @@ export function DafSearchPanel({ spots, onPick }: Props) {
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="fixed right-3 top-[132px] z-[60] flex flex-col items-end gap-2" dir="rtl">
+    <div className="fixed right-3 top-[132px] z-[400] flex flex-col items-end gap-2" dir="rtl">
       {!open ? (
-        null
+        showButton ? (
+          <button type="button" aria-label="ძებნა დაფზე" onClick={() => setOpen(true)} className="rounded-full">
+            <AnimatedMiniGlobeIcon sizeClass="w-11 h-11" iconSizeClass="w-5 h-5" search />
+          </button>
+        ) : null
       ) : (
         <div className="w-[min(92vw,380px)] rounded-2xl border border-[var(--study-rule)] bg-[var(--study-surface)] text-[var(--study-ink)] shadow-[var(--study-shadow)]">
           <div className="flex items-center gap-2 border-b border-[var(--study-rule)] p-2">

@@ -4847,7 +4847,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   return (
     <div className="w-full flex flex-col items-center">
-      {hotspots.length > 0 && <DafSearchPanel spots={hotspots} onPick={jumpToSearchHit} />}
+      {hotspots.length > 0 && <DafSearchPanel spots={hotspots} onPick={jumpToSearchHit} showButton={!!isFullScreen} />}
       {blinkingTarget?.originMarker && (
         <ReferenceOriginLabel container={pageContainerRef} label={blinkingTarget.labelKa} origin={blinkingTarget.originMarker} />
       )}
