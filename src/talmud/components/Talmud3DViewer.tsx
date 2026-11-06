@@ -459,6 +459,10 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         resetTransform();
       }
     }
+    if (e.touches.length === 0 && transformElRef.current) {
+      const el = transformElRef.current;
+      requestAnimationFrame(() => { el.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)'; });
+    }
     if (livePanRef.current) {
       if (panRafRef.current != null) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
       const p = livePanRef.current;
