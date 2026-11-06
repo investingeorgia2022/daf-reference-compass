@@ -24,7 +24,8 @@ export function DafSearchPanel({ spots, onPick }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const hits = useMemo(() => (query.trim().length >= 2 ? searchDaf(spots, query) : []), [spots, query]);
 
-  useEffect(() => setActive(0), [query]);
+  const picked = useRef(-1);
+  useEffect(() => { setActive(0); picked.current = -1; }, [query]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -39,6 +40,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
     const hit = hits[i];
     if (!hit) return;
     setActive(i);
+    picked.current = i;
     onPick(hit);
   };
 
@@ -63,7 +65,7 @@ export function DafSearchPanel({ spots, onPick }: Props) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') pick(e.shiftKey ? (active - 1 + hits.length) % Math.max(1, hits.length) : hits.length ? (active + (e.repeat ? 1 : 0)) % hits.length : 0);
+                if (e.key === 'Enter' && hits.length) pick(picked.current === active ? (active + 1) % hits.length : active);
                 if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
                 if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
               }}
