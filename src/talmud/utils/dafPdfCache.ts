@@ -48,9 +48,7 @@ export function selectPdfCacheEvictions(
 }
 
 function cacheUnavailable(): boolean {
-  return typeof indexedDB === 'undefined' || typeof navigator !== 'undefined' && navigator.storage?.persisted === undefined
-    ? typeof indexedDB === 'undefined'
-    : false;
+  return typeof indexedDB === 'undefined';
 }
 
 function openCacheDb(): Promise<IDBDatabase | null> {
@@ -111,7 +109,8 @@ export async function writeCachedDafPdf(url: string, buffer: ArrayBuffer): Promi
   try {
     await new Promise<void>((resolve) => {
       const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put({ url, buffer, savedAt: Date.now() } satisfies CachedDafPdf);
+      const record: CachedDafPdf = { url, buffer, savedAt: Date.now() };
+      tx.objectStore(STORE).put(record);
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();

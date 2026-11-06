@@ -15,6 +15,7 @@ import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarker
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
 import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
 import { scrollToTarget } from '../utils/scrollToTarget';
+import { readCachedDafPdf, writeCachedDafPdf } from '../utils/dafPdfCache';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
 import { getIndependentMarkerBoxes, getGilyonNote, getGilyonNoteByOrder, getExactMarginEntry } from '../utils/pdfMarkerNavigation';
 import { parseBiblicalCitation } from '../utils/biblicalCitation';
@@ -3025,30 +3026,37 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         let arrayBuffer: ArrayBuffer;
         let isUsingFallbackClone = false;
         const isTalmudApiScan = activePdfUrl.startsWith('/api/talmud/vilna-pdf');
-        try {
-          arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
-        } catch (firstErr) {
-          if (isTalmudApiScan) {
-            // Never show another daf's scan: its layout would not match this daf's text.
-            try {
-              arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
-            } catch {
-              if (!isCancelled) setPdfLoadFailed(true);
-              throw firstErr;
+        // A scan already stored on this device opens without touching the network at all.
+        const cachedScan = isTalmudApiScan ? await readCachedDafPdf(activePdfUrl) : null;
+        if (cachedScan) {
+          arrayBuffer = cachedScan;
+        } else {
+          try {
+            arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
+          } catch (firstErr) {
+            if (isTalmudApiScan) {
+              // Never show another daf's scan: its layout would not match this daf's text.
+              try {
+                arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
+              } catch {
+                if (!isCancelled) setPdfLoadFailed(true);
+                throw firstErr;
+              }
+            } else {
+              isUsingFallbackClone = true;
+              const fallbackCloneUrl = isChumashPdf
+                ? resolveFallbackBundledChumashPdfUrl(dafData.tractateId, dafData.dafId)
+                : isSiddurPdf
+                  ? resolveFallbackBundledSiddurPdfUrl(dafData.tractateId, dafData.dafId)
+                  : null;
+              if (!fallbackCloneUrl) {
+                if (!isCancelled) setPdfLoadFailed(true);
+                throw firstErr;
+              }
+              arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
             }
-          } else {
-            isUsingFallbackClone = true;
-            const fallbackCloneUrl = isChumashPdf
-              ? resolveFallbackBundledChumashPdfUrl(dafData.tractateId, dafData.dafId)
-              : isSiddurPdf
-                ? resolveFallbackBundledSiddurPdfUrl(dafData.tractateId, dafData.dafId)
-                : null;
-            if (!fallbackCloneUrl) {
-              if (!isCancelled) setPdfLoadFailed(true);
-              throw firstErr;
-            }
-            arrayBuffer = await fetchValidPdfBuffer(fallbackCloneUrl);
           }
+          if (isTalmudApiScan) void writeCachedDafPdf(activePdfUrl, arrayBuffer);
         }
         if (!isCancelled) setPdfLoadFailed(false);
         if (isCancelled) return;
@@ -3822,9 +3830,10 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         hotspotIds: new Set(hit.ids),
         activatedAt: Date.now(),
       } as any);
+      // Zoom in and centre on the found words, exactly like a citation-marker jump.
       window.dispatchEvent(
         new CustomEvent('talmud-focus-target-pct', {
-          detail: { ox: (left + right) / 2, oy: (top + bottom) / 2, keepScale: true, scrollHandled: true },
+          detail: { ox: (left + right) / 2, oy: (top + bottom) / 2, targetScale: 1.45, scrollHandled: true },
         })
       );
       requestAnimationFrame(() => {
