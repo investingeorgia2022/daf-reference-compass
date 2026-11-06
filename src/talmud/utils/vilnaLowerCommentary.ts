@@ -17,11 +17,11 @@ export interface LowerRun {
 const MAIN_MIN_H = 12.6;
 const MAIN_MAX_H = 15.8;
 
-function groupRows<T extends LowerRun>(runs: T[]): T[][] {
+function groupRows<T extends LowerRun>(runs: T[], tol = 0.9): T[][] {
   const rows: T[][] = [];
   for (const r of [...runs].sort((a, b) => a.topPct - b.topPct)) {
     const last = rows[rows.length - 1];
-    if (last && last.some((x) => Math.abs(x.topPct - r.topPct) < 0.9)) last.push(r);
+    if (last && last.some((x) => Math.abs(x.topPct - r.topPct) < tol)) last.push(r);
     else rows.push([r]);
   }
   return rows;
@@ -46,7 +46,8 @@ export function assignFullWidthCommentaryRows<T extends LowerRun>(runs: T[]): vo
   // Rows printed mostly in the Gemara body type are Gemara rows (below the top commentary lines).
   const body = runs.filter((r) => r.section !== 'margin' && r.section !== 'header' && r.topPct >= 9);
   const gemaraRuns = new Set<T>();
-  for (const row of groupRows(body)) {
+  // Tight grouping: commentary lines below are packed closely and must not join a Gemara line.
+  for (const row of groupRows(body, 0.35)) {
     const total = row.reduce((s, r) => s + weight(r), 0);
     const main = row.filter(isBody).reduce((s, r) => s + weight(r), 0);
     if (total > 0 && main / total >= 0.6) {
