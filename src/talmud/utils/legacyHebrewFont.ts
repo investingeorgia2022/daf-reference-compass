@@ -114,7 +114,18 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
     const font = (it as { fontName?: string }).fontName;
     if (font && /[\u0001-\u001f]/.test(s) && isLegacyHebrewRun(s)) controlNunFonts.add(font);
   }
-  return items.map((it, i) => repairControlNun(decodeItem(it, i)));
+  // Vowelled verse fonts (Torah Or) print Hebrew as Latin letters with separate nikud glyph items.
+  const latinVerseFonts = new Set<string>();
+  for (const it of items) {
+    const s = typeof it?.str === 'string' ? it.str : '';
+    const font = (it as { fontName?: string }).fontName;
+    if (font && s && LATIN_NIKUD_ONLY.test(s)) latinVerseFonts.add(font);
+  }
+  return items.map((it, i) => {
+    const font = (it as { fontName?: string }).fontName;
+    if (font && latinVerseFonts.has(font)) return decodeLatinVerseItem(it);
+    return repairControlNun(decodeItem(it, i));
+  });
   function decodeItem(it: T, i: number): T {
     const s = typeof it?.str === 'string' ? it.str : '';
     if (!isLegacyHebrewRun(s)) return it;
@@ -130,6 +141,28 @@ export function decodeLegacyHebrewItems<T extends { str?: unknown }>(items: T[])
     const d = decodeLegacyHebrew(s, { quoteAtStart, quoteAtEnd, controlNunFont: !!font && controlNunFonts.has(font) });
     return d === s ? it : { ...it, str: d };
   }
+}
+
+const LATIN_NIKUD_ONLY = /^[\u00A4-\u00A9\u0178]+$/;
+const LATIN_VERSE_MAP: Record<string, string> = {
+  '`': 'א', a: 'ב', b: 'ג', c: 'ד', d: 'ה', e: 'ו', f: 'ז', g: 'ח', h: 'ט', i: 'י', j: 'ך', k: 'כ',
+  l: 'ל', m: 'ם', n: 'מ', o: 'ן', p: 'נ', q: 'ס', r: 'ע', s: 'ף', t: 'פ', u: 'ץ', v: 'צ', w: 'ק',
+  x: 'ר', y: 'ש', z: 'ת',
+  // Vowel/dagesh-bearing variants observed in the Vilna verse font.
+  A: 'ב', B: 'ג', C: 'ד', D: 'ה', E: 'ו', F: 'ו', G: 'ח', H: 'ט', I: 'י', K: 'ך', M: 'כ', N: 'מ',
+  P: 'נ', R: 'ע', T: 'פ', U: 'ש', V: 'צ', W: 'ש', X: 'ר', Y: 'ש', Z: 'ת', '\u00F5': 'א',
+};
+
+/** Decodes a Latin-encoded vowelled verse run (visual order) into Hebrew; nikud glyphs vanish. */
+export function decodeLatinVerseText(s: string): string {
+  const mapped = Array.from(s.replace(/[\u00A4-\u00A9\u0178\u00F7]/g, ''), (ch) => LATIN_VERSE_MAP[ch] ?? (/[A-Za-z]/.test(ch) ? '' : ch));
+  return mapped.reverse().join('').replace(/\s+/g, ' ');
+}
+
+function decodeLatinVerseItem<T extends { str?: unknown }>(it: T): T {
+  const s = typeof it?.str === 'string' ? it.str : '';
+  if (!s || LATIN_NIKUD_ONLY.test(s)) return { ...it, str: '' };
+  return { ...it, str: decodeLatinVerseText(s) };
 }
 
 /** Any Hebrew run (decoded or Unicode) may still carry נ as a control code: יוח\x15ן → יוחנן. */
