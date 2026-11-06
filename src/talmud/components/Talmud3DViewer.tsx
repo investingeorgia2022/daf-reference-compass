@@ -115,15 +115,11 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   const panRafRef = useRef<number | null>(null);
   const applyLivePan = useCallback((x: number, y: number, s: number) => {
     livePanRef.current = { x, y };
-    if (panRafRef.current != null) return;
-    panRafRef.current = requestAnimationFrame(() => {
-      panRafRef.current = null;
-      const el = transformElRef.current;
-      const p = livePanRef.current;
-      if (!el || !p) return;
-      el.style.transition = 'none';
-      el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0px) scale(${s})`;
-    });
+    // Write synchronously: iOS Safari can defer rAF callbacks until the finger lifts.
+    const el = transformElRef.current;
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${s})`;
   }, []);
 
   const isZoomed = scale > 1.02 || isPanDragEnabled;
