@@ -369,6 +369,9 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         startPanY: panY,
         startTime: Date.now(),
         hadMultiTouch: false,
+        // Measured once so touchmove never forces a layout pass.
+        baseW: containerRef.current?.clientWidth || window.innerWidth,
+        baseH: containerRef.current?.clientHeight || window.innerHeight,
       };
     }
   };
@@ -424,18 +427,21 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       const movedDist = Math.hypot(dx, dy);
 
       if (movedDist > 4) {
-        didMoveDafRef.current = true;
-        if (typeof document !== 'undefined') {
+        // Set once per drag: touching body attributes every frame restyles the whole page.
+        if (!didMoveDafRef.current && typeof document !== 'undefined') {
           document.body.dataset.talmudPanning = 'true';
         }
+        didMoveDafRef.current = true;
         if (scale > 1.01 || isPanDragEnabled) {
-          if (!isInteracting) setIsInteracting(true);
-          const clamped = clampPanToContentBounds(
-            dragRef.current.startPanX + dx,
-            dragRef.current.startPanY + dy,
-            scale
-          );
-          applyLivePan(clamped.x, clamped.y, scale);
+          // No React state here: a re-render would reset the live DOM transform mid-drag.
+          const d = dragRef.current;
+          const baseW = d.baseW, baseH = d.baseH;
+          const maxX = Math.max(120, (baseW * scale - baseW) / 2 + baseW * 0.35);
+          const maxYTop = Math.max(160, baseH * 0.4);
+          const maxYBottom = Math.max(240, baseH * scale * 0.95);
+          const x = Math.max(-maxX, Math.min(maxX, d.startPanX + dx));
+          const y = Math.max(-maxYBottom, Math.min(maxYTop, d.startPanY + dy));
+          applyLivePan(x, y, scale);
         }
       }
     }
