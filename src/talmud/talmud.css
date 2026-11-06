@@ -569,7 +569,6 @@ button[data-crystal-gold="true"] div {
 }
 
 .word-note-pointer { position: fixed; inset: 0; z-index: 326; pointer-events: none; overflow: visible; }
-[data-reference-highlight="true"] { box-shadow: inset 0 -1px var(--reference-target-rule); }
 .biblical-verse-text p[data-verse] { background: var(--reference-target-highlight); border-inline-start: 3px solid var(--reference-target-rule); padding: 8px 12px; border-radius: 4px; }
 .word-note-pointer > path { fill: none; stroke: var(--study-accent); stroke-width: 2.5; }
 .word-note-pointer marker path { fill: var(--study-accent); }
