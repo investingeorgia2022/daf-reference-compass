@@ -1342,6 +1342,7 @@ export function App() {
       if (Date.now() < manualRevealLockUntilRef.current) return;
       if (isIgnoredControlTarget(e.target)) return;
       if (e.touches.length !== 1 || touchStartYRef.current === null) return;
+      if (document.body.dataset.talmudPanning === 'true') return;
       const currentTouchY = e.touches[0].clientY;
       const fingerDeltaY = touchStartYRef.current - currentTouchY; // > 0 means swiping up (scrolling down)
       if (fingerDeltaY > 28) {
