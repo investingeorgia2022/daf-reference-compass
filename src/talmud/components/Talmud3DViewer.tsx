@@ -427,10 +427,11 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       const movedDist = Math.hypot(dx, dy);
 
       if (movedDist > 4) {
-        didMoveDafRef.current = true;
-        if (typeof document !== 'undefined') {
+        // Set once per drag: touching body attributes every frame restyles the whole page.
+        if (!didMoveDafRef.current && typeof document !== 'undefined') {
           document.body.dataset.talmudPanning = 'true';
         }
+        didMoveDafRef.current = true;
         if (scale > 1.01 || isPanDragEnabled) {
           // No React state here: a re-render would reset the live DOM transform mid-drag.
           const d = dragRef.current;
