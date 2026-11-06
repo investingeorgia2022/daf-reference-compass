@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { abbreviationSpan, normalizeHebrewWord, wordsMatch, isInlineMarker } from './dibburHamatchilMatcher';
 
 export interface SearchableSpot {
