@@ -49,3 +49,23 @@ export function getGilyonNote<T extends MarginSpot>(spots: T[], sourceSection: s
   const next = leads.find(s => s.topPct > lead.topPct + 0.4);
   return column.filter(s => s.topPct >= lead.topPct - 0.35 && (!next || s.topPct < next.topPct - 0.35));
 }
+
+/**
+ * Splits the Gilyon column into its notes: every note ends with ":". The n-th Gilyon marker on the
+ * daf (reading order) points to the n-th note; returns [] when the column has no such note.
+ */
+export function getGilyonNoteByOrder<T extends MarginSpot & { stopAfter?: string }>(
+  spots: T[], index: number, side: 'left' | 'right',
+): T[] {
+  const column = spots.filter(s => s.section === 'margin' && s.marginCommType === 'gilyon-hashas' &&
+    (side === 'left' ? s.leftPct < 40 : s.leftPct > 60) && !/^גליון/.test(s.word) && !/^הש["״]?ס$/.test(s.word))
+    .sort((a, b) => a.topPct - b.topPct || b.leftPct - a.leftPct);
+  const notes: T[][] = [];
+  let cur: T[] = [];
+  for (const s of column) {
+    cur.push(s);
+    if (s.stopAfter === ':' || /:["'״׳]?$/.test(s.word.trim())) { notes.push(cur); cur = []; }
+  }
+  if (cur.length) notes.push(cur);
+  return index >= 0 && index < notes.length && notes.length > 1 ? notes[index] : [];
+}

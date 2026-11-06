@@ -666,7 +666,7 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
   return createPortal(
     <>
       {/* VISUAL POINTER CONNECTOR & ORIGIN LINK HIGHLIGHT RING (Points directly to the link text from which we navigated) */}
-      {hasValidAnchor && !isMaximized && (
+      {false && (
         <div className="fixed inset-0 pointer-events-none z-[277]">
           {/* Pulsing highlight frame around the origin citation link text */}
           <div
@@ -740,7 +740,8 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
         }`}
       >
         {/* CALLOUT POINTER BEAK ATTACHED TO THE NOTE WINDOW BORDER POINTING TO THE ORIGIN LINK TEXT */}
-        {hasValidAnchor && !isMaximized && (
+        {/* Pointer beak removed: the window floats without an arrow. */}
+        {false && (
           <div
             aria-hidden="true"
             style={
