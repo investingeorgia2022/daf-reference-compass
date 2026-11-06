@@ -67,5 +67,5 @@ export function getGilyonNoteByOrder<T extends MarginSpot & { stopAfter?: string
     if (s.stopAfter === ':' || /:["'״׳]?$/.test(s.word.trim())) { notes.push(cur); cur = []; }
   }
   if (cur.length) notes.push(cur);
-  return index >= 0 && index < notes.length && notes.length > 1 ? notes[index] : [];
+  return index >= 0 && index < notes.length && notes.length > 1 ? (notes[index] ?? []) : [];
 }
