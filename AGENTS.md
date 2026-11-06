@@ -36,3 +36,5 @@
 - Full-width commentary lines below the Gemara are assigned whole to one commentator (the column that keeps printing after the other ends) by vilnaLowerCommentary, never split by page side; side splits mixed Rashi and Tosafot.
 - Zoomed PDF views re-render only the visible page area into PdfSharpZoomTile at screen resolution; mobile canvases cannot hold a whole page at 10x.
 - A line set mostly in the Gemara body type is Gemara wherever it reaches (vilnaLowerCommentary); full-width last Gemara lines were mislabelled as commentary.
+- Scan text repair lives in legacyHebrewFont: control-code נ is restored in every Hebrew run, and fonts whose items include standalone nikud glyphs are decoded as the Latin-encoded vowelled verse font; otherwise Torah Or verses and Mishnah words vanish from matching.
+- Daf search (dafSearch + DafSearchPanel) reuses the DH matcher's wordsMatch/abbreviationSpan and the DH glow/scroll path, so search, links and abbreviations follow one set of rules.
