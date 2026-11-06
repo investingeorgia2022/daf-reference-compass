@@ -740,8 +740,8 @@ export const FloatingSourceDafNoteWindow: React.FC<FloatingSourceDafNoteWindowPr
         }`}
       >
         {/* CALLOUT POINTER BEAK ATTACHED TO THE NOTE WINDOW BORDER POINTING TO THE ORIGIN LINK TEXT */}
-        {/* Pointer beak removed: the window floats without an arrow. */}
-        {false && (
+        {/* Beak on the window border pointing at the origin marker (no extra arrow or ring). */}
+        {hasValidAnchor && !isMaximized && (
           <div
             aria-hidden="true"
             style={
