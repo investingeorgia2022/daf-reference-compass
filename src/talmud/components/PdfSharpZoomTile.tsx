@@ -28,6 +28,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
   const seqRef = useRef(0);
 
   useEffect(() => {
+    if (tileRef.current) tileRef.current.style.display = 'none';
     setRect(null);
     window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base: baseCanvasRef.current } }));
   }, [renderKey]);
@@ -41,6 +42,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       const box = base.getBoundingClientRect();
       const onScreenRatio = box.width / Math.max(1, base.offsetWidth);
       if (scaleRef.current < 1.25 && onScreenRatio < 1.25) {
+        tile.style.display = 'none';
         setRect(null);
         return;
       }
@@ -150,6 +152,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
     const onZoom = (e: Event) => {
       const s = (e as CustomEvent).detail?.scale;
       if (typeof s === 'number') scaleRef.current = s;
+      if (tileRef.current) tileRef.current.style.display = 'none';
       setRect(null);
       window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base: baseCanvasRef.current } }));
       schedule();
