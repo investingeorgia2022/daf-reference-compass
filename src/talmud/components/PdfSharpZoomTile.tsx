@@ -41,7 +41,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       if (!base || !page || !tile) return;
       const box = base.getBoundingClientRect();
       const onScreenRatio = box.width / Math.max(1, base.offsetWidth);
-      if (scaleRef.current < 1.25 && onScreenRatio < 1.25) {
+      if (scaleRef.current < 2.5) {
         tile.style.display = 'none';
         setRect(null);
         return;
@@ -139,7 +139,9 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       tile.width = off.width;
       tile.height = off.height;
       tile.getContext('2d')?.drawImage(off, 0, 0);
+      tile.style.opacity = '0';
       tile.style.display = 'block';
+      requestAnimationFrame(() => { if (tileRef.current === tile) tile.style.opacity = '1'; });
       freeOff();
       setRect(r);
       window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base, canvas: tile, rect: r } }));
@@ -158,16 +160,17 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       schedule();
     };
     const onMove = () => {
-      if (scaleRef.current >= 1.25) schedule();
+      if (scaleRef.current >= 2.5) schedule();
     };
     // While a pinch is in progress the tile would show a stale area; hide it at once.
     const onPinchMove = (e: TouchEvent) => {
-      if (e.touches.length < 2) return;
       const tile = tileRef.current;
       if (tile && tile.style.display !== 'none') tile.style.display = 'none';
       if (timerRef.current) { window.clearTimeout(timerRef.current); timerRef.current = null; }
     };
     window.addEventListener('touchmove', onPinchMove, { passive: true });
+    const onMouseDrag = (e: MouseEvent) => { if (e.buttons) onPinchMove(e as any); };
+    window.addEventListener('mousemove', onMouseDrag);
     window.addEventListener('talmud-zoom-state-change', onZoom);
     window.addEventListener('touchend', onMove, { passive: true });
     window.addEventListener('mouseup', onMove);
@@ -179,6 +182,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       window.removeEventListener('talmud-zoom-state-change', onZoom);
       window.removeEventListener('touchend', onMove);
       window.removeEventListener('touchmove', onPinchMove);
+      window.removeEventListener('mousemove', onMouseDrag);
       window.removeEventListener('mouseup', onMove);
       window.removeEventListener('wheel', onMove);
       window.removeEventListener('scroll', onMove, { capture: true } as any);
@@ -198,6 +202,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
         width: rect ? `${rect.w * 100}%` : 0,
         height: rect ? `${rect.h * 100}%` : 0,
         filter,
+        transition: 'opacity 160ms ease-out',
       }}
     />
   );
