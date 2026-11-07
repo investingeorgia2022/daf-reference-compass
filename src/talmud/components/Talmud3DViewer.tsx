@@ -330,11 +330,12 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
     const el = containerRef.current;
     if (!el) return;
     const onNativeMove = (e: TouchEvent) => {
-      if (e.touches.length !== 1 || !dragRef.current || !e.cancelable) return;
+      if (e.touches.length !== 1 || !dragRef.current) return;
       if (document.body.dataset.talmudWordSelecting === 'true') return;
       const g = panGateRef.current;
       if (g.scale <= 1.01) return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
+      (dragRef.current as any).nativeMoved = true;
       // The one-finger pan runs here, in a non-passive native listener, so mobile browsers
       // can never hand the gesture to native scrolling and delay it until the finger lifts.
       const d = dragRef.current;
@@ -357,7 +358,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
     };
     el.addEventListener('touchmove', onNativeMove, { passive: false });
     return () => el.removeEventListener('touchmove', onNativeMove);
-  }, []);
+    // The container sits inside the page-keyed flip wrapper, so it is a new element on every daf.
+  }, [pageKey]);
 
   // High-performance Multi-Touch Pinch-to-Zoom & 1:1 Touch-Drag Panning Engine
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -469,7 +471,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         }
         didMoveDafRef.current = true;
         // Zoomed one-finger pan is handled by the native non-passive listener above.
-        if (false) {
+        // Fallback when the native listener did not run for this drag.
+        if (scale > 1.01 && !(dragRef.current as any).nativeMoved) {
           // No React state here: a re-render would reset the live DOM transform mid-drag.
           const d = dragRef.current;
           const baseW = d.baseW, baseH = d.baseH;
