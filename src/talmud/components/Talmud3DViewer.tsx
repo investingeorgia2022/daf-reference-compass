@@ -333,7 +333,6 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       if (e.touches.length !== 1 || !dragRef.current) return;
       if (document.body.dataset.talmudWordSelecting === 'true') return;
       const g = panGateRef.current;
-      if (g.scale <= 1.01) return;
       if (e.cancelable) e.preventDefault();
       (dragRef.current as any).nativeMoved = true;
       // The one-finger pan runs here, in a non-passive native listener, so mobile browsers
@@ -472,7 +471,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         didMoveDafRef.current = true;
         // Zoomed one-finger pan is handled by the native non-passive listener above.
         // Fallback when the native listener did not run for this drag.
-        if (scale > 1.01 && !(dragRef.current as any).nativeMoved) {
+        if (!(dragRef.current as any).nativeMoved) {
           // No React state here: a re-render would reset the live DOM transform mid-drag.
           const d = dragRef.current;
           const baseW = d.baseW, baseH = d.baseH;
@@ -538,8 +537,11 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         if (
           Math.abs(dx) >= 42 &&
           Math.abs(dx) > Math.abs(dy) * 1.15 &&
-          elapsed < 950
+          elapsed < 450
         ) {
+          if (transformElRef.current) applyLivePan(completedDrag.startPanX, completedDrag.startPanY, scale);
+          setPanX(completedDrag.startPanX);
+          setPanY(completedDrag.startPanY);
           if (dx < 0) {
             onNextAmud?.();
           } else {
@@ -921,7 +923,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           onMouseDown={handleMouseDown}
           onClickCapture={handleClickCapture}
           style={{
-            touchAction: scale > 1.02 ? 'none' : 'pan-y',
+            touchAction: 'none',
           }}
           className={`w-full max-w-full overflow-x-hidden ${
             isAreaZoomMode
