@@ -57,7 +57,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
         w: (x1 - x0) / box.width,
         h: (y1 - y0) / box.height,
       };
-      const isTouch = (navigator.maxTouchPoints || 0) > 0;
+      const isTouch = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
       const dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 3);
       let pxW = (x1 - x0) * dpr;
       let pxH = (y1 - y0) * dpr;
@@ -75,7 +75,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       const off = document.createElement('canvas');
       off.width = Math.max(1, Math.floor(pxW));
       off.height = Math.max(1, Math.floor(pxH));
-      const ctx = off.getContext('2d', { willReadFrequently: true });
+      const ctx = off.getContext('2d', isTouch ? { willReadFrequently: true } : undefined);
       const freeOff = () => { off.width = 0; off.height = 0; };
       if (!ctx) return;
       ctx.fillStyle = '#FFFFFF';
