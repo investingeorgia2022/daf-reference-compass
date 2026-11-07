@@ -3091,7 +3091,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0;
         const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
         // iOS Safari holds both the offscreen and visible canvas; keep each well under its memory budget.
-        const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? (isIOS ? 1600 : 2200) / maxSide : 3.2);
+        const renderScale = Math.min(3.2, 2.2 * dpr, isTouchDevice ? (isIOS ? 1600 : 2600) / maxSide : 3.2);
         const renderViewport = page.getViewport({ scale: renderScale });
         const renderW = Math.floor(renderViewport.width);
         const renderH = Math.floor(renderViewport.height);
@@ -3127,7 +3127,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = Math.floor(renderViewport.width);
         offscreenCanvas.height = Math.floor(renderViewport.height);
-        const offCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+        const offCtx = offscreenCanvas.getContext('2d', isIOS ? { willReadFrequently: true } : undefined);
         if (!offCtx) return;
 
         offCtx.fillStyle = '#FFFFFF';
@@ -3167,7 +3167,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const textContent = await page.getTextContent();
         if (isCancelled) { offscreenCanvas.width = 0; offscreenCanvas.height = 0; return; }
 
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const ctx = canvas.getContext('2d', isIOS ? { willReadFrequently: true } : undefined);
         if (!ctx) return;
         canvas.width = offscreenCanvas.width;
         canvas.height = offscreenCanvas.height;
