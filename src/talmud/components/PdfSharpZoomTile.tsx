@@ -129,9 +129,15 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
           // ignore
         }
       }
+      // Position the tile in the same frame as its new pixels, so it never shows at the old spot.
+      tile.style.left = `${r.l * 100}%`;
+      tile.style.top = `${r.t * 100}%`;
+      tile.style.width = `${r.w * 100}%`;
+      tile.style.height = `${r.h * 100}%`;
       tile.width = off.width;
       tile.height = off.height;
       tile.getContext('2d')?.drawImage(off, 0, 0);
+      tile.style.display = 'block';
       freeOff();
       setRect(r);
       window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base, canvas: tile, rect: r } }));
@@ -151,6 +157,14 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
     const onMove = () => {
       if (scaleRef.current >= 1.25) schedule();
     };
+    // While a pinch is in progress the tile would show a stale area; hide it at once.
+    const onPinchMove = (e: TouchEvent) => {
+      if (e.touches.length < 2) return;
+      const tile = tileRef.current;
+      if (tile && tile.style.display !== 'none') tile.style.display = 'none';
+      if (timerRef.current) { window.clearTimeout(timerRef.current); timerRef.current = null; }
+    };
+    window.addEventListener('touchmove', onPinchMove, { passive: true });
     window.addEventListener('talmud-zoom-state-change', onZoom);
     window.addEventListener('touchend', onMove, { passive: true });
     window.addEventListener('mouseup', onMove);
@@ -161,6 +175,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       if (timerRef.current) window.clearTimeout(timerRef.current);
       window.removeEventListener('talmud-zoom-state-change', onZoom);
       window.removeEventListener('touchend', onMove);
+      window.removeEventListener('touchmove', onPinchMove);
       window.removeEventListener('mouseup', onMove);
       window.removeEventListener('wheel', onMove);
       window.removeEventListener('scroll', onMove, { capture: true } as any);
