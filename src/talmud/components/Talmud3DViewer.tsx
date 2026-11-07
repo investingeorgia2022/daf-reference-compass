@@ -331,7 +331,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       if (e.touches.length !== 1 || !dragRef.current || !e.cancelable) return;
       if (document.body.dataset.talmudWordSelecting === 'true') return;
       const g = panGateRef.current;
-      if (g.scale > 1.01 || g.isPanDragEnabled) e.preventDefault();
+      if (g.scale > 1.01) e.preventDefault();
     };
     el.addEventListener('touchmove', onNativeMove, { passive: false });
     return () => el.removeEventListener('touchmove', onNativeMove);
@@ -446,7 +446,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           document.body.dataset.talmudPanning = 'true';
         }
         didMoveDafRef.current = true;
-        if (scale > 1.01 || isPanDragEnabled) {
+        // At the starting size a sideways swipe turns the page, so only a zoomed daf pans.
+        if (scale > 1.01) {
           // No React state here: a re-render would reset the live DOM transform mid-drag.
           const d = dragRef.current;
           const baseW = d.baseW, baseH = d.baseH;
@@ -502,8 +503,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       if (
         !completedDrag.hadMultiTouch &&
         !isSelectingWord &&
-        scale <= 1.05 &&
-        !isPanDragEnabled
+        scale <= 1.05
       ) {
         const endX = e.changedTouches?.[0]?.clientX ?? completedDrag.lastX;
         const endY = e.changedTouches?.[0]?.clientY ?? completedDrag.lastY;
@@ -896,7 +896,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           onMouseDown={handleMouseDown}
           onClickCapture={handleClickCapture}
           style={{
-            touchAction: scale > 1.02 || isPanDragEnabled ? 'none' : 'pan-y',
+            touchAction: scale > 1.02 ? 'none' : 'pan-y',
           }}
           className={`w-full max-w-full overflow-x-hidden ${
             isAreaZoomMode
