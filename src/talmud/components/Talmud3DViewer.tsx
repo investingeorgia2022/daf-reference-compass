@@ -322,6 +322,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   // iOS Safari: React touch listeners are passive, so a one-finger drag also starts native page
   // scrolling, which throttles touchmove and freezes the live pan until release. A non-passive
   // native listener cancels that native scroll while the daf itself is being panned.
+  const applyLivePanRef = useRef(applyLivePan);
+  applyLivePanRef.current = applyLivePan;
   const panGateRef = useRef({ scale, isPanDragEnabled });
   panGateRef.current = { scale, isPanDragEnabled };
   useEffect(() => {
@@ -331,7 +333,27 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       if (e.touches.length !== 1 || !dragRef.current || !e.cancelable) return;
       if (document.body.dataset.talmudWordSelecting === 'true') return;
       const g = panGateRef.current;
-      if (g.scale > 1.01) e.preventDefault();
+      if (g.scale <= 1.01) return;
+      e.preventDefault();
+      // The one-finger pan runs here, in a non-passive native listener, so mobile browsers
+      // can never hand the gesture to native scrolling and delay it until the finger lifts.
+      const d = dragRef.current;
+      const t = e.touches[0];
+      d.lastX = t.clientX;
+      d.lastY = t.clientY;
+      const dx = t.clientX - d.startX;
+      const dy = t.clientY - d.startY;
+      if (Math.hypot(dx, dy) <= 4) return;
+      if (!didMoveDafRef.current) document.body.dataset.talmudPanning = 'true';
+      didMoveDafRef.current = true;
+      const s = g.scale;
+      const baseW = d.baseW, baseH = d.baseH;
+      const maxX = Math.max(120, (baseW * s - baseW) / 2 + baseW * 0.35);
+      const maxYTop = Math.max(160, baseH * 0.4);
+      const maxYBottom = Math.max(240, baseH * s * 0.95);
+      const x = Math.max(-maxX, Math.min(maxX, d.startPanX + dx));
+      const y = Math.max(-maxYBottom, Math.min(maxYTop, d.startPanY + dy));
+      applyLivePanRef.current(x, y, s);
     };
     el.addEventListener('touchmove', onNativeMove, { passive: false });
     return () => el.removeEventListener('touchmove', onNativeMove);
@@ -446,8 +468,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           document.body.dataset.talmudPanning = 'true';
         }
         didMoveDafRef.current = true;
-        // At the starting size a sideways swipe turns the page, so only a zoomed daf pans.
-        if (scale > 1.01) {
+        // Zoomed one-finger pan is handled by the native non-passive listener above.
+        if (false) {
           // No React state here: a re-render would reset the live DOM transform mid-drag.
           const d = dragRef.current;
           const baseW = d.baseW, baseH = d.baseH;
