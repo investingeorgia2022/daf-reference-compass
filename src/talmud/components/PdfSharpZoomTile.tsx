@@ -57,12 +57,14 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
         w: (x1 - x0) / box.width,
         h: (y1 - y0) / box.height,
       };
-      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const isTouch = (navigator.maxTouchPoints || 0) > 0;
+      const dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 3);
       let pxW = (x1 - x0) * dpr;
       let pxH = (y1 - y0) * dpr;
       const area = pxW * pxH;
-      if (area > MAX_TILE_PX) {
-        const k = Math.sqrt(MAX_TILE_PX / area);
+      const maxPx = isTouch ? 2_000_000 : MAX_TILE_PX;
+      if (area > maxPx) {
+        const k = Math.sqrt(maxPx / area);
         pxW *= k;
         pxH *= k;
       }
@@ -73,7 +75,8 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       const off = document.createElement('canvas');
       off.width = Math.max(1, Math.floor(pxW));
       off.height = Math.max(1, Math.floor(pxH));
-      const ctx = off.getContext('2d');
+      const ctx = off.getContext('2d', { willReadFrequently: true });
+      const freeOff = () => { off.width = 0; off.height = 0; };
       if (!ctx) return;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, off.width, off.height);
@@ -92,9 +95,10 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
         taskRef.current = task;
         await task.promise;
       } catch {
+        freeOff();
         return;
       }
-      if (seq !== seqRef.current) return;
+      if (seq !== seqRef.current) { freeOff(); return; }
       const tint = tintRef.current;
       if (tint) {
         // Same ink colours as the base image, mapped into the tile's coordinates.
@@ -128,6 +132,7 @@ export const PdfSharpZoomTile: React.FC<Props> = ({ baseCanvasRef, pageRef, tint
       tile.width = off.width;
       tile.height = off.height;
       tile.getContext('2d')?.drawImage(off, 0, 0);
+      freeOff();
       setRect(r);
       window.dispatchEvent(new CustomEvent('talmud-sharp-tile-painted', { detail: { base, canvas: tile, rect: r } }));
     };
