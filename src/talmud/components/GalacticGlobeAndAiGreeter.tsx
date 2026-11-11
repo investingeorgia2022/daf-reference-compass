@@ -186,8 +186,14 @@ const LifelikeGlassOrbKacunaAvatar: React.FC<{
     const pitch = 0.18;
     const size = 112;
 
-    const render = () => {
-      currentYaw += 0.012;
+    let lastDraw = 0;
+    const render = (now = 0) => {
+      if (now - lastDraw < 33 || document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      lastDraw = now;
+      currentYaw += 0.024;
       const backCanvas = backGlobeCanvasRef.current;
       const frontCanvas = frontGlobeCanvasRef.current;
       if (!backCanvas || !frontCanvas) {
@@ -2535,7 +2541,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
                           ? `0 0 34px ${orb.accentColor}bb, 0 0 16px rgba(255,255,255,0.65), inset 0 3px 8px rgba(255,255,255,0.75), inset 0 -4px 12px ${orb.accentColor}88`
                           : `0 12px 30px rgba(0,0,0,0.55), 0 0 22px ${orb.accentColor}55, inset 0 3px 8px rgba(255,255,255,0.65), inset 0 -3px 10px ${orb.accentColor}66`,
                       }}
-                      className={`sphere-orbit-wrapper pointer-events-auto absolute rounded-full border overflow-hidden flex flex-col items-center justify-center px-1.5 py-1.5 text-center backdrop-blur-[6px] cursor-pointer box-border ${
+                      className={`sphere-orbit-wrapper pointer-events-auto absolute rounded-full border overflow-hidden flex flex-col items-center justify-center px-1.5 py-1.5 text-center cursor-pointer box-border ${
                         isCurrent
                           ? 'border-white/90 ring-2 ring-amber-300/90 text-white'
                           : 'border-white/60 text-white hover:border-white/90'
