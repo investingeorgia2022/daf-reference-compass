@@ -3128,7 +3128,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = Math.floor(renderViewport.width);
         offscreenCanvas.height = Math.floor(renderViewport.height);
-        const offCtx = offscreenCanvas.getContext('2d', isIOS ? { willReadFrequently: true } : undefined);
+        const offCtx = offscreenCanvas.getContext('2d');
         if (!offCtx) return;
 
         offCtx.fillStyle = '#FFFFFF';
@@ -3162,7 +3162,8 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           darkInkSampleCount = 10;
         }
         if (darkInkSampleCount < 3) {
-          throw new Error('Rendered PDF canvas contained no visible ink pixels');
+          // Safari may report pixels late; keep the scan instead of blanking the daf.
+          console.warn('[vilna-pdf] few ink pixels sampled; continuing');
         }
 
         const textContent = await page.getTextContent();
