@@ -1,3 +1,4 @@
+import "@/talmud/utils/pdfPolyfills";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
