@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { needsPdfPolyfills } from '../utils/pdfPolyfills';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { Loader2, ChevronUp, ChevronDown, GripHorizontal, X, Copy, BookOpen, Check } from 'lucide-react';
@@ -48,7 +49,7 @@ import {
 
 // Configure PDF.js worker using Vite asset URL (with public static fallback)
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl || '/pdf.worker.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = needsPdfPolyfills ? '/pdf.worker.polyfilled.mjs' : (pdfWorkerUrl || '/pdf.worker.min.mjs');
 }
 
 export type MarginCommentaryType =
@@ -3167,7 +3168,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         const textContent = await page.getTextContent();
         if (isCancelled) { offscreenCanvas.width = 0; offscreenCanvas.height = 0; return; }
 
-        const ctx = canvas.getContext('2d', isIOS ? { willReadFrequently: true } : undefined);
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
         canvas.width = offscreenCanvas.width;
         canvas.height = offscreenCanvas.height;
