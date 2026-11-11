@@ -1055,9 +1055,16 @@ export const AxialRotatingSphereCanvas: React.FC<{
     const size = 120;
     const rotSpeed = 0.011 + (idx % 3) * 0.002;
 
-    const render = () => {
-      currentYaw += rotSpeed;
+    let lastDraw = 0;
+    const render = (now = 0) => {
+      if (now - lastDraw < 40 || document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      lastDraw = now;
+      currentYaw += rotSpeed * 2.4;
       const canvas = canvasRef.current;
+      if (canvas && !canvas.isConnected) return;
       if (!canvas) {
         animId = requestAnimationFrame(render);
         return;
