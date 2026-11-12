@@ -118,7 +118,13 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   const applyLivePan = useCallback((x: number, y: number, s: number) => {
     livePanRef.current = { x, y };
     // Write synchronously: iOS Safari can defer rAF callbacks until the finger lifts.
-    const el = transformElRef.current;
+    // The page-flip animation can null this ref after the old page leaves; re-find the live daf.
+    let el = transformElRef.current;
+    if (!el || !el.isConnected) {
+      el = (containerRef.current?.isConnected ? containerRef.current.querySelector('.will-change-transform') : null)
+        || (document.querySelector('[data-component="PageFlip3DWrapper"] .will-change-transform') as HTMLDivElement | null);
+      transformElRef.current = el;
+    }
     if (!el) return;
     el.style.transition = 'none';
     el.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${s})`;
