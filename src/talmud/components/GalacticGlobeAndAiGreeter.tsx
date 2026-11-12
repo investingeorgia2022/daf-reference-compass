@@ -36,6 +36,11 @@ import {
   SpinningCrystalCrownMagenDavidEmblem,
 } from './CrystalGlobeHelpers';
 
+// Phones redraw the whole globe screen on each tick; a slower tick keeps it smooth there.
+const IS_TOUCH_DEVICE =
+  typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0;
+const GLOBE_TICK_MS = IS_TOUCH_DEVICE ? 50 : 32;
+
 // Realistic World Continent Polygons ([lat, lon] in degrees) for the 3D Central Globe
 const REAL_WORLD_CONTINENTS: { name: string; coords: [number, number][] }[] = [
   {
@@ -1772,9 +1777,10 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
     let animId = 0;
     let lastTick = performance.now();
     const step = (now: number) => {
-      if (now - lastTick >= 32) {
+      if (now - lastTick >= GLOBE_TICK_MS) {
+        const steps = (now - lastTick) / 32;
         lastTick = now;
-        setRotYaw((prev) => prev + 0.0085);
+        setRotYaw((prev) => prev + 0.0085 * steps);
       }
       animId = requestAnimationFrame(step);
     };
@@ -2541,7 +2547,7 @@ export const GalacticGlobeAndAiGreeter: React.FC<GalacticGlobeAndAiGreeterProps>
                           ? `0 0 34px ${orb.accentColor}bb, 0 0 16px rgba(255,255,255,0.65), inset 0 3px 8px rgba(255,255,255,0.75), inset 0 -4px 12px ${orb.accentColor}88`
                           : `0 12px 30px rgba(0,0,0,0.55), 0 0 22px ${orb.accentColor}55, inset 0 3px 8px rgba(255,255,255,0.65), inset 0 -3px 10px ${orb.accentColor}66`,
                       }}
-                      className={`sphere-orbit-wrapper pointer-events-auto absolute rounded-full border overflow-hidden flex flex-col items-center justify-center px-1.5 py-1.5 text-center cursor-pointer box-border ${
+                      className={`sphere-orbit-wrapper pointer-events-auto absolute rounded-full border overflow-hidden [contain:layout_paint] [will-change:transform] flex flex-col items-center justify-center px-1.5 py-1.5 text-center cursor-pointer box-border ${
                         isCurrent
                           ? 'border-white/90 ring-2 ring-amber-300/90 text-white'
                           : 'border-white/60 text-white hover:border-white/90'
