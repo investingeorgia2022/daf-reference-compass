@@ -251,69 +251,28 @@ function modeHeight(words: DhHotspotLike[]): number {
   return best / 10;
 }
 
-/** Large square opening word of Tosafot (wherever the zone rules placed it). */
-function isLargeTosafotWord(h: DhHotspotLike, bodyH: number): boolean {
-  if ((h.section !== 'gemara' && h.section !== 'mishnah') || h.isSmallMarker || !h.glyphH || !bodyH) return false;
-  const r = h.glyphH / bodyH;
-  return r > 1.38 && r < 1.7 && !HEADINGS.has(plainWord(h.word));
-}
 
 interface Piece<T> { commentator: DhCommentator; words: T[] }
 
-/**
- * Finds every opening in the Rashi and Tosafot columns. Openings are contiguous runs of
- * opening-type words; a run cut at the end of a line continues on the next line of the same column.
- */
+/** Longest opening (in words); a run cut at a line end continues on the commentator's next line. */
 export const MAX_DH_WORDS = 15;
-/** Openings bounded by their own typeface may quote a longer passage. */
-export const MAX_TYPEFACE_DH_WORDS = 15;
 
 const endsWith = (w: string, ch: string) => String(w || '').trim().endsWith(ch);
 
-/** Most common font among the given words, weighted by letters (the body script). */
-function modeFont(words: DhHotspotLike[]): string | undefined {
-  const count = new Map<string, number>();
-  for (const h of words) {
-    if (!h.font) continue;
-    count.set(h.font, (count.get(h.font) || 0) + Math.max(1, plainWord(h.word).length));
-  }
-  let best: string | undefined;
-  let bestN = 0;
-  for (const [k, n] of count) if (n > bestN) { best = k; bestN = n; }
-  return best;
-}
-
 /**
  * Finds every opening. Vilna typesetting rules:
- * - An entry starts at the column start (clean space) or right after the previous entry's ":";
+ * - An entry starts at the commentator's first word or right after its previous entry's ":";
  *   its opening ends at the first "." (or וכו׳ / MAX_DH_WORDS).
- * - The opening is printed in its own typeface — Rashi's in bold Rashi script, Tosafot's in
- *   square letters — so the typeface (PDF font resource), not the page side, names the commentator.
- *   Each opening typeface is bound to the commentator whose entries use it most; a page without
- *   Tosafot therefore simply yields Rashi openings on both sides.
- * - Scans without font information fall back to the column the words were printed in.
+ * - The commentator of every word was decided upstream from the scan's text streams and
+ *   typefaces (vilnaCommentaryStreams), never from where on the page it sits.
  */
 export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T>[] {
-  const comm = hotspots.filter(
-    (h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker && plainWord(h.word)
-  );
-  const bodyH = modeHeight(comm);
-  const raw: Array<Piece<T> & { bodyFont?: string }> = [];
+  const raw: Array<Piece<T>> = [];
   for (const sec of ['rashi', 'tosafot'] as const) {
-    // Each column has its own body script; the opening typeface is anything else.
-    // Punctuation alone bounds an opening; PDF font IDs change per line and never decide it.
-    const bodyFont: string | undefined = undefined;
-    const isOpeningType = (_h: T) => true;
-    void modeFont;
+    // Punctuation alone bounds an opening.
     const words = readingOrder(
-      hotspots.filter(
-        (h) =>
-          (h.isSmallMarker || plainWord(h.word)) &&
-          (h.section === sec || (sec === 'tosafot' && isLargeTosafotWord(h, bodyH)))
-      )
+      hotspots.filter((h) => (h.isSmallMarker || plainWord(h.word)) && h.section === sec)
     );
-    // With a distinct opening typeface the run itself bounds the opening; without one, cap it.
-    const maxWords = bodyFont ? MAX_TYPEFACE_DH_WORDS : MAX_DH_WORDS;
     let open = true;
     let cur: Piece<T> | null = null;
     // An opening is only real once its closing "." (or וכו׳) is printed.
@@ -332,25 +291,13 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
       const colon = colonMark;
       const dot = w.stopAfter === '.' || endsWith(w.word, '.');
       if (open && !HEADINGS.has(p)) {
-        if (cur && cur.words.length > 0 && bodyFont && w.font === bodyFont && w.font !== cur.words[0].font) {
-          // Body script resumed without a printed "." — that was not an opening.
-          drop();
-          open = false;
-        } else {
-          if (!cur) {
-            if (bodyFont && !isOpeningType(w)) {
-              // No opening typeface here: the entry continues in body text.
-              open = false;
-              if (colon) open = true;
-              continue;
-            }
-            cur = { commentator: sec, words: [], bodyFont };
-            raw.push(cur);
-          }
-          cur.words.push(w);
-          if (dot || ETC.has(p)) { open = false; cur = null; }
-          else if (cur.words.length >= maxWords) { drop(); open = false; }
+        if (!cur) {
+          cur = { commentator: sec, words: [] };
+          raw.push(cur);
         }
+        cur.words.push(w);
+        if (dot || ETC.has(p)) { open = false; cur = null; }
+        else if (cur.words.length >= MAX_DH_WORDS) { drop(); open = false; }
       }
       if (colon) {
         drop();
@@ -360,8 +307,6 @@ export function extractDibburim<T extends DhHotspotLike>(hotspots: T[]): Piece<T
     drop();
   }
 
-  // The commentator is the column the opening was printed in (geometric zone); PDF font IDs
-  // are per-line OCR artefacts and never vote on identity — they only bound the opening.
   return raw;
 }
 
@@ -398,15 +343,8 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
   links: DhLink[];
   roles: Map<string, DhHotspotRole>;
 } {
-  const commBodyH = modeHeight(
-    hotspots.filter((h) => (h.section === 'rashi' || h.section === 'tosafot') && !h.isSmallMarker)
-  );
   const mainAll = hotspots.filter(
-    (h) =>
-      (h.section === 'gemara' || h.section === 'mishnah') &&
-      !h.isSmallMarker &&
-      plainWord(h.word) &&
-      !isLargeTosafotWord(h, commBodyH)
+    (h) => (h.section === 'gemara' || h.section === 'mishnah') && !h.isSmallMarker && plainWord(h.word)
   );
   // Small inline citations such as (דף ג.) are not part of the quoted text.
   const mainH = modeHeight(mainAll);
@@ -453,7 +391,7 @@ export function buildDibburHamatchilLinks<T extends DhHotspotLike>(hotspots: T[]
     if (!found) {
       // Still an opening: colour it in its column even when the quotation is not on this page.
       for (const h of piece.words) {
-        if (h.section === 'rashi' || h.section === 'tosafot' || isLargeTosafotWord(h, commBodyH)) {
+        if (h.section === 'rashi' || h.section === 'tosafot') {
           roles.set(h.id, { [piece.commentator]: key });
         }
       }

@@ -14,8 +14,8 @@ import {
 import { normalizeHebrewWord } from '../data/lexicon';
 import { detectSmallMarkerToken, isCircleMarker, getTorahOrNumber, canJoinMarkerFragments } from '../utils/referenceMarkerDetector';
 import { findMarginGutters, normalizeVilnaX, REFERENCE_GUTTERS } from '../utils/vilnaColumnGutters';
-import { assignFullWidthCommentaryRows } from '../utils/vilnaLowerCommentary';
-import { scrollToTarget } from '../utils/scrollToTarget';
+import { assignPrintedSections } from '../utils/vilnaCommentaryStreams';
+import { findScrollParent, scrollToTarget } from '../utils/scrollToTarget';
 import { readCachedDafPdf, writeCachedDafPdf } from '../utils/dafPdfCache';
 import { dafRenderCacheKey, readDafRender, writeDafRender } from '../utils/dafRenderCache';
 import { getTorahOrEntryHotspots, getTorahOrSentenceId } from '../utils/torahOrNavigation';
@@ -27,6 +27,7 @@ import { PdfSharpZoomTile } from './PdfSharpZoomTile';
 import { PdfInkHighlight } from './PdfInkHighlight';
 import { DafSearchPanel } from './DafSearchPanel';
 import type { DafSearchHit } from '../utils/dafSearch';
+import { shouldJoinSplitWordRuns } from '../utils/splitWordRuns';
 import {
   translateToGeorgianLive,
   normalizeGeorgianJewishTerms,
@@ -327,62 +328,6 @@ function getWordVisualGlyphWeight(word: string): number {
     else w += 0.92;
   }
   return Math.max(0.5, w);
-}
-
-/**
- * Classifies a word's x/y coordinate + font height on the Vilna Daf into its canonical commentary/text zone,
- * properly handling wide Gemara lines, wide top Rashi/Tosafot lines, and wide bottom Tosafot lines so lines are never split in half!
- */
-function classifyVilnaCoordinateZone(
-  leftPct: number,
-  topPct: number,
-  isAmudBet: boolean,
-  pdfH = 11.2
-): 'header' | 'mishnah' | 'gemara' | 'rashi' | 'tosafot' | 'margin' {
-  if (leftPct < 14.0 || leftPct > 80.2) {
-    return 'margin';
-  }
-  if (topPct < 4.5 && pdfH >= 15.5) return 'header';
-
-  const rashiSideIsRight = !isAmudBet;
-
-  // Top lines of the outer columns hold only commentary: a bold opening word (e.g. Rashi's
-  // מאימתי) stays in its column whatever its size. The central block is never affected.
-  if (topPct < 9.0 && pdfH < 15.8 && (leftPct > 61.8 || leftPct < 33.2)) {
-    if (leftPct > 61.8) return rashiSideIsRight ? 'rashi' : 'tosafot';
-    return rashiSideIsRight ? 'tosafot' : 'rashi';
-  }
-
-  // Square font (pdfH >= 12.6) inside the main body (between 31% and 80.2%) is always Mishnah or Gemara
-  // (unless it is a single bold lead word at the very start of Rashi/Tosafot on the outer column edge)
-  if (pdfH >= 12.6 && pdfH < 15.8 && leftPct >= 32.5) {
-    return topPct < 31.2 ? 'mishnah' : 'gemara';
-  }
-
-  // Top 4 lines above the Mishnah/Gemara center box (topPct < 9.0%):
-  // Rashi and Tosafot meet in the middle at x = 47.1%
-  if (topPct < 9.0 && pdfH < 12.6) {
-    if (leftPct >= 47.1) {
-      return rashiSideIsRight ? 'rashi' : 'tosafot';
-    }
-    return rashiSideIsRight ? 'tosafot' : 'rashi';
-  }
-
-  // Lower full-width Tosafot / Rashi below Gemara (topPct >= 65.5% and Rashi script pdfH < 12.6):
-  if (topPct >= 65.5 && pdfH < 12.6) {
-    // Below the Gemara each commentary keeps its own side of the page.
-    if (leftPct >= 47.1) return rashiSideIsRight ? 'rashi' : 'tosafot';
-    return rashiSideIsRight ? 'tosafot' : 'rashi';
-  }
-
-  if (leftPct > 61.8) {
-    return rashiSideIsRight ? 'rashi' : 'tosafot';
-  }
-  if (leftPct < 33.2) {
-    return rashiSideIsRight ? 'tosafot' : 'rashi';
-  }
-  if (topPct < 31.2) return 'mishnah';
-  return 'gemara';
 }
 
 /**
@@ -973,6 +918,8 @@ function extractHotspotsFromTextContent(
     leftPct: number;
     topPct: number;
     section: 'header' | 'mishnah' | 'gemara' | 'rashi' | 'tosafot' | 'margin';
+    /** Label for the run if it turns out to be main text. */
+    mainSection?: 'mishnah' | 'gemara';
     marginCommType?: MarginCommentaryType;
     marginEntryKey?: string;
   }
@@ -1099,12 +1046,10 @@ function extractHotspotsFromTextContent(
         section = 'gemara';
       }
     } else {
-      section = classifyVilnaCoordinateZone(
-        normalizeVilnaX(leftPct + (vpWidth / vpW) * 50, marginGutters),
-        topPct,
-        isAmudBet,
-        pdfH
-      );
+      // Only the side margins are found by position (blank gutters); which text a run belongs
+      // to — Gemara, Rashi or Tosafot — is decided below from the scan's text streams.
+      const x = normalizeVilnaX(leftPct + (vpWidth / vpW) * 50, marginGutters);
+      section = x < 14.0 || x > 80.2 ? 'margin' : 'gemara';
     }
 
     initialRuns.push({
@@ -1118,55 +1063,15 @@ function extractHotspotsFromTextContent(
       leftPct,
       topPct,
       section,
+      mainSection: topPct < 31.2 ? 'mishnah' : 'gemara',
     });
   }
 
   if (initialRuns.length === 0) return [];
 
   if (!isSiddurPdf && !isChumashPdf) {
-    // Full-width commentary lines below the Gemara belong to one commentator, never split by side.
-    const probe = initialRuns.map((r) => ({
-      run: r,
-      topPct: r.topPct,
-      pdfH: r.pdfH,
-      section: r.section,
-      centerPct: normalizeVilnaX(r.leftPct + (r.vpWidth / vpW) * 50, marginGutters),
-      chars: r.str.replace(/\s+/g, '').length,
-    }));
-    assignFullWidthCommentaryRows(probe);
-    for (const p of probe) p.run.section = p.section;
-  }
-
-  // Enlarged opening words of Rashi / Tosafot sit in the top commentary lines but are taller than
-  // commentary script, so the zone rules call them header/mishnah/margin. Give them the column of
-  // the commentary text printed on the same baseline right next to them.
-  if (!isSiddurPdf && !isChumashPdf) {
-    // The Gemara's own square type is not an enlarged opening: its first line sits beside the commentary too.
-    const mainSizes = new Map<number, number>();
-    for (const r of initialRuns) {
-      if (r.pdfH < 12.6 || r.pdfH >= 15.8) continue;
-      const k = Math.round(r.pdfH * 10);
-      mainSizes.set(k, (mainSizes.get(k) || 0) + r.str.length);
-    }
-    let mainBodyH = 0;
-    let mainBodyN = 0;
-    for (const [k, c] of mainSizes) if (c > mainBodyN) { mainBodyH = k / 10; mainBodyN = c; }
-    for (const r of initialRuns) {
-      if (r.topPct >= 9 || r.pdfH < 12.9 || r.pdfH > 18.5) continue;
-      if (mainBodyH && Math.abs(r.pdfH - mainBodyH) < 0.6) continue;
-      if (r.section === 'rashi' || r.section === 'tosafot' || r.section === 'gemara') continue;
-      const rBottom = r.vpTop + r.vpHeight;
-      const rRight = r.vpLeft + r.vpWidth;
-      let best: { gap: number; section: RawPdfRun['section'] } | null = null;
-      for (const o of initialRuns) {
-        if (o === r || (o.section !== 'rashi' && o.section !== 'tosafot') || o.pdfH >= 12.6) continue;
-        if (Math.abs(o.vpTop + o.vpHeight - rBottom) > Math.max(4, o.vpHeight * 0.6)) continue;
-        const gap = Math.max(o.vpLeft - rRight, r.vpLeft - (o.vpLeft + o.vpWidth), 0);
-        if (gap / vpW > 0.035) continue;
-        if (!best || gap < best.gap) best = { gap, section: o.section };
-      }
-      if (best) r.section = best.section;
-    }
+    // Gemara by its body type; Rashi and Tosafot by their own text streams and typefaces.
+    assignPrintedSections(initialRuns);
   }
 
   // Step 1: Pre-merge adjacent bracket/parenthesis tokens in stream order
@@ -1363,10 +1268,8 @@ function extractHotspotsFromTextContent(
       // Never move text between columns: Rashi and Tosafot touch at the top of the page, and the
       // first Gemara line sits right beside them — absorbing them mixes three texts into one line.
       const isComm = (s: RawPdfRun['section']) => s === 'rashi' || s === 'tosafot';
-      const crossesColumns =
-        (isComm(b.section) && isComm(run.section)) ||
-        ((run.section === 'mishnah' || run.section === 'gemara') && run.pdfH >= 12.6 && run.pdfH < 15.5) ||
-        ((b.section === 'mishnah' || b.section === 'gemara') && isComm(run.section) && run.pdfH >= 9.6 && run.pdfH < 12.6);
+      // Every run's text was decided from the scan's streams; rows never reassign it.
+      const crossesColumns = isComm(b.section) || isComm(run.section);
       if (
         !crossesColumns &&
         b.section !== 'margin' &&
@@ -1633,6 +1536,26 @@ function extractHotspotsFromTextContent(
         joined.push(cur);
       }
       bucket.runs = joined;
+      // A word the PDF split into touching runs ("או" + "תו.") is one word: rejoin glyph-adjacent fragments.
+      const words: RawPdfRun[] = [];
+      for (const run of bucket.runs) {
+        const prev = words[words.length - 1];
+        if (prev && shouldJoinSplitWordRuns(prev, run)) {
+          const minL = Math.min(prev.vpLeft, run.vpLeft);
+          const maxR = Math.max(prev.vpLeft + prev.vpWidth, run.vpLeft + run.vpWidth);
+          prev.str = `${prev.str}${run.str}`;
+          prev.vpLeft = minL;
+          prev.vpWidth = maxR - minL;
+          prev.leftPct = (minL / vpW) * 100;
+          prev.vpTop = Math.min(prev.vpTop, run.vpTop);
+          prev.vpHeight = Math.max(prev.vpHeight, run.vpHeight);
+          prev.pdfH = Math.max(prev.pdfH, run.pdfH);
+          prev.quoteAdjacent = prev.quoteAdjacent || run.quoteAdjacent;
+        } else {
+          words.push({ ...run });
+        }
+      }
+      bucket.runs = words;
     }
     // A tiny letter touching a same-size quote mark is part of an abbreviation (ב"ח, ז"ל), never a marker.
     const abbreviationRuns = new Set<RawPdfRun>();
@@ -2223,9 +2146,6 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       }
     }
 
-    const isAmudBet = dafData.dafId.endsWith('b');
-    const rashiIsRight = !isAmudBet;
-
     const list: PdfDafLine[] = Array.from(map.values()).map((item) => {
       // Expand the line bounds slightly and snap to the full column edges when a line spans most of its column
       // so the reading line ALWAYS reaches from the very beginning to the very end of the line!
@@ -2238,29 +2158,13 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         if (rightEdge > 58.0 && rightEdge < 62.2) rightEdge = 60.5;
         else if (rightEdge > 76.5 && rightEdge < 81.0) rightEdge = 79.8;
       } else if (!isSiddurPdf && !isChumashPdf && (item.section === 'rashi' || item.section === 'tosafot')) {
-        const isRightCol =
-          (item.section === 'rashi' && rashiIsRight) ||
-          (item.section === 'tosafot' && !rashiIsRight);
-        if (item.minTop < 9.0) {
-          // Top 4 wide lines above Mishnah
-          if (isRightCol) {
-            if (leftEdge > 46.8 && leftEdge < 51.5) leftEdge = 47.9;
-            if (rightEdge > 76.0 && rightEdge < 81.0) rightEdge = 79.8;
-          } else {
-            if (leftEdge > 13.5 && leftEdge < 17.5) leftEdge = 14.4;
-            if (rightEdge > 43.0 && rightEdge < 47.2) rightEdge = 46.3;
-          }
-        } else if (item.minTop >= 65.5 && rightEdge - leftEdge > 34) {
-          // Full-width bottom Tosafot/Rashi lines
-          if (leftEdge > 13.5 && leftEdge < 18.5) leftEdge = 14.4;
-          if (rightEdge > 75.5 && rightEdge < 81.0) rightEdge = 79.8;
-        } else if (isRightCol) {
-          if (leftEdge > 61.5 && leftEdge < 65.5) leftEdge = 62.4;
-          if (rightEdge > 76.0 && rightEdge < 81.0) rightEdge = 79.8;
-        } else {
-          if (leftEdge > 13.5 && leftEdge < 17.5) leftEdge = 14.4;
-          if (rightEdge > 29.0 && rightEdge < 33.2) rightEdge = 31.8;
-        }
+        // Snap commentary reading lines to the nearest printed column edge, whichever column it is.
+        if (leftEdge > 13.5 && leftEdge < 18.5) leftEdge = 14.4;
+        else if (leftEdge > 46.8 && leftEdge < 51.5) leftEdge = 47.9;
+        else if (leftEdge > 61.5 && leftEdge < 65.5) leftEdge = 62.4;
+        if (rightEdge > 75.5 && rightEdge < 81.0) rightEdge = 79.8;
+        else if (rightEdge > 43.0 && rightEdge < 47.2) rightEdge = 46.3;
+        else if (rightEdge > 29.0 && rightEdge < 33.2) rightEdge = 31.8;
       }
 
       return {
@@ -3844,6 +3748,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
     return { byKey: new Map(links.map((l) => [l.key, l])), roles };
   }, [hotspots]);
 
+  // Exact Gemara view saved when jumping to a commentary, restored when jumping back.
+  const gemaraViewMemoryRef = useRef<{ linkKey: string; scale: number; panX: number; panY: number; scrollTop: number; hotspots: VilnaPdfHotspot[] } | null>(null);
+
   const jumpToDibbur = useCallback(
     (h: VilnaPdfHotspot, clientX: number, rect: DOMRect | null): boolean => {
       const role = dibburLinks.roles.get(h.id);
@@ -3863,6 +3770,22 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       const right = Math.max(...targets.map((t) => t.leftPct + t.widthPct));
       const bottom = Math.max(...targets.map((t) => t.topPct + t.heightPct));
       const isRashi = link.commentator === 'rashi';
+      const scrollEl = pageContainerRef.current ? findScrollParent(pageContainerRef.current) : null;
+      const readScroll = () => (scrollEl ? scrollEl.scrollTop : window.scrollY);
+      const saved = gemaraViewMemoryRef.current;
+      if (fromMain) {
+        const out: Record<string, number> = {};
+        window.dispatchEvent(new CustomEvent('talmud-view-snapshot', { detail: { out } }));
+        gemaraViewMemoryRef.current = {
+          linkKey: link.key,
+          scale: out.scale ?? 1,
+          panX: out.panX ?? 0,
+          panY: out.panY ?? 0,
+          scrollTop: readScroll(),
+          hotspots,
+        };
+      }
+      const restore = !fromMain && saved && saved.linkKey === link.key && saved.hotspots === hotspots ? saved : null;
       const dhText = hotspots.filter((x) => link.dhIds.includes(x.id)).map((x) => x.word).join(' ');
       setSelectedRange(null);
       setShowRangeHandles(false);
@@ -3878,6 +3801,18 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         hotspotIds: ids,
         activatedAt: Date.now(),
       });
+      if (restore) {
+        gemaraViewMemoryRef.current = null;
+        window.dispatchEvent(
+          new CustomEvent('talmud-view-restore', { detail: { scale: restore.scale, panX: restore.panX, panY: restore.panY } })
+        );
+        window.setTimeout(() => {
+          const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+          if (scrollEl) scrollEl.scrollTo({ top: restore.scrollTop, behavior });
+          else window.scrollTo({ top: restore.scrollTop, behavior });
+        }, 360);
+        return true;
+      }
       window.dispatchEvent(
         new CustomEvent('talmud-focus-target-pct', {
           detail: { ox: (left + right) / 2, oy: (top + bottom) / 2, keepScale: true, scrollHandled: true },
@@ -4346,7 +4281,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         e.touches[0].clientX - pointerDownPosRef.current.x,
         e.touches[0].clientY - pointerDownPosRef.current.y
       );
-      if (dist > 18) {
+      if (dist > 6) {
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
@@ -4402,7 +4337,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             navigator.vibrate(30);
           } catch {}
         }
-      }, 450);
+      }, 400);
     }
   };
 
@@ -4417,7 +4352,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
       e.touches[0].clientX - pointerDownPosRef.current.x,
       e.touches[0].clientY - pointerDownPosRef.current.y
     );
-    if (dist > 18) {
+    if (dist > 6) {
       clearLongPressTimer();
       suppressNextClickRef.current = true;
     }

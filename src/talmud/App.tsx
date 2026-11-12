@@ -656,6 +656,20 @@ export function App() {
   const [isGlobalBottomSheetOpen, setIsGlobalBottomSheetOpen] = useState<boolean>(false);
   const [isCascadingSelectorOpen, setIsCascadingSelectorOpen] = useState<boolean>(false);
   const globalBottomBarTouchRef = useRef<{ startY: number; startX: number } | null>(null);
+  // Bottom dock stays visible; a downward swipe folds it so only the search globe remains.
+  const [isDockCollapsed, setIsDockCollapsed] = useState<boolean>(false);
+  const [dockPanelHeight, setDockPanelHeight] = useState<number>(64);
+  const dockObserverRef = useRef<ResizeObserver | null>(null);
+  const dockPanelRef = useCallback((el: HTMLDivElement | null) => {
+    dockObserverRef.current?.disconnect();
+    dockObserverRef.current = null;
+    if (!el) return;
+    setDockPanelHeight(el.offsetHeight || 64);
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setDockPanelHeight(el.offsetHeight || 64));
+    ro.observe(el);
+    dockObserverRef.current = ro;
+  }, []);
   const lastBottomNavClickRef = useRef<number>(0);
   const [voiceAiModalState, setVoiceAiModalState] = useState<{
     isOpen: boolean;
@@ -2769,7 +2783,7 @@ export function App() {
     <div
       data-talmud-app="true"
       className={`min-h-screen w-full max-w-[100vw] overflow-x-hidden ${
-        barsHidden || isDafMobileFullscreen ? 'pt-0 pb-0' : 'pt-[54px] sm:pt-[58px] pb-20'
+        isDafMobileFullscreen ? 'pt-0 pb-0' : `${barsHidden ? 'pt-0' : 'pt-[54px] sm:pt-[58px]'} ${isDockCollapsed ? 'pb-0' : 'pb-28'}`
       } transition-all duration-300 ${
         theme === 'celestial-slate'
           ? 'bg-[#EBF3FB] text-[#1E293B]'
@@ -3686,8 +3700,8 @@ export function App() {
             aria-label="ქვედა ნავიგაციის პანელი"
             initial={false}
             animate={{
-              y: barsHidden && !isGlobalBottomSheetOpen ? '120%' : '0%',
-              opacity: barsHidden && !isGlobalBottomSheetOpen ? 0 : 1,
+              y: isDockCollapsed && !isGlobalBottomSheetOpen ? dockPanelHeight - 6 : 0,
+              opacity: 1,
             }}
             transition={{
               type: 'spring',
@@ -3709,10 +3723,14 @@ export function App() {
               const dx = e.changedTouches[0].clientX - globalBottomBarTouchRef.current.startX;
               globalBottomBarTouchRef.current = null;
               if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) {
-                if (dy < 0 && !isGlobalBottomSheetOpen) {
+                if (dy < 0 && isDockCollapsed) {
+                  setIsDockCollapsed(false);
+                } else if (dy < 0 && !isGlobalBottomSheetOpen) {
                   setIsGlobalBottomSheetOpen(true);
                 } else if (dy > 0 && isGlobalBottomSheetOpen) {
                   setIsGlobalBottomSheetOpen(false);
+                } else if (dy > 0) {
+                  setIsDockCollapsed(true);
                 }
               }
             }}
@@ -3745,6 +3763,7 @@ export function App() {
                 }}
                 onClick={(e) => {
                   if ((e.currentTarget as any)._moved) { (e.currentTarget as any)._moved = false; return; }
+                  if (isDockCollapsed) { setIsDockCollapsed(false); return; }
                   window.dispatchEvent(new CustomEvent('talmud-open-daf-search'));
                 }}
                 whileTap={{ scale: 0.9 }}
@@ -3758,12 +3777,13 @@ export function App() {
             </div>
             {/* SINGLE UNIFIED PANEL THAT STRETCHES ACROSS THE FULL SCREEN WIDTH */}
             <motion.div
+              ref={dockPanelRef}
               layout
               transition={{
                 layout: { type: 'spring', stiffness: 140, damping: 22, mass: 1.1 },
               }}
               style={{
-                pointerEvents: barsHidden && !isGlobalBottomSheetOpen ? 'none' : 'auto',
+                pointerEvents: isDockCollapsed && !isGlobalBottomSheetOpen ? 'none' : 'auto',
               }}
               className={`w-full max-w-none rounded-t-[20px] sm:rounded-t-[26px] backdrop-blur-2xl border-t overflow-hidden select-none transition-colors ${
                 theme === 'celestial-slate'
