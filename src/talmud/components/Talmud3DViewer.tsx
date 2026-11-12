@@ -51,6 +51,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   const [scale, setScale] = useState<number>(1);
   const [panX, setPanX] = useState<number>(0);
   const [panY, setPanY] = useState<number>(0);
+  const viewStateRef = useRef({ scale: 1, panX: 0, panY: 0 });
+  viewStateRef.current = { scale, panX, panY };
   const [tiltX, setTiltX] = useState<number>(0);
   const [tiltY, setTiltY] = useState<number>(0);
   const [is3DTiltActive, setIs3DTiltActive] = useState<boolean>(false);
@@ -271,10 +273,27 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
         });
       }
     };
+    // Gemara↔commentary navigation saves and restores the exact view (zoom + pan).
+    const onViewSnapshot = (e: Event) => {
+      const out = (e as CustomEvent<{ out?: Record<string, number> }>).detail?.out;
+      if (out) Object.assign(out, viewStateRef.current);
+    };
+    const onViewRestore = (e: Event) => {
+      const d = (e as CustomEvent<{ scale: number; panX: number; panY: number }>).detail;
+      if (!d) return;
+      setScale(d.scale);
+      setPanX(d.panX);
+      setPanY(d.panY);
+      if (d.scale > 1.02) setShowResetAfterRelease(true);
+    };
+    window.addEventListener('talmud-view-snapshot', onViewSnapshot);
+    window.addEventListener('talmud-view-restore', onViewRestore);
     window.addEventListener('talmud-focus-target-pct', onFocusTargetPct);
     window.addEventListener('talmud-reset-zoom', onExternalReset);
     window.addEventListener('talmud-zoom-step', onZoomStep);
     return () => {
+      window.removeEventListener('talmud-view-snapshot', onViewSnapshot);
+      window.removeEventListener('talmud-view-restore', onViewRestore);
       window.removeEventListener('talmud-focus-target-pct', onFocusTargetPct);
       window.removeEventListener('talmud-reset-zoom', onExternalReset);
       window.removeEventListener('talmud-zoom-step', onZoomStep);
@@ -326,6 +345,8 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
   applyLivePanRef.current = applyLivePan;
   const panGateRef = useRef({ scale, isPanDragEnabled });
   panGateRef.current = { scale, isPanDragEnabled };
+  const pageNavRef = useRef({ next: onNextAmud, prev: onPrevAmud });
+  pageNavRef.current = { next: onNextAmud, prev: onPrevAmud };
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -355,8 +376,69 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       const y = Math.max(-maxYBottom, Math.min(maxYTop, d.startPanY + dy));
       applyLivePanRef.current(x, y, s);
     };
-    el.addEventListener('touchmove', onNativeMove, { passive: false });
-    return () => el.removeEventListener('touchmove', onNativeMove);
+    // One-finger drag starts natively in the capture phase, so word/marker handlers that stop
+    // propagation can never prevent the daf from following the finger.
+    const onNativeStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      if (document.querySelector('[data-fullscreen-section-active="true"]')) return;
+      if (document.body.dataset.talmudWordSelecting === 'true') return;
+      const t = e.touches[0];
+      const cur = livePanRef.current || { x: viewStateRef.current.panX, y: viewStateRef.current.panY };
+      if (transformElRef.current) transformElRef.current.style.transition = 'none';
+      didMoveDafRef.current = false;
+      dragRef.current = {
+        startX: t.clientX, startY: t.clientY, lastX: t.clientX, lastY: t.clientY,
+        startPanX: cur.x, startPanY: cur.y, startTime: Date.now(), hadMultiTouch: false,
+        baseW: el.clientWidth || window.innerWidth, baseH: el.clientHeight || window.innerHeight,
+        native: true,
+      } as any;
+    };
+    const onNativeEnd = (e: TouchEvent) => {
+      const d = dragRef.current as any;
+      if (!d?.native || e.touches.length !== 0) return;
+      dragRef.current = null;
+      const moved = didMoveDafRef.current;
+      if (moved) {
+        lastMoveEndTimestampRef.current = Date.now();
+        setTimeout(() => { delete document.body.dataset.talmudPanning; }, 380);
+      }
+      const p = livePanRef.current;
+      livePanRef.current = null;
+      const t = e.changedTouches[0];
+      const dx = (t?.clientX ?? d.lastX) - d.startX;
+      const dy = (t?.clientY ?? d.lastY) - d.startY;
+      const elapsed = Date.now() - d.startTime;
+      // Only a quick flick turns the page; a held drag keeps the daf where the finger left it.
+      if (panGateRef.current.scale <= 1.05 && elapsed < 260 && Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        applyLivePanRef.current(d.startPanX, d.startPanY, panGateRef.current.scale);
+        setPanX(d.startPanX);
+        setPanY(d.startPanY);
+        if (dx < 0) pageNavRef.current.next?.(); else pageNavRef.current.prev?.();
+        return;
+      }
+      if (p) {
+        setPanX(p.x);
+        setPanY(p.y);
+        setShowResetAfterRelease(true);
+      }
+    };
+    // iOS Safari only reliably honours preventDefault from a document-level non-passive
+    // listener; element listeners let it commit the gesture to native vertical scrolling.
+    const inside = (e: TouchEvent) => el.contains(e.target as Node);
+    const start = (e: TouchEvent) => { if (inside(e)) onNativeStart(e); };
+    const move = (e: TouchEvent) => { if (dragRef.current && (dragRef.current as any).native) onNativeMove(e); };
+    const end = (e: TouchEvent) => onNativeEnd(e);
+    const opts = { passive: false, capture: true } as AddEventListenerOptions;
+    document.addEventListener('touchstart', start, opts);
+    document.addEventListener('touchmove', move, opts);
+    document.addEventListener('touchend', end, opts);
+    document.addEventListener('touchcancel', end, opts);
+    return () => {
+      document.removeEventListener('touchstart', start, opts);
+      document.removeEventListener('touchmove', move, opts);
+      document.removeEventListener('touchend', end, opts);
+      document.removeEventListener('touchcancel', end, opts);
+    };
     // The container sits inside the page-keyed flip wrapper, so it is a new element on every daf.
   }, [pageKey]);
 
@@ -395,6 +477,7 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
       };
       dragRef.current = null;
     } else if (e.touches.length === 1) {
+      if ((dragRef.current as any)?.native) return;
       const t = e.touches[0];
       if (transformElRef.current) transformElRef.current.style.transition = 'none';
       dragRef.current = {
@@ -924,6 +1007,9 @@ export const Talmud3DViewer: React.FC<Talmud3DViewerProps> = ({
           onClickCapture={handleClickCapture}
           style={{
             touchAction: 'none',
+            // Fill the screen down to its bottom edge so a moved or zoomed daf is never cut off
+            // above an empty strip when the bottom dock is folded.
+            minHeight: isFullScreen ? undefined : 'calc(100dvh - 64px)',
           }}
           className={`w-full max-w-full overflow-x-hidden ${
             isAreaZoomMode

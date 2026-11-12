@@ -7,7 +7,7 @@
  */
 
 /** Bump when rendering/tinting/text decoding changes so stale pictures are ignored. */
-export const DAF_RENDER_CACHE_VERSION = 1;
+export const DAF_RENDER_CACHE_VERSION = 2;
 const DB_NAME = 'talmud_daf_render_cache_v1';
 const STORE = 'renders';
 export const DAF_RENDER_CACHE_LIMIT = 160;
