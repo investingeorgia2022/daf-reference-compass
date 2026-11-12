@@ -2044,6 +2044,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
 
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [pdfLoadFailed, setPdfLoadFailed] = useState<boolean>(false);
+  const [pdfLoadError, setPdfLoadError] = useState<string>('');
   const [pdfAspectRatio, setPdfAspectRatio] = useState<number>(643.575 / 992.575);
   const [hotspots, setHotspots] = useState<VilnaPdfHotspot[]>([]);
   const [biblicalCitation, setBiblicalCitation] = useState(null);
@@ -3060,18 +3061,46 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
           }
           if (isTalmudApiScan) void writeCachedDafPdf(activePdfUrl, arrayBuffer);
         }
-        if (!isCancelled) setPdfLoadFailed(false);
+        if (!isCancelled) { setPdfLoadFailed(false); setPdfLoadError(''); }
         if (isCancelled) return;
 
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
-        loadingTask = pdfjsLib.getDocument({
-          data: new Uint8Array(arrayBuffer),
-          wasmUrl: `${origin}/pdfjs-wasm/`,
-          standardFontDataUrl: `${origin}/pdfjs-fonts/`,
-          cMapUrl: `${origin}/pdfjs-cmaps/`,
-          cMapPacked: true,
-        });
-        const pdfDoc = await loadingTask.promise;
+        const openPdf = (bytes: ArrayBuffer) => {
+          loadingTask = pdfjsLib.getDocument({
+            data: new Uint8Array(bytes.slice(0)),
+            wasmUrl: `${origin}/pdfjs-wasm/`,
+            standardFontDataUrl: `${origin}/pdfjs-fonts/`,
+            cMapUrl: `${origin}/pdfjs-cmaps/`,
+            cMapPacked: true,
+          });
+          return loadingTask.promise;
+        };
+        let pdfDoc;
+        try {
+          pdfDoc = await openPdf(arrayBuffer);
+        } catch (openErr) {
+          if (isCancelled) return;
+          console.warn('[vilna-pdf] worker open failed, retrying on main thread', openErr);
+          // Safari fallback: run the PDF engine on the page itself instead of a background worker.
+          try {
+            if (!globalThis.pdfjsWorker?.WorkerMessageHandler) {
+              globalThis.pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+            }
+          } catch (importErr) {
+            console.warn('[vilna-pdf] main-thread engine import failed', importErr);
+          }
+          // A stored scan may be damaged: fetch a fresh copy and replace it.
+          if (cachedScan && isTalmudApiScan) {
+            try {
+              arrayBuffer = await fetchValidPdfBuffer(activePdfUrl);
+              void writeCachedDafPdf(activePdfUrl, arrayBuffer);
+            } catch {
+              // keep the stored bytes
+            }
+          }
+          if (isCancelled) return;
+          pdfDoc = await openPdf(arrayBuffer);
+        }
         if (isCancelled) return;
 
         const page = await pdfDoc.getPage(1);
@@ -3308,6 +3337,7 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
         }
         console.error('[vilna-pdf] render failed', err);
         if (!isCancelled) {
+          setPdfLoadError(String((err as Error)?.message || err || '').slice(0, 140));
           setHotspots([]);
           setPdfLoadFailed(true);
         }
@@ -4961,6 +4991,9 @@ export const VilnaPdfInteractiveViewer: React.FC<VilnaPdfInteractiveViewerProps>
             <div className="absolute inset-x-0 top-6 z-30 flex justify-center">
               <span className="rounded-full bg-[#FBF6EA]/90 px-3 py-1.5 text-xs font-extrabold text-[#3B2313] shadow">
                 ამ დაფის სკანი ვერ ჩაიტვირთა — სცადეთ თავიდან
+                {pdfLoadError && (
+                  <span className="block text-[10px] font-semibold opacity-75" dir="ltr">{pdfLoadError}</span>
+                )}
               </span>
             </div>
           )}

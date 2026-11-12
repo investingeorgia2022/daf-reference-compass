@@ -1041,6 +1041,9 @@ const MINI_SPHERE_CONTINENTS: [number, number][][] = [
  * rotating continental facets, and equatorial crystal nodes) spinning continuously
  * around its own vertical axis inside any crystal sphere!
  */
+const MINI_SPHERE_FRAME_MS =
+  typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0 ? 70 : 40;
+
 export const AxialRotatingSphereCanvas: React.FC<{
   accentColor: string;
   idx?: number;
@@ -1052,17 +1055,17 @@ export const AxialRotatingSphereCanvas: React.FC<{
     let animId = 0;
     let currentYaw = idx * 0.85;
     const pitch = 0.22;
-    const size = 120;
+    const size = MINI_SPHERE_FRAME_MS > 40 ? 84 : 120;
     const rotSpeed = 0.011 + (idx % 3) * 0.002;
 
     let lastDraw = 0;
     const render = (now = 0) => {
-      if (now - lastDraw < 40 || document.hidden) {
+      if (now - lastDraw < MINI_SPHERE_FRAME_MS || document.hidden) {
         animId = requestAnimationFrame(render);
         return;
       }
       lastDraw = now;
-      currentYaw += rotSpeed * 2.4;
+      currentYaw += rotSpeed * 2.4 * (MINI_SPHERE_FRAME_MS / 40);
       const canvas = canvasRef.current;
       if (canvas && !canvas.isConnected) return;
       if (!canvas) {
